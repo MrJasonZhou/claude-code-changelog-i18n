@@ -1411,6 +1411,96 @@
 - auto mode für Claude API- und Enterprise-Nutzer sowie auf Bedrock, Vertex, Foundry und Gateways standardmäßig auf den serverseitigen Klassifizierer umgestellt, der keine Kosten für Klassifizierungs-Overhead berechnet (`CLAUDE_CODE_AUTO_MODE_SERVER=0` deaktiviert dies auf Bedrock, Vertex, Foundry und Gateways); warnt bei kostenpflichtigem Fallback. Siehe https://code.claude.com/docs/en/auto-mode-classifier-billing
 - Zeile `Auto mode server` zu `/status` hinzugefügt, die anzeigt, ob der Klassifizierer für den auto mode dieser Sitzung auf dem Server ausgeführt wird
 
+## 2.1.277 (2026-09-18)
+
+- Unterstützung für AGENTS.md hinzugefügt: In einem Projekt ohne CLAUDE.md liest Claude Code stattdessen AGENTS.md; Änderung unter „Project instructions“ in `/config` möglich
+- `CLAUDE_GATEWAY_PROXY_IS_EGRESS_BOUNDARY=1` für Claude apps Gateways hinzugefügt, deren einziger Egress ein Forward-Proxy ist: Jede ausgehende Anfrage übergibt dem Proxy den Hostnamen, anstatt ihn lokal aufzulösen
+- Optionale `headers:`-Map für Claude apps Gateway-Upstreams hinzugefügt, um statische Header an einen Proxy zu senden, der vor einem Provider betrieben wird
+- Hinweiszeile hinzugefügt, dass ein Update eines Hintergrund-Tasks wartet, wenn dieser abgeschlossen wird, während ein Panel wie `/tasks` geöffnet ist
+- Fehler behoben, durch den `claude -p`- und Agent SDK-Sitzungen nach einem internen Fehler ohne Ergebnis hängenbleiben konnten; sie melden nun den Fehler und beenden sich mit Exit-Code 1
+- Fehler behoben, durch den Konversationen bei jeder Anfrage mit „text content blocks must be non-empty“ fehlschlugen, wenn ein früherer Assistant-Turn neben anderen Inhalten einen leeren Textblock enthielt, auch nach `--resume`
+- Fehler behoben, durch den man unerwartet abgemeldet wurde, wenn ein älterer Claude Code-Build (z. B. das gebündelte CLI einer IDE-Erweiterung) auf derselben Maschine wie die aktuelle Version ausgeführt wird
+- Fehler behoben, durch den der interaktive Start für Nutzer von `ANTHROPIC_API_KEY` hängenblieb oder einen Fehler anzeigte, wenn `~/.claude.json` einen fehlerhaften `customApiKeyResponses`-Wert enthält
+- Fehler behoben, durch den Update-Prüfungen alle 30 Minuten fehlschlugen und `claude update` hängenblieb, wenn eine Minimal- oder Maximalversion festgelegt ist und ein Proxy eine ungültige Version zurückgibt; ein fehlerhaftes `minimumVersion` wird nun ignoriert
+- Fehler behoben, durch den `claude update` bei über winget oder apk verwalteten Installationen „up to date“ meldete, wenn die Versionsabfrage fehlschlug
+- Fehler behoben, durch den `claude plugin install` manchmal fehlschlug und die installierte Kopie beschädigte, wenn eine Plugin-Version neu installiert wurde, die von einer Sitzung oder einem anderen Programm verwendet wurde; eine unveränderte Kopie bleibt nun unberührt
+- Fehler behoben, durch den Grep und Glob keine Treffer meldeten, wenn die Suche nicht gestartet werden konnte, weil dem System Prozesse, Arbeitsspeicher oder Dateihandles ausgingen; sie geben nun eine entsprechende Fehlermeldung zurück
+- Fehler behoben, durch den das Write-Tool den Turn stillschweigend als abgelehnte Berechtigung beendete, wenn der Zielpfad ein existierendes Verzeichnis ist; es meldet nun einen eindeutigen Fehler
+- Fehler behoben, durch den das Edit-Tool einen maskierten Backslash gefolgt von `uXXXX`-Text als `\uXXXX`-Escape-Sequenz behandelte, wodurch beim Bearbeiten eines Nicht-ASCII-Zeichens stattdessen eine maskierte Backslash-Sequenz überschrieben werden konnte
+- Fehler behoben, durch den das Edit-Tool „Invalid regular expression: regular expression too large“ statt „String not found in file“ meldete, wenn eine sehr große Änderung mit Nicht-ASCII-Text nicht mit der Datei übereinstimmte
+- Fehler behoben, durch den ein Turn vorzeitig mit „Path contains null bytes“ beendet wurde, wenn der Dateipfad eines Tool-Aufrufs `\u0000` als Escape-Sequenz enthielt; maskierte Steuerzeichen bleiben nun Literaltext
+- Fehler behoben, durch den Hintergrund-Sitzungen (`claude --bg`) beendet wurden, wenn der LSP-Server eines Plugins beendet wurde oder dessen stdin schloss
+- Absturz („Type error“) beim Öffnen von `/mcp` oder `/plugin manage` mit einem fehlerhaften `claudeAiMcpEverConnected`-Wert in `~/.claude.json` behoben
+- Absturz beim Start behoben, wenn `~/.claude.json` einen fehlerhaften `theme`-Wert enthält
+- Absturz („unrecoverable interface error“) behoben, wenn der Prompt Text mit Terminal-Farbcodes enthielt, beispielsweise ein aus dem Verlauf aufgerufener Prompt oder aus dem externen Editor geladener Text
+- Absturz beim Fortsetzen einer Sitzung behoben, deren gespeicherter Verlauf eine Assistant-Nachricht als einfachen String enthält
+- Fehler behoben, durch den Sitzungen auf langsamen oder stark ausgelasteten Maschinen beim Erscheinen des ersten Spinners manchmal mit „Claude Code exited after an unrecoverable interface error“ beendet wurden
+- Seltener Fehler behoben, durch den der Bildschirm nach einem internen Rendering-Fehler für den Rest der Sitzung nicht mehr aktualisiert wurde
+- Seltener Fall unter Windows behoben, bei dem ein Turn direkt nach Claudes Antwort mit einem Fehler wie „Out of memory“ abbrach, sodass die Tool-Aufrufe dieser Antwort nie ausgeführt wurden
+- Fehler behoben, durch den nach `/clear` fortgesetzten Sitzungen (Neustart, `--continue`, `--resume`) ein Teil ihrer ersten Nachricht fehlte, wenn ein SessionStart-Hook Ausgaben erzeugte, was zu einem vollständigen Prompt-Cache-Miss führte
+- Fehler behoben, durch den Nachrichten von anderen Agents (wie das SendMessage eines Subagents), die mitten im Turn eintrafen, unterhalb der Zeile „Ran N shell commands“ statt an der Stelle ihres Eintreffens angezeigt wurden
+- Fehler behoben, durch den der „copied“-Hinweis nach dem Markieren per Ziehen im Vollbild-`/resume`-Picker und anderen Panels, die den Prompt-Bereich überdecken, nicht erschien
+- Fehler behoben, durch den `$TMPDIR` in Bash-Befehlen, die außerhalb der Sandbox ausgeführt werden, bei aktiviertem Sandboxing leer aufgelöst wurde
+- Fehler behoben, durch den WebFetch und WebSearch in Cowork-Cloud-Sitzungen Claude nicht mitteilten, warum eine Anfrage abgelehnt wurde, etwa durch ein aufgebrauchtes Fetch-Budget oder eine Admin-Richtlinie
+- Fehler behoben, durch den das Telemetrie-Relay des Claude apps Gateways einen in `NO_PROXY` aufgeführten Collector-Hostnamen oder eine entsprechende Domain ignorierte, wenn ein Proxy gesetzt ist
+- Fehler behoben, durch den ein einzelner fehlerhafter `strictKnownMarketplaces`- oder `blockedMarketplaces`-Eintrag stillschweigend die gesamte Enterprise-Marketplace-Richtlinie deaktivierte
+- Fehler behoben, durch den fehlgeschlagene automatische Updates große bereitgestellte Downloads in `~/.cache/claude/staging` zurückließen
+- Fehler behoben, durch den `/plugin` Terminal-Steuerzeichen in Meldungen auf dem Installed-Tab nicht entfernte, wie etwa die Fehlermeldung eines fehlgeschlagenen Plugin-Updates
+- Absturz in `/plugin` → Installed und `/skills` behoben, wenn ein Skill oder Legacy-Befehl wie eine integrierte Object-Eigenschaft (z. B. `constructor` oder `toString`) benannt ist
+- Fehler behoben, durch den sich `/plugin` ohne Meldung schloss, wenn jede Installation bei einer Mehrfachauswahl fehlschlug
+- Fehler behoben, durch den deinstallierte Plugins als „failed to load“-Zeilen in `/plugin` Installed wieder auftauchten und Remove eine solche Zeile nicht entfernte
+- Fehler behoben, durch den Plugins aus dem offiziellen Marketplace ohne ihren Commit in `installed_plugins.json` erfasst wurden und `installed_plugins.json` nach dem Aktualisieren eines Plugins mit fixiertem Commit den alten Commit beibehielt
+- Fehler behoben, durch den Plugin-Reload-Vorschauen jede in der Vorschau angezeigte Kopie eines Plugin-Archivs bis zum Beenden entpackt ließen und das zwischengespeicherte `--plugin-url`-Archiv überschrieben, auf das ein Reload zurückgreift, wenn dessen Download fehlschlägt
+- Fehler bei der Protokollierung von Remote Control-Sitzungen behoben, wenn `~/.claude.json` einen fehlerhaften Platzhaltereintrag enthält
+- Fehler behoben, durch den die Fehlermeldung nach einem widerrufenen claude.ai-Login fälschlicherweise ein abgelaufenes Anthropic-Profil nannte; sie verweist nun zuerst auf `/login`
+- Fehler behoben, durch den getippter oder eingefügter Text bei Tastenwiederholung oder sehr schneller Eingabe in der `claude agents`-Dispatch-Eingabe gelegentlich durcheinandergeriet
+- Absturz („unrecoverable interface error“) beim Fortsetzen einer Sitzung behoben, deren gespeichertes Transkript eine Stop-Hook-Zusammenfassung ohne wohlgeformte Hook-Liste enthält
+- Fehler behoben, durch den Enter auf einer ausgewählten Agent-Panel-Zeile keine Aktion ausführte, wenn `keybindings.json` Enter im Chat-Kontext neu belegt, beispielsweise mit `chat:queueSubmit`
+- Fehler behoben, durch den das Lesen von PDF-Seiten unter Windows fehlschlug, wenn der Pfad des Arbeitsordners lang ist (etwa 120 Zeichen oder mehr)
+- Fehler behoben, durch den ein Headless-Resume (`claude -p --resume`, das SDK, ein Neuladen des VS Code-Erweiterungsfensters) die Kosten- und Nutzungssummen der Sitzung bei null startete; Headless-Sitzungen speichern ihre Summen nun beim Beenden
+- Fehler behoben, durch den Projekt-Skills aus dem Haupt-Repository in `--worktree`-Sitzungen nicht geladen wurden, wenn `.claude/skills` untracked ist
+- Fehler behoben, durch den ein `sandbox.excludedCommands`-Glob einen gesamten zusammengesetzten Bash-Befehl von der Sandbox ausnahm, wenn nur ein Teil übereinstimmte; nun müssen alle Teile übereinstimmen
+- Fehler behoben, durch den fortgesetzte Subagents und Teammates die von ihnen geladenen MCP-Tool-Definitionen neu renderten, was das Prompt-Caching für diesen Agent unterbrach
+- Fehler behoben, durch den ratenbegrenzte Veröffentlichungen von Artifacts Claude anwiesen, Wiederholungsversuche einzustellen; Claude wird nun mitgeteilt, dass nichts veröffentlicht wurde und wann dieselbe Veröffentlichung erneut gesendet werden soll
+- Fehler behoben, durch den früher in einer Konversation erfasste Anhänge nach einem Resume oder Neustart neu gerendert wurden, wodurch Extended Thinking verworfen wurde und der Prompt-Cache verfehlt wurde
+- Fehler behoben, durch den die Console-Anmeldung nur „Request failed with status code 400“ anzeigte, wenn der Server die Erstellung eines API-Keys verweigerte; es wird nun die Nachricht des Servers angezeigt
+- Fehler behoben, durch den Nachrichten, die getippt wurden, während Claude noch arbeitet, vom Modell manchmal ignoriert wurden
+- Sitzungsstart für SDK- und Headless-Nutzung (`-p`) verbessert: Der erste Turn wartet nicht mehr auf die verzeichnisweise CLAUDE.md-Suche
+- Loopback-Fehlermeldungen des Claude apps Gateways verbessert, sodass `CLAUDE_GATEWAY_ALLOW_LOOPBACK` genannt wird
+- `/plugin` Installed verbessert: Ein MCP-Server, der getrennt von seinem Plugin aufgeführt ist, zeigt nun an, zu welchem Plugin er gehört
+- `claude plugin install` bei bereits installierten Plugins verbessert: Es wird nun angezeigt, wenn der Marketplace eine neuere Version anbietet, und der Befehl `claude plugin update` genannt
+- Überlaufzeile für Startmeldungen unter dem Logo verbessert: Sie lautet nun „N more notices hidden“ statt „+N more · /status“
+- Prompt-Verarbeitung verbessert: Unsichtbare Unicode-Formatierungs- und Tag-Zeichen in einem Prompt werden entfernt und der bereinigte Prompt wird vor dem Senden zur Überprüfung angezeigt
+- `/ultrareview` verbessert, wenn nichts zu überprüfen ist: Meldungen geben an, welcher Fall vorliegt, bieten einen Befehl zur Überprüfung des neuesten Commits an, und der erste Commit eines neuen Repositorys wird vollständig überprüft
+- Handhabung von Artifact-Links verbessert, sodass Claude claude.ai-Artifact-Links mit dem Artifact-Tool statt mit WebFetch liest, sofern dieses Tool verfügbar ist
+- Berechtigungsabfrage für gefährliche rm-Befehle verbessert: Der beanstandete rm-Befehl wird benannt und ein `${VAR:?}`-Schutz vorgeschlagen, damit Headless-Ausführungen fortgesetzt werden können
+- Berechtigungsabfragen des Artifact-Tools verbessert: Kürzere Sätze, Seiten und Artifacts nach Titel oder Dateinamen benannt und Links nach dem Text aufgeführt
+- Geändert: Fable erscheint in der Anthropic API nun immer in `/model`; es ist nur dann ausgegraut, wenn die Einstellungen Ihrer Organisation es deaktivieren
+- Geändert: Die Anweisungen für die Bash-Sandbox auf Bedrock, Vertex und Foundry wurden auf die First-Party-Formulierung umgestellt, die die Sandbox als Rahmen dessen definiert, was der Aufgabe vorgegeben wurde
+- Geändert: `/ultrareview` verweigert in nicht-interaktiven Sitzungen die Ausführung, wenn das Repository keinen Basis-Branch oder keine gemeinsame Historie hat
+- Geändert: Ergebnisse von Subagents erreichen den Haupt-Agent nun unter einer Kopfzeile, die sie als Subagent-Ausgabe kennzeichnet, mit eingerücktem Ergebnis, sodass Text im Ergebnis eines Subagents nicht als eigene Anweisung der Sitzung missverstanden werden kann
+- Geändert: Berechnete `agent()`-Prompts von Workflow-Skripten auf Bedrock, Vertex und Foundry erreichen den Subagent nun als vom Skript verfasster Text gerahmt, damit der Safety-Classifier sie nicht als Nutzer interpretiert
+- Die Hintergrund-Anfrage für Haiku-Auto-Title bei `claude -p`-Ausführungen außerhalb eines SDK oder einer IDE wurde entfernt
+- Das veraltete TaskOutput-Tool wurde entfernt; Claude liest die Ausgabedatei eines Hintergrund-Tasks stattdessen mit Read, und die Einstellung `taskOutputMaxChars` sowie `TASK_MAX_OUTPUT_LENGTH` haben keine Auswirkung mehr
+- [VSCode] Sign out-Zeile zum Panel-Menü hinzugefügt, mit `/logout` im Menü für getippte Befehle
+- [VSCode] Hintergrund-Shells und andere laufende Tasks zur Agent-Map hinzugefügt, jeweils mit Stop, sowie ein getipptes `/tasks`, das sie öffnet
+- [VSCode] Copy response-Button bei Antworten und ein getipptes `/copy` hinzugefügt
+- [VSCode] Einmaliger Hinweis bei der automatischen Archivierung inaktiver Sitzungen und Aktion „Unarchive all“ in der Gruppe „Archived sessions“ hinzugefügt
+- [VSCode] Kosten und Token-Nutzung der Sitzung zum Dialog „Account & usage“ und zum Sitzungsmanager hinzugefügt, wo keine Tariflimits gelten (Vertex, Bedrock, Foundry, API key)
+- [VSCode] Fehler behoben, durch den die Menüzeile „General config“ den `/config`-Hilfetext anzeigte, anstatt die Einstellungen zu öffnen, und dafür gesorgt, dass getippte Befehle wie `/mcp`, `/hooks`, `/memory`, `/rewind` und ähnliche ihre Dialoge öffnen
+- [VSCode] Fehler behoben, durch den die Stufe des Effort-Schiebereglers bei einem Modell, für das bereits eine Stufe mit `/effort` gespeichert war, nicht für spätere Sitzungen erhalten blieb
+- [VSCode] Fehler behoben, durch den Auto in der Modusauswahl für Konversationen fehlte, die in einem bereits verwendeten Panel geöffnet wurden, wenn die gespeicherte Modelleinstellung ein anders geschriebener Alias wie „Sonnet“ ist
+- [VSCode] Fehler behoben, durch den `/fast` den Fast-Modus nicht als Standard speicherte, sodass er verloren ging, wenn die Erweiterung Claude Code neu startete
+- [Claude Code on the web] Abschnitte „Personal“ und „Organization“ zur Umgebungsauswahl in Team- und Enterprise-Tarifen hinzugefügt; Admins können nun eine persönliche Umgebung für die Organisation freigeben
+- [Claude Code on the web] Geändert: Organisationsumgebungen öffnen sich in Team- und Enterprise-Tarifen über den Code-Tab als schreibgeschützte Übersicht; Bearbeitung unter Admin settings → Cloud environments
+- [Claude Code on the web] Fehler behoben, durch den eine Cloud-Umgebung, die mit „Custom network access“ und ohne Domains gespeichert wurde, stillschweigend auf „Trusted“ zurückgesetzt wurde; der Dialog fordert nun mindestens eine Domain
+- [Claude Code on the web] Geändert: Die Administrator-Einstellung für Claude Code mit der Bezeichnung „Web“ wurde in „Cloud sessions“ umbenannt und die redundante, schreibgeschützte Mobile-Zeile darunter entfernt
+- [Claude Tag] Fehler behoben, durch den Routinen, die in einem Slack-Kanal bei einer organisationsweiten Enterprise Grid-Installation erstellt wurden, bei ihrer Ausführung andere öffentliche Kanäle in ihrem Workspace nicht lesen konnten
+- [Claude Tag] Fehler behoben, sodass die „Learn more“-Links bei Anmeldedaten-Voreinstellungen in Claude Tag-Zugriffsbündeln nun die Einrichtungsseite des jeweiligen Anbieters statt einer generischen API-Referenz öffnen
+- [Claude Tag] Geändert: Die Pylon-Anmeldedaten-Voreinstellung in Claude Tag-Zugriffsbündeln wurde angepasst, sodass Admins sie auf den EU-Host von Pylon verweisen können
+- [Claude Tag] Fehler in Google Cloud-Anmeldedatenformularen in Claude Tag-Zugriffsbündeln behoben: Bei einer abgelehnten Schlüsseldatei wird nun der Grund genannt, Website und Scopes bleiben gesperrt, und bei einer abgelehnten Rotation bleibt der eingefügte Schlüssel erhalten
+- [Claude Tag] Fehler behoben, durch den das Netzwerkereignis-Protokoll in den Claude Tag-Admin-Einstellungen keinen Antwortstatus für Anfragen über Verbindungen anzeigte, die AWS-Signierung, Client-Zertifikate oder eine benutzerdefinierte CA verwenden
+
 ## 2.1.276 (2026-09-18)
 
 - Fehler behoben, bei dem alle Anfragen mit `400 … Input tag 'advisor_20260301'` fehlschlugen, wenn `ANTHROPIC_BASE_URL` auf einen Proxy oder ein Gateway verweist (Regression in 2.1.275)
