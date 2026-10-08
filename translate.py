@@ -136,6 +136,7 @@ def build(lang, entries, dates):
 
 
 def main():
+    sys.stdout.reconfigure(line_buffering=True)  # progress shows up live in the cron log
     entries = parse(fetch(CHANGELOG_URL))
     dates = json.loads(fetch(NPM_URL))['time']
     todo = [(lang, ver, body, digest(body))
