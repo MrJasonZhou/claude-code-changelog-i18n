@@ -2,6 +2,152 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.295 (2026-10-08)
+
+- 為命令與 HTTP hook 新增 `onFailure: "block"`：無法啟動、逾時或以非預期代碼結束的 hook 會阻止該操作，而非直接放行
+- 新增 Program Status Protocol (OSC 7501) 支援：實作此協定的終端機可顯示 Claude Code 正在運作、等待使用者或已完成
+- 在 `/copy` 選取器中新增引用文字支援，讓草稿訊息在複製時不會帶有 `>` 標記
+- 在 `claude plugin install`、`enable`、`disable` 和 `marketplace add` 中新增警告，當它們寫入的設定檔無法載入時發出提示
+- 當 stderr 為終端機時新增一行提示，說明 `claude -p` 執行在最後一輪結束後仍保持開啟時正在等待什麼
+- 在 Claude apps gateway 的 Bedrock、Vertex、Foundry 及其他雲端上游新增對 `timeouts.upstream_ttfb_ms` 的支援：設定的數值可限制串流啟動的最長時間，逾時後會進行容錯轉移或收到 502
+- 當 `←` 正在等待目前工具完成而你停止該輪對話時，新增「Backgrounding cancelled」訊息
+- 為每個 Claude apps gateway 上游新增選填的 `models` 清單：只有列出的模型會傳送到該處（包含容錯轉移時），項目中的單個 `*` 可作為萬用字元
+- 在未受託管設定的機器上，於個人使用者設定中新增對 `forceLoginMethod: "gateway"` 和 `forceLoginGatewayUrl` 的支援，讓 `/login` 在該 Claude apps gateway 上開啟
+- 在外掛的 README 沒有安裝指令列時，為 `claude plugin validate` 新增建議提示：會印出可貼上的指令列，且即使加上 `--strict` 也不會改變結束代碼
+- 在 Claude apps gateway 的 `inference` 稽核事件中新增 `upstream_request_id`：包含來自 Amazon Bedrock、Anthropic API 或其他上游的請求 ID，以便於支援案件追蹤
+- 為 mod 新增 `$.ui.notify`：可透過個人通知設定觸發原生通知，並註明發送的通道
+- 為 mod 的 `Button` 新增子元素支援：字串與 `Text`，讓清單中的一列可以成為單一可點擊元件，內部包含 chip 或淡化顯示的詳細資訊
+- 新增 `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`，用以限制無人值守重試模式（`CLAUDE_CODE_RETRY_WATCHDOG`）等待 429 與 529 錯誤的最長時間
+- 在 Claude apps gateway 成功的推論回應中新增 `request-id` 標頭，使 Claude Code 遙測資料中的 `request_id` 能與閘道的稽核日誌一致
+- 修復當閘道、Bedrock、Vertex 或 Foundry 拒絕 context-1m beta 時，所有發送到 `[1m]` 模型的請求皆失敗的問題；Claude Code 現在會在不帶該設定的情況下重新發送
+- 修復背景工作啟動另一輪對話時，`claude -p` 的文字輸出會遺失先前回應的問題；現在每一輪的回應都會在該輪結束時印出
+- 修復無周邊（headless）與 SDK 工作階段中的遠端 MCP 伺服器在斷線超過 15 秒後維持斷線狀態，或在伺服器連線後立即斷開時陷入緊密迴圈重連的問題；重複斷線現在會採用退避機制，最長達 30 秒
+- 修復當伺服器的錯誤回應剛好包含網路錯誤名稱時，遠端 MCP 連線會被中斷的問題
+- 修復重複回傳分頁游標（pagination cursor）的 MCP 伺服器在每次連線時會被重複請求同一頁高達 20 次的問題
+- 修復 MCP 工具回傳的 CSS、JavaScript 與 XML 檔案被儲存為 .bin 導致 Read 工具拒絕讀取的問題；字型與圖示檔案現在也會獲得各自的副檔名
+- 修復當模型傳遞 `command_description` 而非 `description` 時 Bash 工具呼叫失敗的問題
+- 修復 Chrome 中的 Claude 未將包含連接埠 80（`host:80`）的網站拒絕規則套用至該主機的純 `http://` 頁面的問題
+- 修復在 `/plugin` 的 Errors 分頁中按下 Enter 時，未經確認即直接移除載入失敗的 marketplace 並解除安裝其外掛的問題
+- 修復 `claude plugin marketplace add` 對無法在該名稱下安裝任何外掛的 marketplace 回報成功之問題；此類新增操作現在會被拒絕
+- 修復 `CLAUDE_AUTO_BACKGROUND_TASKS` 在編輯或 shell 命令於後方排隊等待時將 subagent 移至背景，導致該呼叫在 subagent 完成前就已啟動的問題
+- 修復在 `claude remote-control` 工作階段中，緊接在手機訊息之後、未開啟 `/config` 開關、或從 Claude Code 內部啟動時，PushNotification 顯示推播未發送的問題
+- 修復從遠端工作階段一次傳送超過 256 個檔案時，檔案被以「could not be vouched for」為由拒絕的問題
+- 修復在登入重新整理後啟動時，偶爾會無法載入代管設定的罕見問題
+- 修復當無法再次啟動 Claude Code 時，`/tui` 在沒有訊息或僅帶有原始系統錯誤的情況下退出的問題
+- 修復以文字顯示的連結網址被回覆所殘留的色彩或隱藏（conceal）樣式遮蓋的問題，包括在表格或問題預覽中換行的情況
+- 修復已登入 Claude apps gateway 的工作階段中，列在 `availableModels` 的 Fable 模型未出現在 `/model` 選取器中的問題；此類模型現在會顯示其內建列，以取代為同一模型新增的 `modelPicker` 列
+- 修復當開發者的工作階段不再帶有群組後，Claude apps gateway 的管理員支出檢視仍顯示該開發者的舊群組與群組上限的問題
+- 修復 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 會在 `/usage` 和狀態列中隱藏 Claude apps gateway 支出上限的問題。支出上限請求會發送至該工作階段登入的閘道
+- 修復位於各自連結 worktree 中的 subagent 仍顯示父工作階段的 git 分支、狀態與近期 commit 的問題
+- 修復在提示詞中輸入文字取消了使用 `←` 移至背景時，Claude 會在目前工具執行結束時停止的問題；Claude 現在會在前景繼續工作
+- 修復 `--tools` 與 `--restricted` 未套用至啟動後才註冊的內建工具，以及已棄用的工具名稱會存取到呼叫端工具集外部之工具的問題
+- 修復當 Claude 等待 MCP 伺服器的資源清單時，中斷操作直到逾時才結束該輪對話的問題
+- 修復傳遞給 mod 的 hook 的深層巢狀工具輸入在沒有錯誤的情況下被截斷，導致守衛（guard）可能放行其從未見過的內容之問題
+- 修復 Esc 無法停止透過 `←` 移至背景之自動步調 `/loop` 的問題；取消待處理的喚醒現在會顯示通知
+- 修復背景工作階段中的命令與 hook 繼承了 `FORCE_COLOR=3`，導致 Claude 讀取的輸出中帶有顏色跳脫碼的問題
+- 修復在工作階段開啟的狀態下兩者同時停止時（例如重新開機），`claude agents` 在退出時會啟動新的背景服務，進而延遲關機並重啟已被中斷的工作階段之問題
+- 修復名為 `worker` 的自訂 agent 在自動模式拒絕通知以及任務詳細資訊檢視的活動清單中被顯示為「Agent」的問題
+- 修復針對 glob pattern 進行 for 迴圈時的 Bash 權限檢查，提升權限檢查的準確度
+- 修復從 Workflow subagent 叫用的 forked skill 會將結果傳遞給主對話而非呼叫該 skill 的 agent 之問題
+- 修復同行程（in-process）agent 隊友在透過工具搜尋載入該工具前，首次 SendMessage 呼叫會失敗的問題
+- 修復在恢復工作階段時，Claude 被告知未完成的背景工作流程可能已被 `TaskStop` 停止（但這絕不可能是原因）的問題
+- 修復從任務面板或連線的客戶端停止長時間執行的 MCP 工具呼叫時，Claude 未收到通知的問題
+- 修復背景工作階段的處理程序終止時，若剛好迎來下次喚醒時間，`/loop` 會在無通知的情況下停止的問題；工作階段現在會對此進行提示，且 Claude 也會收到通知
+- 修復回覆或隊友訊息中的原始終端機超連結位元組會被繪製成帶有隱藏網址的可點擊連結之問題
+- 修復存放庫含有大型 git submodule 的外掛市集無法新增或重新整理的問題：現在只會擷取包含外掛檔案的 submodule
+- 修復 `/advisor` 對話框在已儲存但已不可用的顧問模型上顯示勾選標記的問題；現在開啟時會預設為「No advisor」
+- 修復移至背景的 MCP 工具呼叫通知中顯示縮短版 task id 的問題
+- 修復 vim 模式下的 `~` 會將游標移出該行最後一個字元，導致隨後的 `x` 無效，以及 `3~` 會超出並延續到下一行的問題
+- 修復將從 macOS 複製的含重音符號文字（例如檔案名稱）貼到提示詞中間時，游標會多偏移一個字元的問題
+- 修復當回應長達數萬行時終端機凍結且忽略 ctrl+c 的問題
+- 修復當外掛 hooks worker 重啟時，mod 於重新載入期間發出的呼叫會繞過另一個帶有 `.catch` 的 mod 守衛 hook 之問題；此類呼叫現在會被拒絕
+- 修復 hooks 模組包含數千層巢狀程式碼的外掛在載入或驗證時失敗，並僅顯示堆疊溢位（stack-overflow）訊息的問題
+- 修復 `claude plugin test` 傳遞了會移除真實工作階段所保留的工具呼叫、工具結果或思考區塊（thinking blocks）之 `session.append` hook 的問題
+- 修復工作階段被終止並第二次恢復後，Claude 未被告知可以使用 SendMessage 恢復背景 subagent 的問題
+- 修復在執行如 `cat` 等 Bash 命令且未印出內容後，檔案被視為已讀取過的問題
+- 修復名為 `constructor` 或 `prototype` 的外掛選項始終讀取為預設值，且在編輯時永遠不會重新載入外掛的問題
+- 修復在 `/reload-plugins` 或工作階段啟動讀取 mod 檔案期間進行儲存時，mod 的熱重載（hot reload）會遺漏該次儲存的問題
+- 修復當未選擇答案就批准時，整個工作階段中每一輪都會重複詢問 mod 熱重載問題的問題
+- 修復 `/model`、`/fast` 和 `/output-style` 在儲存設定時未詢問外掛的 `config.set` hook 的問題
+- 修復在管線輸出中，粗體文字緊接在暗淡文字後時會被繪製為微弱顯示的問題
+- 修復每隔幾行引用就巢狀加深的回覆會導致終端機凍結數秒並耗用數 GB 記憶體的問題
+- 修復 mod 的熱重載遺漏了距離上次重載僅數毫秒內的儲存，導致 mod 在下次儲存前一直維持舊版本之問題
+- 修復 `claude mcp serve` 背景 Bash 結果未標明輸出檔案名稱，且其工具描述承諾了從未送達之通知的問題
+- 修復非同步 SessionStart hook 未變更的 context 在每次恢復時都被重複新增至對話中的問題
+- 修復在應用程式內執行 `/resume` 或 `/branch` 後，SessionStart hook 寫入 `CLAUDE_ENV_FILE` 的變數無法傳遞給 Bash 工具的問題
+- 修復當 Skill 工具在回應串流結束前完成時，skill 的 `allowed-tools` 和 `effort` 會被捨棄，導致在 `-p` 執行中 skill 的 Bash 命令被拒絕之問題
+- 修復在受管設定會列出或啟用外掛的機器上，被篡改的伺服器代管設定快取會導致個人外掛被視為組織代管外掛之問題
+- 修復在功能旗標（feature flags）不可用時，Claude 3 Opus 與 Claude 3.x Sonnet 工作階段會收到工具搜尋功能，而這些模型會拒絕該功能之問題
+- 修復在 `-p` 與 SDK 工作階段中，產生的型別檔案會被寫入 `--plugin-dir` 外掛資料夾的問題；現在僅會在開發 mod 的位置寫入
+- 修復包含定位字元（tab）或雙向控制字元的文字在螢幕邊緣會遺失結尾，或覆蓋相鄰行繪製之問題
+- 修復 `/model` 顯示 Max effort 選項已儲存為新工作階段的預設值之問題；Max 僅適用於目前工作階段
+- 修復非同步 hook 的 JSON 輸出跨多行印出時會被忽略的問題
+- 修復 Read 工具會拒絕帶有空 `pages` 參數的呼叫，而非將其視為省略之問題
+- 修復因磁碟機代號大小寫問題，導致專案範圍的外掛無法在 Windows 上的 VS Code 載入之問題 (anthropics/claude-code#74612)
+- 修復在 Windows 上以專案或本機範圍執行 `plugin install` 與 `uninstall` 時，若僅磁碟機代號大小寫不同，會遺失安裝記錄或新增重複記錄之問題
+- 修復緊接在 `←` 後使用 `↑` 或 `Esc` 將排隊訊息拉回提示詞時訊息會遺失的問題：現在提示歷史記錄會保留該訊息
+- 修復當 SDK 主機在無人回答前關閉啟用詢問時，整個工作階段的 mod 熱重載會被關閉的問題；該問題現在最多會詢問三次
+- 修復被 mod 的 `prompt.submit` hook 改寫或捨棄的提示詞仍會以原始輸入內容儲存至提示歷史記錄與逐字稿的排隊提示記錄之問題
+- 修復非互動式工作階段在請求未使用需要驗證的 MCP 伺服器時，仍向你回報該伺服器的問題
+- 修復登入 Claude apps gateway 時未發出 `claude_code.auth` OpenTelemetry 登入事件之問題。該事件會在機器設定了 OpenTelemetry 或工作階段已登入閘道時匯出
+- 修復當外掛 hooks worker 停頓時，新增過大介面的外掛會導致另一個外掛被卸載的問題
+- 修復當檔案內容已變更但修改時間未更新時，Edit 會將該檔案視為已完整讀取的問題
+- 修復帶有 Windows 換行符號（CRLF）的簡短命令輸出被繪製在同一行的問題
+- 修復倒帶（rewind）後恢復時已停止的排程任務會重新出現，以及壓縮（compaction）後按下 Esc 或倒帶再恢復時排程任務會遺失的問題
+- 修復為具有極長程式碼行、大量連續空白行或未閉合字串與 heredoc 的程式碼進行語法突顯時，終端機會凍結數秒至數分鐘的問題
+- 修復因中斷 `/ultrareview` 上傳而在 `~/.claude/seed-admin` 下遺留的暫存檔永遠不會被保留清理機制刪除之問題
+- 修復從設定中移除 `disableAutoMode` 後，Desktop 與 SDK 工作階段在重啟前拒絕切換回自動模式的問題
+- 修復另一個工作階段同步外掛更新後，長時間執行的工作階段中與 claude.ai 同步的外掛 hook 發生「Plugin directory does not exist」錯誤的問題
+- 修復當工作階段移至背景或被終止後恢復時，在 `/rewind` 之後發送的提示詞會遺失且已移除的對話輪次會重新出現之問題
+- 修復當 mod 的 `session.receive` hook 在轉發訊息前請求權限時，雲端工作階段會懸掛無回應的問題
+- 修復 macOS 背景工作階段在更新後一同重啟時，有時會在穩定應用程式包裝外部執行，導致資料夾存取提示可能再次出現的問題
+- 修復無周邊與 SDK 工作階段中過晚完成的 MCP 登入或重新連線會將使用 `setMcpServers()` 設定的伺服器重新列為自有的問題
+- 修復在 `/config` 中變更自動更新通道時，未先詢問外掛的 `config.set` hook 就逕行儲存的問題
+- macOS：修復工作階段在家目錄或其上層目錄啟動時，啟動時的檔案計數可能會存取到其他應用程式的資料，並觸發「access data from other apps」提示的問題
+- 改善 Amazon Bedrock 上位於 Claude apps gateway 背後的權杖計數（供 `/context` 和大檔讀取使用）：閘道現在會從 AWS 的 CountTokens API 取得計數，而非發送 1 個權杖的模型請求。請授予 `bedrock:CountTokens` 權限以使用此功能
+- 改善 Claude apps gateway 在其 PostgreSQL 資料庫處於唯讀狀態時，每 30 秒記錄一次警告，說明失敗原因與復原方式
+- 改善在 Remote Control、claude.ai 和桌面應用程式中顯示等待權限提示之工作階段狀態：改以伺服器名稱與易讀名稱標示 MCP 工具，而非使用 `mcp__server__tool` 識別碼
+- 改善 Claude apps gateway 背後的背景請求，改用 Haiku 4.5 而非工作階段的模型；在閘道未提供 Haiku 4.5 的情況下則退回使用工作階段的模型
+- 改善 Claude apps gateway 處理 AWS 美國境外之 Amazon Bedrock 區域中未列於 `models:` 下的模型方式。AWS 先前一律拒絕此類請求；現在閘道會在你的所在區域嘗試呼叫該模型，若遭拒絕則會註明需新增的模型名稱
+- 改善無周邊環境下的 `rate_limit_event` 用量限制警告，說明該帳號是否已開啟額外用量（extra usage）
+- 改善內建的 `plugin-authoring` skill：不再指示沒有終端機的工作階段執行終端機命令，且僅在被詢問時才解釋如何分享 mod
+- 改善 Grep 輸入處理：帶有 grep 的 `-l`、`-c` 或 `-r` 旗標的搜尋現在可以正常執行，而非導致呼叫失敗
+- 改善 `claude plugin validate` 與外掛載入機制：當 hooks 模組因重新繫結頂層 `var` 而被拒絕時，錯誤訊息現在會指出重新繫結的行號、原因及修正方法
+- 改善 Workflow 工具拒絕 `scriptPath` 時的提示：現在會說明改用 `script` 內嵌傳遞指令碼，此方式適用於沒有 Read 工具的工作階段
+- 改善當 Claude 傳送的大型檔案在無具體原因下上傳失敗時收到的提示，使其直接回報失敗而非嘗試縮小檔案
+- 變更模型透過工具搜尋載入的 MCP 工具描述字數上限，從 2,048 個字元放寬至 16,384 個字元
+- 變更 subagent 從 `skills` 欄位預先載入 skill 的上限為最多 32 個（每個僅載入一次）；具備 Skill 工具的 subagent 仍可叫用其餘 skill
+- 變更在附加的背景工作階段閒置提示處按下 Ctrl+C 時不影響待處理的 `/loop` 喚醒，因此連按兩次會中斷附加（detach）且迴圈繼續執行；請按 Esc 停止迴圈
+- 變更 `claude agents` 與其背景服務一同停止時的行為（macOS，或未安裝服務的 Linux）：除非再次執行，否則執行中的工作階段將在約一分鐘內停止，並會顯示通知說明
+- 變更 claude.ai 連接器在未獲取任何旗標的安裝環境中，預設協商 MCP 協定版本 2026-07-28；可設定 `MCP_PROTOCOL_NEGOTIATION=legacy` 選擇退出
+- 變更沒有自訂背景的 Artifact 頁面顯示為純白背景而非米白色
+- 變更當 mod 在工具執行後拒絕工具呼叫時 Claude 與使用者看到的內容：現在會明確說明工具已執行且外掛保留了其結果
+- 變更定位點（tab stop）計算基準，改從文字起點而非螢幕左緣開始計算：縮排 2 格的回覆，其第一個定位點為第 8 格（原先為第 6 格）
+- 變更停用遙測功能時 Artifact 工具的權限提示，改為與其他安裝環境相同的五個問題，而非在每次讀取他人的 artifact 及每次編輯資料前都重複詢問
+- 變更在停用遙測功能的安裝環境中排程及「Run now」常規（routine）執行的行為：發布新的私人 artifact 及更新自己的 artifact 時不再詢問，與其他安裝環境一致
+- 變更來自所屬組織 mod 的浮動提示（toast）優先於其他 mod 的提示顯示，而非排在後方等待
+- 變更 Claude apps gateway 在其搭售的 Claude Desktop schema 無法識別 `desktop` 政策鍵時發出警告並繼續提供該政策鍵，讓新的 Desktop 設定無需升級閘道即可使用
+- 變更 WebSocket (`ws`) MCP 伺服器規格：超過 16 MiB 的訊息將不再解析並會關閉連線，與其他傳輸方式已採用的限制一致
+- [VSCode] 為 Claude 傳送給你的檔案新增聊天列：點擊檔名可在編輯器中開啟；下方顯示 Claude 的說明文字，且該列在 Focus 檢視中仍保持可見
+- [VSCode] 修復在背景 agent 產生活動或面板本身顯示狀態列後，「Fork conversation from here」和 Rewind 的對話還原會失敗並顯示「Message not found in session」的問題
+- [VSCode] 修復在聊天輸入框中按下 Ctrl+Shift+Tab、Cmd+Shift+Tab 和 Alt+Shift+Tab 會同時切換權限模式，以及 Ctrl+Tab 會接受建議提示詞的問題
+- [VSCode] 修復鍵盤焦點在同時顯示的兩個 Claude 檢視之間跳動，可能導致輸入的文字傳送至錯誤對話的問題
+- Self-hosted runner：變更 runner 行為，停止將 `CCR_AUTO_MODE_ALLOW`、`CCR_AUTO_MODE_ENVIRONMENT` 及 `CCR_AUTO_MODE_SOFT_DENY` 傳遞至工作階段的環境變數
+- Self-hosted runner：修復在大型存放庫上 git 伺服器仍在回報進度時 git fetch 就被截斷的問題；可透過 `CLAUDE_RUNNER_FETCH_SERVER_PROGRESS_CAP_MS` 調整或關閉等待時間
+- [Cloud sessions] 修復解除封存雲端工作階段後立即發送訊息時，偶爾會因無法啟動容器而沒有收到回覆的問題
+- [Cloud sessions] 修復部分較舊的 routine 在啟動執行時從未將已儲存的提示詞提供給 Claude 的問題；這些 routine 現在會重新執行其提示詞
+- [Cloud sessions] 改善雲端工作階段斷線後的同步速度：錯過的活動現在會一次全部呈現，而非逐行顯示
+- [Cloud sessions] 改善雲端環境表單中的設定指令碼（setup script）輸入框：預設高度增加、會隨指令碼內容擴展，且可透過拖曳調整大小
+- [Claude Tag] 變更 Claude 在 Slack 頻道中發布的設定確認卡片停留時間，從 10 分鐘延長至 30 分鐘
+- [Claude Tag] 變更在跨 Enterprise Grid 工作區共用頻道中使用組織預設值的通知發布頻率：改為僅在有人提及 Claude 時發布，且每月最多一次
+- [Claude Tag] 修復分支討論串的「Continued from」卡片中的頻道連結與 @-mentions 顯示為原始 Slack 程式碼的問題
+- [Claude Tag] 修復在 `@Claude !restart` 已確認重啟後，討論串下方 Slack 的 Working 狀態圖示仍持續旋轉的問題
+- [Claude Tag] 修復在 Claude 已停止讀取未標記訊息的忙碌頻道中，其他應用程式或 bot 的 @Claude 呼叫未獲回應的問題
+- [Claude Tag] 在 Claude Tag 管理員設定中新增確認提示，避免在新增頻道管理員時將該成員移至 Custom roles 而移除其其他權限
+- [Code Review] 修復 Code Review 重新審查在先前的審查問題仍未結案時顯示未發現問題之情況；現在留言中會註明仍有幾個未結案的問題
+- [Code Review] 修復當 pull request 編輯大型 CLAUDE.md 時，Code Review 仍會跳過該檔案中規則的問題
+- 修復在 `xhigh` 與 `max` effort 下網頁搜尋與 `agent` hook 評估耗時過長的問題
+
 ## 2.1.294 (2026-10-08)
 
 - 修復以指示形式撰寫的 `prompt` 與 `agent` hook（例如 "Block commands that..."）放行了本應阻擋內容的問題
