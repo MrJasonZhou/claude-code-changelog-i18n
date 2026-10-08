@@ -65,3 +65,2996 @@
 - [Claude Tag] 更改了 Claude in Slack 加入仅管理员可发帖的公告频道的行为：加入时不再发送自我介绍消息
 - [Claude Tag] 在 Claude Tag 管理员设置中，将每个工作区以及全组织 Slack 页面的频道规则数量限制从 20 提高到 50
 - [Code Review] 改进了 Code Review 的 Add a repository 对话框，列出无法添加的各个仓库及其原因（如缺少 GitHub 写入权限）
+
+## 2.1.292 (2026-10-06)
+
+- 向 `claude plugin install` 添加了 `--marketplace <source>`：如果需要会自动添加该插件市场（遵循与 `claude plugin marketplace add` 相同的策略检查），然后从中安装插件
+- 为 Agent 工具添加了 `effort` 参数，以便 Claude 按照你要求的思考程度（effort level）运行子代理
+- 添加了 `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS` 环境变量，用于在重试过载（529）请求时为退避设置更长的基础延迟
+- 添加了 `prompt.autocomplete`，mod 可挂钩该事件以向提示框的自动补全列表添加自定义行
+- 为 mod 在 `$.model.complete` 中添加了提示词缓存（prompt caching）：`prompt` 和 `system` 支持文本块，在文本块上设置 `cache: true` 会缓存截至该位置的请求
+- 在 `agent.spawn` mod 钩子中添加了工作流代理及其运行和索引信息，以便 mod 可以拒绝它们
+- 修复了带有 `permissionMode: auto` 的子代理定义在自动模式不可用（被设置禁用、触发断路器熔断，或模型不支持）时仍进入自动模式的问题
+- 修复了沙盒命令能够读取位于 `~/.claude/seed-admin` 下 `/ultrareview` 上传的暂存文件副本的问题
+- 修复了托管沙盒的读取拒绝路径（以及其旁边的用户路径）在会话进行中出现或重新指向时，未丢弃其内部的项目授权或未终止来自其覆盖文件的凭据注入的问题
+- 修复了在 macOS 和 Windows 上读取笔记本或 PDF 时，由于读取过程中链接被替换而可能返回已批准范围之外文件的问题
+- 修复了服务器托管设置的篡改本地磁盘缓存能够在设置获取失败时关闭或取消内置策略插件的问题
+- 修复了对 8.3 短名称或 Windows 上家目录或驱动器的其他备用写法执行 `rm -rf` 时未被视为删除它的问题
+- 安全：修复了 PreToolUse 钩子批准和自动模式会绕过从网络（UNC）路径读取文件时的权限提示的问题
+- 修复了在当前轮次中途退出自动模式或计划模式时，技能或斜杠命令的 `allowed-tools` 规则会在后续轮次重新出现的问题
+- 修复了设置了 `HTTPS_PROXY` 时，Claude Code 自身的 API 请求（登录、策略、反馈、工件）会忽略 `NO_PROXY` 的问题
+- 修复了名称超过 128 个字符的 MCP 工具会导致所有请求失败的问题；现在该工具会被忽略并在 MCP 错误中列出其名称
+- 修复了在首次运行时，`claude plugin` 命令（如 `marketplace add` 和 `install`）会在组织的托管设置加载完成之前运行的问题
+- 修复了单次执行的 `claude -p` 和 Agent SDK 运行会在最终结果产生 5 秒后停止后台命令，以及单次执行的 `claude -p` 运行会丢弃计划唤醒的问题；现在两者都会等待完成
+- 修复了从 `claude --resume` 会话选择器或通过 `/resume` 恢复会话时无法恢复计划模式的问题
+- 修复了在 `/resume`、`/branch` 或 `/clear` 之后创建的已保存计划任务永不触发，以及在毫秒级间隔内连续两次写入任务文件后已保存任务会忽略后续创建和删除操作的问题
+- 修复了后台会话的 `/loop` 在会话进程重启（例如崩溃后）时静默停止的问题，原因是其挂起的唤醒丢失了
+- 修复了 Grep 和 Glob 在给定的文件或文件夹无法读取时报告无匹配项的问题；Claude 现在会重试一次或通知你
+- 修复了当 PDF 的 `pages` 为类似 "6,9,15" 的列表时 Read 工具只返回第一项且不报错的问题；现在会返回错误提示分别读取每一页或范围
+- 修复了 @ 提及的超过 256KB 的文本文件会被静默忽略的问题：现在会告知 Claude 该文件的大小并提示分块读取
+- 修复了当代理因已导致主会话停止的使用量限制而失败时，每个后台代理都会重复弹出一次使用限制警报的问题
+- 修复了在由桌面应用或 IDE 托管的会话中，Remote Control 查看器看到的后台子代理面板为空的问题
+- 修复了跨会话送达通知将两个名称相似的会话显示为一个接收者，以及当终端会话使消息过期时过期通知归咎于桌面应用的问题
+- 修复了在另一条消息已排队时，桌面应用中的 Send now 会终止当前轮次正在等待的子代理的问题
+- 修复了在发送报告时按 Ctrl+O 或 Ctrl+Z 会导致 `/bug`、`/share` 和 `/feedback <text>` 重新开始，并在发送后以已取消状态关闭的问题
+- 修复了立即按 Enter 时 `/remote-env` 会替换已保存的默认环境的问题：现在列表会打开在默认项上，且未生效默认环境时没有任何行显示勾选标记
+- 修复了当多个粘贴在同一个提示中重叠时，部分粘贴的文本会作为键入文本发送给 Claude 的问题
+- 修复了 vim 模式下光标停在行尾之后、j/k 在较短行上丢失列位置，以及 `f`/`t`/`F`/`T`/`;`/`,` 会跳转到提示中另一行的匹配项或删除至该处的问题
+- 修复了 `/add-dir` 路径框允许 Shift+Enter 或粘贴添加换行符，并将快速键入的 "tab"、"up" 或 "down" 视为这些按键的问题
+- 修复了在选定提示页脚行时快速键入、输入法文本和分解重音符号会丢失，以及 `!` 会使该行保持选中状态的问题
+- 修复了在检测到 iTerm2 时，全屏模式会在每次窗口调整大小和 Ctrl+L 时发送全屏清屏信号，这可能导致 iTerm2 回滚缓冲区被过时页面填满的问题
+- 修复了设置了 Read 拒绝规则且工作目录位于符号链接下时，对于未指定文件的 @ 词会错误显示“could not be examined”提示的问题
+- 修复了在 `/cd` 或权限更改后“instruction file not loaded”行失效或丢失的问题，并在嵌套指令文件未加载时添加了记录行
+- 修复了重复 `/name` 的压缩摘要可能允许 Claude 调用保留给用户的技能的问题
+- 修复了 Write、Edit、NotebookEdit 和 LSP 行，以及单个 Read、Grep 和 Glob 行隐藏 mod 拒绝调用的原因的问题：现在该行会显示原因
+- 修复了云会话在其工作进程恰好在当前轮次完成时停止而导致显示永不结束的轮次的问题
+- 修复了包含大量转录记录的云会话在获得批准后有时仍会再次请求权限的问题
+- 修复了在 Claude 正在读取消息时如果重试或编辑消息，云会话中的计划任务和其他排队通知会丢失的问题
+- 修复了云会话容器重启时会遗忘客户端中所选思考设置的问题
+- 修复了当 Anthropic 无法确认组织设置时，Cowork 云会话提示代理阻止了工件的问题
+- 修复了钩子模块通过单个常量进行多次 `$.state` 调用的插件需要数分钟才能加载或验证的问题
+- 修复了 `claude plugin validate` 列出引擎从别处读取的钩子模块的匹配器或状态值的问题
+- 修复了 `claude plugin validate` 列出通过重新声明或重新赋值的顶层 `var` 读取的 `$.state` 值的问题；此类模块现在会被拒绝
+- 修复了插件对外提供的 `$` 方法会重启钩子源头，从而可能无休止地再次运行上方带有 `.catch` 的防护钩子的问题
+- 修复了在插件钩子工作进程重启期间发起的插件接口调用在运行时缺少其他插件对其设置的钩子的问题
+- 修复了 mod 的 `config.set`、`state.set`、`env.set` 或 `agent.spawn` 钩子在调用 `next(e)` 后拒绝会被作为普通拒绝应答的问题：现在该钩子会按名称报告为失败
+- 修复了 `/theme`、`/config` 主题菜单和首次运行主题步骤在询问插件的 `config.set` 钩子之前就保存主题的问题
+- 修复了插件的 `tool.check` 钩子应答允许时，无需弹出对话框即可运行需要用户回答的工具（提问、计划批准）的问题
+- 修复了在钩子工作进程被替换时，mod 的启动提示、命令或子代理会被第二次排队的问题
+- 修复了 mod 的钩子调用 `next(e)` 并在轮次中断时失败仍允许调用通过的问题；该调用现在会被拒绝
+- 修复了当原因超过 4,096 个字符时插件的提示丢弃或设置拒绝会被忽略的问题
+- 修复了当组织的插件返回了用户安装的 mod 所添加的 `$` 名称时，在该插件自身重新加载或另一个插件崩溃后该插件会被卸载的问题；现在会改为卸载该 mod
+- 修复了在插件钩子工作进程重启期间发起的工具调用在没有插件权限钩子的情况下被响应的问题
+- 修复了插件 `tool.call` 钩子在参数名称错误修复之前就捕获到某些工具调用的问题；钩子现在能看到工具实际运行所用的参数
+- 修复了对于另一个 mod 的钩子在防护钩子自身的 `$` 调用下发起的调用，带有 `.catch` 的 mod 防护钩子会被静默跳过的问题；其 `.catch` 现在会被调用
+- 改进了 `claude -p` 和 SDK 会话的启动性能：第一轮交互不再等待 HTTP 和 SSE MCP 服务器响应 `resources/list`
+- 改进了长项目符号或编号回复的渲染速度：流式传输、调整大小以及在记录中重新打开 (ctrl+o) 的速度明显加快
+- 改进了 Ctrl+C 草稿恢复：在执行斜杠命令或发送消息后，已清空的提示内容仍可通过向上键找回
+- 改进了钩子输出处理：钩子输出中编写的 `<system-reminder>` 标签在传递给 Claude 之前会被转义
+- 改进了工具输入处理：Grep 接受将 `file_path` 作为 `path`，Write、WebFetch 和 Read 会忽略少数多余参数而不是导致调用失败
+- 改进了当设置文件中声明的插件市场名称类似于 Anthropic 官方插件市场时所显示的步骤提示
+- 改进了沙盒自动允许功能：在用户、托管或 `--settings` 设置中启用了严格沙盒模式时，带有环境变量前缀的解释器命令（如 `FOO=bar python3 app.py`）无需确认即可运行
+- 改进了 Artifact 工具的列表显示：Claude 现在可以看到已发布的工件总数，并可一次性列出最多 200 个（之前为 50 个）
+- 改进了重启后的云会话：现在会告知 Claude 哪些已停止的后台代理可以通过 ID 恢复运行
+- 改进了在无法访问浏览器时 claude.ai 云会话中的 Claude in Chrome 提示消息：现在会告知 Claude 如果用户愿意可以继续使用替代方案
+- 改进了 /focus 提示：现在会邀请你在轮次中途尝试专注视图并说明如何切回
+- 改进了忽略较新协议检查的本地 (stdio) MCP 服务器的启动体验：在经历一次缓慢连接后会被记住 7 天，并在之后以旧方式直接连接而无需等待
+- 更改了本地 (stdio) MCP 服务器连接行为：在所有安装中默认协商 2026-07-28 协议版本，包括 Bedrock、Vertex 和 Foundry；可通过 `MCP_PROTOCOL_NEGOTIATION=legacy` 选择停用
+- 更改了 `claude plugin test`：在测试注册的钩子内失败的 `expect`，或引擎拒绝的桩响应，现在会导致测试失败而不是静默通过
+- 更改了使用限制消息中的 claude.ai 设置链接，添加 https:// 前缀以便终端和应用可以将其渲染为可点击链接
+- 更改了定时和 Run now 例行程序运行的行为：发布仅你可见的新工件时无需请求批准；请求连接器或其他访问权限的工件仍会提示请求
+- 更改了代理名称长度限制为最多 256 个字符：超出长度会被拒绝，技能或插件文件中超过该长度的 `name` 将被忽略
+- [Cloud sessions] 修复了例行程序运行在结束后有时仍显示为运行中达数小时的问题
+- [Cloud sessions] 修复了当例行程序未保存通知设置时，编辑或复制该例行程序会关闭其推送通知的问题
+- [Cloud sessions] 修复了 SVG、HEIC、TIFF 和其他较少见的图像文件无法附加的问题；它们现在可以作为常规文件附加
+- [Cloud sessions] 修复了对于组织设定为需要批准的连接器工具，批准提示仍提供“Always allow”选项的问题；该选择之前没有任何效果
+- [Remote Control] 修复了从 claude.ai/code 启动的新 Remote Control 会话的首条消息仅接受图像的问题；现在它与后续消息一样支持接受 PDF 和其他文件
+- [Claude Tag] 在频道 Configure 页面的 Allowed domains 卡片中添加了 Edit 按钮，以便 Enterprise 管理员可以打开用于配置频道域名的访问捆绑包（access bundle）
+- [Claude Tag] 修复了当 Claude 仍在处理 Slack 话题中的第一个请求时在该话题中发送的回复会被挂起直到该请求完成，或当回复发送间隔仅数秒时被遗漏的问题
+- [Claude Tag] 修复了仅由 GitHub 拉取请求活动或例行程序唤醒的 Slack 话题在管理员更改频道或工作区默认模型后仍保留在其原始模型上的问题
+- [Claude Tag] 修复了当真正原因是组织已用完使用额度时，Claude 有时会在 Slack 中发布支出上限提示的问题
+- [Claude Tag] 修复了当无法从 Slack 回答的权限提示被自动拒绝时会话会一直挂起直到被中断的问题
+- [Claude Tag] 改进了频道中的 `@Claude !status`，当 Claude 停止读取未标记消息时会说明原因，并告知再次 @ 提及可使其重新开始读取
+- [Claude Tag] 将使用 `!fork` 延续的 Slack 话题的第一条消息更改为卡片形式，展示其来源、请求内容和发起人，并附带指向原始话题的链接
+- [Claude Tag] 将管理设置中 Claude Tag 支出上限页面上的全组织和默认支出上限输入框更改为仅在按 Save 或 Enter 时保存，而非在失去焦点时保存
+- [Code Review] 在 Code Review 分析中的已审查 PR 图表中添加了当前周期的总数及其相较上一周期的变化，并提供了按代码库的细分统计
+- [Code Review] 修复了当拉取请求切换到新的目标分支且旧目标分支被删除时排队的审查会失败的问题；该提交现在会重新排队等待审查
+- [Code Review] 修复了当拉取请求修改 CLAUDE.md 时审查会忽略该文件规则的问题；审查现在会使用来自目标分支的版本
+
+## 2.1.291 (2026-10-06)
+
+- 修复了 2.1.290 中的回归问题：云端会话可能会丢失对权限提示的回复
+- 修复了 2.1.288 中的回归问题：退出时可能会丢失会话的最后几条消息
+
+## 2.1.290 (2026-10-05)
+
+- 在 mod 的 `turn.step` hook 结果中添加了 `serverToolUses`：即 API 自身运行的工具调用（advisor），每个调用都包含其 id、name、input、start 和 end
+- 在插件 hook 的 `tool.check` 事件中添加了 `agentId`，以便 hook 能够区分子 agent 与主会话的权限检查
+- 在 mod 的 `tool.check` hook 所读取的 question 和 verdict 中添加了 `ceiling`，用于指明组织对某工具要求的审批级别
+- 在插件 hook 类型定义中添加了 `ThemeKey` 和 `Color` 类型，以便编辑器列出 mod 绘图可指定的主题颜色
+- 为 `claude plugin validate` 添加了新功能：列出 mod 在门控点注册的每个 hook 及其是否包含 `.catch`（`--json` 下的 `gatingHooks`）
+- 在 Claude apps gateway 的登录审批页面添加了 Deny 按钮：可终止挂起的登录，使处于等待状态的终端在数秒内停止
+- 添加了 `claude attach <name>` 和 `claude logs <name>`：支持使用会话名称的一部分代替 id
+- 添加了 `/claude-api managed-agents-onboard <url>`，用于将页面描述的 Managed Agents 模式配置为 `ant apply` 文件
+- 添加了 `/claude-api managed-agents-onboard <quickstart-name>`，用于通过 `ant` CLI 构建 Console 快速入门模板（例如 `deep-researcher`）
+- 添加了当托管配置文件是指向托管配置文件夹外部文件的链接时的警告
+- 添加了当托管配置忽略用户配置的沙箱 allowRead 路径或允许域名时的 /status 和 doctor 警告
+- 修复了在代理和网关后方发生的请求失败问题：这些代理/网关会以非 400 状态码拒绝 Claude Code 的某个 beta 请求头，或与第二个 beta 请求头一起拒绝
+- 修复了包含数百张图像的长会话卡在“Request rejected as unprocessable by the model”错误中的问题
+- 修复了当 Claude 仍在思考时 API 的输出内容过滤器中断回复导致 turn 立即结束的问题；现在在显示错误前会重试一次请求
+- 修复了恢复运行的子 agent 和队友在运行中途收到消息后丢失先前的思考过程和 prompt 缓存的问题
+- 修复了 WebFetch 悄悄丢弃超过 100,000 个字符的页面文本的问题；现在会提示有多少内容未读取，并接受 `offset` 继续读取
+- 修复了当响应嵌套列表或引用达到数千层时发生的崩溃（“Maximum call stack size exceeded”）
+- 修复了 `/rewind` 未列出在 Claude 仍在工作时发送的 prompt 的问题
+- 修复了会话被压缩后，定时任务（带间隔的 `/loop`、提醒）在恢复时静默丢失的问题；覆盖从该版本起进行的压缩
+- 修复了在前台设置的定时任务在 ← 或 `/background` 交接后从不触发，以及周期性任务在每次 resume、respawn 或 fork 时额外执行一次的问题
+- 修复了无头 `--json-schema` 运行在结构化输出已交付后断开连接时，在 `success` 结果上退出非零值并返回 `is_error: true` 的问题
+- 修复了 plan 模式下 auto 模式分类器会批准带有服务端推送的 ask 策略的非只读连接器工具的问题
+- 修复了当符号链接指向工作目录外部的项目的 `CLAUDE.md`、规则或 `AGENTS.md` 时，在 `permissions.blockReadsOutsideWorkingDirectories` 或 `Read` 拒绝规则下仍被加载的问题
+- 修复了在 `xn--` 主机标签内带有通配符的 URL 允许和拒绝模式在不同进程间匹配结果不一致的问题
+- 修复了由组织提供的 MCP 服务器在登录或重新连接后被重新列为您自己的服务器的问题，包括在无头和 SDK 会话中来自延迟结果的情况
+- 修复了在 Windows 上当 `git stash create` 失败时 `/ultrareview` 会在没有警告的情况下丢弃未提交的更改，并在 `git add -N` 文件被删除或移动后拒绝更改的问题
+- 修复了 macOS 和 Linux 上 `plansDirectory` 配置对包含反斜杠的路径进行的项目根目录检查问题
+- 修复了在超长 Remote Control 和云端会话中回复可能会整块出现而非流式传输的问题
+- 修复了后台守护进程日志在 `claude daemon run` 和 `claude daemon logs` 下将终端控制字符输出到屏幕的问题；现在它们会显示为 `\uXXXX` 转义字符
+- Self-hosted runner：修复了会话错误输出中构造的超长单行文本会导致 runner 冻结数秒的问题
+- 修复了当带有 `.catch` 的插件 hook 使 hooks worker 在 prompt 或工具调用上保持繁忙时，该 hook 会被卸载且其 `.catch` 被跳过的问题
+- 修复了 mod 的 `turn.step` 结果会列出响应中途模型 fallback 时已丢弃的工具调用的问题
+- 修复了 Cowork 云端会话的容器在 Claude 发送消息或文件后立即重启时，回复有时永远无法完成的问题
+- 修复了当 hooks 模块解构了一个与其顶层函数同名的选项时，`claude plugin validate` 和插件加载会拒绝该模块的问题
+- 修复了当 git 配置中设置了 `core.safecrlf=true` 时，`/ultrareview` 无法上传未提交更改的问题
+- 修复了当被标记的消息在设置中保存了不同努力程度的 fallback 模型上重试时，努力程度（effort level）发生改变的问题
+- Windows：修复了当文件保存为 CRLF 换行符时，skills 和命令中的多行 `!` shell 块执行失败的问题
+- 修复了在全屏模式下搜索时点击 `/permissions` 标签会导致 Claude Code 卡死直至被终止的问题
+- 修复了会话压缩有时因“null is not an object”错误而失败的问题
+- 修复了在 auto 模式下交回报告的子 agent 在 `turn.complete` 上插件 hook 读取到空 `answer` 的问题
+- 修复了在重新加载失败后执行刷新时 mod 会被静默卸载的问题；其失败行现在会提示先前加载的版本已被卸载
+- 修复了 mod 的 `prompt.submit` hook 在调用 `next(e)` 后丢弃 prompt 会被静默忽略的问题：现在会按名称报告该 hook 失败
+- 修复了当 mod 的 pane 或 band 跟随每次绘制都会改变高度的树形结构末尾时导致无限重绘的问题
+- 修复了在 macOS 和 Windows 上读取图像时，通过在中途替换链接能够返回超出已批准范围的文件的问题
+- 修复了用户安装的 mod 可能会导致组织的插件被卸载的问题；现在被卸载的将是该 mod
+- 修复了 `disableClaudeAiConnectors` 和 `allowedMcpServers` URL 规则未应用于 `.mcp.json`、插件或 agent 中声明的部分 MCP 条目的问题
+- 修复了 mod 的内联窗格在每次绘制树形高度改变时发生无限重绘的问题
+- 修复了在读取阻止或 `--restricted` 下的 `@` 提及能够通过中途更改的链接读取工作目录外部文件的问题
+- 修复了在 agents 视图中按 Esc 会确认“Press enter again to restart this session — it isn't responding”提示的问题；现在 Esc 仅重新打开会话
+- 修复了在 agent 视图中，后台会话进入其创建的 worktree 后丢失 `/loop` 运行次数、倒计时和实时状态行的问题
+- 修复了处于手动权限模式下的 `claude agents` 会话在读取粘贴到回复或新 agent prompt 中的图像时请求审批的问题
+- 修复了拒绝或询问规则遗漏了名称来自 `declare`、`typeset`、`export` 或 `readonly` 前缀变量的命令或路径的问题
+- 修复了 Read 拒绝规则未应用于粘贴或拖入 prompt 的图像路径，或 @ 提及文件夹所列出的文件名的问题
+- 修复了用户安装的 mod 可能导致组织的 guard 跳过检查的问题；此类 mod 现在会被卸载
+- 修复了当 mod 绘制包含非拉丁字符的长多行文本时插件 hook 会卡顿每次重绘的问题
+- 修复了在 agents 视图中删除某个分区的最底部会话后，连续按 Ctrl+X 会删除整个下一分区的问题
+- 修复了 You should know 无论 `language` 设置为何都以英文编写提示的问题
+- 修复了发送某些超长消息后出现冻结的问题
+- 修复了在展开 transcript（ctrl+o）或在包含非 ASCII 字符（如箭头、破折号或制表符）的大型工具输出上调整大小时出现卡顿的问题
+- 修复了 `claude respawn` 会向没有保存 transcript 的后台会话重新发送先前的消息，而不是以空会话启动的问题
+- 修复了在 agents 视图中进行 `n:` 或 Ctrl+F 搜索后按 Esc 会将焦点移至分区标题，从而导致按两次 Ctrl+X 删除该分区中所有会话的问题
+- 修复了 `claude agents` 会保存无法递送给已停止会话的斜杠命令，并在该会话下次重启时自行运行的问题
+- 修复了对于名为 `unset` 或 `unspecified` 的 git filter driver 下的文件，`/ultrareview` 会未经筛选上传未提交更改的问题；上传现在会停止并要求重命名该 driver
+- 修复了 auto 模式拒绝建议的权限规则可能会跳过整个工具的分类器或被 Claude Code 忽略的问题
+- 修复了当选择暂存（stash）时，`claude --teleport` 和 `/teleport` 会删除替换了同名受跟踪文件的文件夹中的文件的问题：暂存操作现在会被拒绝并说明原因
+- 修复了按 Esc 会确认 agent 视图的“Press enter again to restart this session fresh”提示的问题
+- 修复了 agent 视图的 `/loop` 运行计数冻结且倒计时在 `/clear` 后消失的问题；计数现在会随新会话重新开始
+- 修复了 `--channels` 权限转发问题：在会话内重复的回复 ID 现在会被忽略，而不会批准不同的 prompt
+- 修复了 Chrome 连接失败后 `/chrome` “Reconnect extension” 无法恢复浏览器工具的问题，并在无法恢复时添加了解释说明（anthropics/claude-code#98135）
+- 修复了通过网关（带有 `ANTHROPIC_AUTH_TOKEN` 的 `ANTHROPIC_BASE_URL`）访问 Claude 且没有 Anthropic 账户的用户 mod 保持关闭的问题
+- 修复了在后台会话崩溃后立即从 `claude agents` 发送的回复会在 2 秒后被拒绝的问题：现在在会话重启期间最多会重试 12 秒
+- 修复了 `claude agents` 无法递送给正在运行的会话的斜杠命令和多项选择题答案会被保存并在下次重启时自行发送的问题
+- 修复了通过管道将 heredoc 传递给另一个命令（`cat <<EOF | python3`）的沙箱命令在每次运行时都会请求审批的问题
+- 修复了在 Homebrew 升级后 `claude agents` 报错“Couldn't restart the background service”且后台会话停止的问题（将在本次之后的下一次升级生效）
+- 修复了 agent 视图的“restart this session fresh”会重新发送会话早先的消息而不是以空会话开始的问题
+- 修复了 Bash 权限检查自动批准某些只读命令（例如 `rg` 或 `git grep`），而其参数仍会被 shell 作为通配符展开的问题；现在这些命令会提示要求审批
+- 修复了升级后因保存的配置过时导致 `claude plugin test` 拒绝运行的问题
+- 修复了 Bash 权限检查自动批准 zsh 与 bash 解析变量名方式不同的某些命令的问题；现在这些命令会提示要求审批
+- 修复了 `git clone` 选项的简写形式会保留 `sandbox.excludedCommands` 中类似 `git *` 的 git 模式沙箱豁免的问题；现在将其视为与完整形式相同
+- 修复了会话的第一个 feature-flag 请求忽略项目设置中指定的代理或 API 端点的问题
+- 修复了在将分支保存在 `.git` 外部的仓库（git 2.54+）中，对本地分支执行 `/ultrareview` 会静默遗漏未提交工作的问题；现在会拒绝并提供解释
+- 修复了容器重启丢失挂起的 `/loop` 唤醒或定时任务后云端会话保持休眠的问题；现在会通知 Claude 并可重新安排调度
+- 修复了在没有 2025 年 11 月修复补丁的 PostgreSQL 版本上，Claude apps gateway 的保留清理会删除在同一时刻刷新的返回开发人员身份行的问题
+- 修复了沙箱 Monitor 工具命令在沙箱自动允许下跳过权限提示的问题；现在它们遵循您的权限规则
+- 修复了当 Claude apps gateway 向身份提供商出示的证书主题为空时启动失败的问题
+- 修复了当 `store.postgres_url` 无法解析时 Claude apps gateway 仅退出并提示“Invalid URL”的问题；错误信息现在会指明该配置项并说明 URL 可包含的内容
+- 修复了 Mac 从睡眠中唤醒时后台 agent 报错“Agent stalled”以及 Workflow 工具子 agent 从其 prompt 重启的问题
+- 修复了自 2.1.285 以来在 VS Code 插件等 SDK 宿主环境下，当托管配置在缓慢的文件系统（特别是 WSL 下的 Windows 驱动器）上拒绝读取多个路径时启动缓慢或失败的问题
+- 修复了由电脑睡眠中断的响应在 Bedrock、Vertex、Foundry 和自定义网关上被视为主流挂起的问题
+- 修复了在 Linux 和 WSL 上，当沙箱读取规则（如 `~/**/.env`）覆盖大型文件夹时，在首次请求前和 `/sandbox` Config 标签中出现冻结的问题
+- 修复了当技能文件夹名称不同（例如非英文名称）时，通过 SKILL.md 中的名称请求无法找到技能的问题：技能列表现在会同时显示这两个名称
+- 修复了在展示方案之前云端会话容器发生重启导致在 plan 模式下编写的方案丢失的问题
+- 修复了在新配置目录启动数秒后运行首个命令时，Bash 工具偶尔会在整个会话中丢失 shell 别名、函数和插件 PATH 条目的问题
+- 修复了 HTTP MCP 服务器发送极大响应时内存无限制占用的问题
+- 修复了从云端会话内部启动的 Claude Code 运行（例如从 Bash 工具运行 `claude -p`）中 artifact 操作失败的问题
+- 修复了从远程会话发送的文件在一次发送四个或更多时有时会被拒绝并提示“not the one approved”的问题
+- 修复了在终端中使用 `--continue` 或 `--resume <session-id>` 恢复会话时 plan 模式未恢复的问题
+- 修复了以另一个 GitHub marketplace 下载文件夹命名的 marketplace 会阻止该 marketplace 下载的问题
+- 修复了当 Mac 在运行时进入睡眠状态导致自动压缩放弃并报错“Prompt is too long”的问题
+- 修复了当会话包含非常大的粘贴堆栈跟踪或源文件时，回退菜单（Esc Esc / `/rewind`）每次按键都会冻结数百毫秒的问题
+- 修复了 @ 提及子目录下的文件时未附加该子目录的 AGENTS.md 的问题
+- 修复了当会话文件夹是相对符号链接时，在 runner 停止后恢复的 self-hosted runner 会话失败并显示“missing but already registered worktree”的问题
+- 修复了敏感信息扫描或权限提示遇到长 token 类文本时发生冻结的问题
+- 修复了 Bash 权限检查未对只读命令某些选项值中的通配符应用 Read 拒绝规则或目录外读取阻止的问题
+- 修复了 `CLAUDE_CODE_USER_DIALOG_TIMEOUT_MS=5m` 被读取为 5 ms 并立即取消远程对话框的问题；带有单位后缀的值现在会回退到 `dialogExpiry`
+- 修复了当 MCP 服务器的工具列表包含非常长的组合字符序列时发生卡顿的问题
+- 修复了在同一个 prompt 中重叠的两次粘贴被作为键入文本而非单个粘贴块部分发送给模型的问题
+- 修复了当选定的浏览器不再连接时，Claude in Chrome 的浏览器选择器会显示本应发给 Claude 的消息，以及切换后 VS Code 对话框列表过时的问题
+- 修复了在主会话进入或退出其他 worktree 后，后台子 agent 在其 worktree 中丢失写入和 Bash 访问权限的问题
+- 修复了在机器上没有强制网关登录的托管配置时，后台命令、agents 视图和守护进程 worker 在 Claude apps gateway 后方仍向 Anthropic 发送遥测和 feature-flag 请求的问题
+- 修复了 `--restricted`（和 `CLAUDE_CODE_RESTRICTED=1`）会话打开跨会话通信 socket 的问题
+- 修复了在空闲时移至后台的会话在重启或空闲清理后重新打开显示为“no saved transcript”的问题；它们现在会恢复会话
+- 修复了后台 worker 在 respawn 时在未接受绕过权限免责声明的情况下仍遵循 `--allow-dangerously-skip-permissions` 的问题
+- 修复了当插件的异步 Stop hook 在包含空格的文件夹（如 Application Support）下传递未加引号的脚本路径时，Claude 会陷入死循环回复的问题
+- 修复了敏感信息脱敏遇到极长连续文本时发生数秒冻结的问题
+- 修复了在 PreToolUse hook 重写工具输入后，部分权限规则和安全检查未应用于该工具调用的问题
+- 修复了在执行 `claude auth login` 或配置目录中已存在凭据文件后，首次启动仍要求再次选择登录方式的问题
+- 修复了包含换行符的文件名在文件工具错误和权限提示中显示不正确的问题
+- 修复了就地展开的大型粘贴在下一次击键后被作为键入文本发送给模型的问题（当其包含像 macOS 文件名那样作为独立字符存储的重音符号时）
+- 修复了在 macOS 上钥匙串拒绝新登录并保留无法删除的旧登录时，`/login` 仍报告成功的问题
+- 修复了使用 `--include-partial-messages` 的 SDK 宿主在流被切断、中断或回退到非流式传输时，看到回复在 turn 结束后仍保持开启的问题
+- 修复了在 `.claude/settings.json` 或 `.claude/settings.local.json` 不存在时，Linux 上沙箱化的 Bash 命令在中途运行 `ConfigChange` hook 并重新加载配置的问题
+- 修复了当 Claude Code 运行的工具（如 git 或 gh）未安装时，错误显示为“Premature close”而非指明缺失程序的问题（macOS、Linux）
+- 修复了在 Linux 上执行沙箱 Bash 命令后或删除 `.claude/scheduled_tasks.json` 后，`/loop` 和其他周期性仅限会话的任务会额外运行一次的问题
+- 修复了对符号链接配置文件所指向的文件进行编辑时，不出现配置文件权限询问即可运行的问题
+- 改进了网络代理后的 MCP 启动机制：被代理阻止的服务器（HTTP 403）不再重试三次
+- 改进了后台 agent 的权限提示，显示可停止所有后台 agent 的 Ctrl+X Ctrl+K 快捷键
+- 改进了内置的 `plugin-authoring` skill：Claude 现在会提供其他人安装您制作的 mod 所需运行的单条命令，并将其写入 README 的安装部分
+- 改进了桌面应用 Code 标签中对 `/plugin` 的回复：现在会说明在该处安装和管理插件的位置
+- 改进了 Bash 更改文件视图：当链式命令包含 git merge、pull 或 checkout 时，它会列出文件而不显示完整 diff
+- 改进了上游云凭据或连接失败时的 Claude apps gateway 日志：警告信息现在会附带根本原因
+- 改进了未登录 claude.ai 启动云端会话时显示的错误：现在会指明 `claude auth login` 和 /login，不再归咎于 API key 认证
+- 改进了 Read 工具针对二进制文件的消息：现在会引导 Claude 使用能够读取该格式的 skill 或 shell 命令
+- 改进了 git 配置文件阻止 `/ultrareview` 上传时显示的错误：长度减少约一半，并说明是哪类文件导致了问题
+- 改进了 `/ultrareview` 上传拒绝检出时显示的错误：每个已知原因现在都有对应的独立消息及修复方法
+- 改进了 Claude apps gateway：在其向身份提供商出示的证书到期前最后 30 天内会记录警告日志
+- 改进了 Claude in Chrome：`browser_batch` 调用在被报告为超时前的等待时间从 60 秒增加到 90 秒
+- 改进了 Claude apps gateway 的浏览器登录页面：采用品牌字体、居中布局和深色模式
+- 改进了恢复大型会话时的响应速度：在加载 transcript 时计时器、输入和渲染保持运行
+- 改进了 / 和 @ 建议列表：选中行现在以 ❯ 指针开头，因此在无颜色模式下也能辨识
+- 将 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 修改为同时跳过启动连接预热
+- 修改了 Claude in Chrome，使项目的配置文件不再能开启它；请使用 `--chrome`、`/chrome` 或您的用户配置
+- 修改了 Bash 工具，使其在运行 `pyright` 之前请求权限，该命令不再被视为只读命令
+- 修改了当另一个 mod 在子进程运行后拒绝它时 mod 的 `$.process.spawn` 的 reject 内容：现在说明调用已运行且某个插件拦截了其结果
+- 修改了后台守护进程的日志格式，将多行消息记录为单行 JSON 引号字符串
+- 修改了 skills 和自定义命令，拒绝包含除制表符和换行符之外的原始控制字符的 `!` shell 命令，并显示其所在位置的消息
+- 修改了 `/artifacts`：在浏览器中打开 artifact 现在会关闭列表
+- 修改了 Bash 权限检查，使更多形式的 `ps` 命令需要审批而非直接运行
+- 修改了插件 hook，对长文本进行截断和记录日志，而不是直接拒绝或静默丢弃
+- 修改了已不存在调度任务的后台会话行为：它们现在会在约 20 秒后转入 Completed 状态，并可在空闲时进行更新或关闭
+- 修改了在刚清空的 prompt 上的“Press ← again”确认机制：按第二次 ← 不再需要等待一秒即可切换，长按 ← 现在也能切换
+- 修改了 `/ultrareview` 上传在 git 步骤失败时显示的错误：说明具体步骤和尝试方法，不再重复 git 自身的错误文本
+- 修改了中等努力程度（medium effort）下的 `/code-review`，使其在未微调审查设置的模型（包括 Opus 5.5 和 Sonnet 5.5）上也会报告清理和 CLAUDE.md 规范发现
+- 修改了进程内 teammate 在 Agent 结果中的 `agent_id` 为其 agent ID（其 `name@team` 地址保留在 `teammate_id` 中）；TeammateIdle hook 不再从其子 agent 或 fork 触发
+- 修改了等待定时唤醒（`/loop`）的后台会话：它们现在会在更新和低内存期间保持运行，避免因重启或关闭而静默丢失唤醒
+- 修改了从 `claude agents` 发送给繁忙后台会话的 `/model`、`/effort` 和 `/rename`，使其立即生效且无需确认，而不是等到 turn 结束
+- 将 Claude apps gateway 最低支持的 PostgreSQL 版本从 14 改为 11
+- 将交互式会话的 WebSearch 配额修改为随时间补充（100 次调用/小时；通过 `CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR` 设置速率，设为 0 可关闭），而非在 200 次调用后耗尽
+- 修改了 `CLAUDE_CODE_DISABLE_ATTACHMENTS`，使代码仓库的 `.claude/settings.json` 或 `.claude/settings.local.json` 不再能设置它；shell、用户和托管配置仍可设置
+- 修改了针对从目录加载的插件执行 `claude plugin update` 的行为：仅输出其原因，不再带有类似内置插件的“Failed to update plugin”前缀
+- 修改了云端会话中内置的 `gh api`：在 `GH_HOST` 或 `GH_REPO` 中设置非 github.com 的主机现在会被拒绝（请使用 `--hostname` 或完整 URL），且 stderr 会记录针对其他主机的请求
+- 修改了 `claude-api` skill 的 Managed Agents 示例，除非 agent 需要否则关闭 web 工具，并使用 `auto` 权限策略
+- Self-hosted runners：修改了 `claude --environment <id>`，使其通过当前的 Sessions API 创建会话；打印的和 JSON 会话 id 保持 session_… 形式
+- [VSCode] 当您在 Claude 工作时发送消息，添加了屏幕阅读器朗读提示：“Message queued.”
+- [VSCode] 在 Manage plugins 对话框中添加了查看并运行插件市场安装或更新命令的功能
+- [VSCode] 修复了在原位置打开保存的会话后，未输入任何内容的空白聊天仍使后台 Claude 进程保持运行的问题
+- [VSCode] 修复了在保存期间 Claude Code 异常停止时配置对话框报错超时的问题
+- [VSCode] 修复了分支切换对话框在无法检查未提交更改时仍提示切换的问题
+- [VSCode] 修复了在打开的对话框背后弹出的权限提示会获取键盘焦点，导致在对话框中按键可能会回答该提示的问题
+- [VSCode] 修复了当 Claude Code 无法找到或启动其程序时，登录和新建会话没有给出明确原因的问题
+- [VSCode] 修复了 agent 架构图显示嵌套子 agent 为“Tool calls (0)”并将该子 agent 启动的 agent 放置在主 agent 下方的问题
+- [VSCode] 改进了 Continue After Reload：在 VS Code 重启扩展后重新打开的标签页现在也会完成因重启中断的步骤
+- [VSCode] 改进了消息中的文件胶囊：悬停时现在会显示文件相对于项目文件夹的路径，以便区分同名文件
+- [VSCode] 将消息时间戳修改为默认显示（可通过 Claude Code: Show Message Timestamps 配置关闭）
+- [Cloud sessions] 修复了通过云环境的环境变量关闭 prompt 建议在新的云端会话中不起作用的问题
+- [Cloud sessions] 修复了在 Claude 回复完成后云端会话中的工作指示器仍持续旋转数秒的问题；现在它会随回复一同停止
+- [Cloud sessions] 修复了在从未运行过的 routine 页面上点击 Run now 后 History 仍显示“No runs yet”的问题；现在会显示新的运行
+- [Cloud sessions] 修复了未归档的云端会话在您发送下一条消息前看起来好像 Claude 仍在工作的问题
+- [Remote Control] 修复了刚启动 Remote Control 的计算机在新会话的 Remote Control 菜单中最多需要一分钟才会出现的问题；现在它会在数秒内显示
+- [Claude Tag] 在 Slack 中添加了快速模式：使用 `!fast` @ 提及 Claude 可将 thread 切换为快速模式（必要时切换到 Opus），使用 `!fast off` 切换回正常模式；开启时回复会显示 (fast)
+- [Claude Tag] 在访问包中创建自定义连接时添加了可选的 Path prefixes 字段，使其允许规则可以仅覆盖这些路径而非整个主机
+- [Claude Tag] 修复了拥有 Claude Tag Admin 权限的成员在 Activity 页面的 Memory 标签中遇到“Couldn't load memory files”的问题；他们现在可以读取工作区和频道记忆
+- [Claude Tag] 修复了工作区访客在 Slack 中的 Claude 设置卡片上点击 Confirm 会为所有人移除按钮的问题；现在仅访客会看到拒绝提示，成员仍可确认或取消
+- [Claude Tag] 修复了 Slack 频道中的定时 routine 在非频道默认模型上运行的问题；每次启动新会话的运行现在均使用当前默认模型
+- [Claude Tag] 修复了按频道名称规则附加的访问包中的 GitHub 仓库在规则覆盖的频道中被拒绝的问题；Claude 现在可以在这些频道中添加、列出和克隆它们
+- [Claude Tag] 改进了在私聊中当您个人的 Claude 套餐用量达到上限时 Claude 发出的通知：数秒内即会显示，并说明上限何时重置
+- [Claude Tag] 改进了早期的 Claude in Slack 应用在无法启动会话时的回复：现在会说明失败原因以及由谁来修复，每个 thread 仅完整显示一次
+- [Claude Tag] 将频道 instructions 的限制从字节改为 8,192 个字符，使非英文文本享有同等空间，并在 Configure 页面上的 Save 旁添加了字符计数
+- [Code Review] 修复了阻塞性 review 评论有时会以与其严重程度相悖的“nit”标签开头的问题
+- [Code Review] 修复了在已关闭 Code Review 的组织中，fork 和 Manual 模式的 pull request 上仍会发布建议评论“@claude review”提示的问题
+
+## 2.1.289 (2026-10-03)
+
+- 修复了在托管设备上，复合 shell 命令嵌套部分的 deny 或 ask 规则无法优先于用户已安装 mod 的审批的问题
+- 修复了包含大量未闭合 `<script>` 标签或深层嵌套 `${` 替换的简短代码块导致终端卡死的问题
+- 修复了通过符号链接在 IDE 中通过 @ 提及、修改或选中的文件未应用 `Read` deny 规则的问题
+- [VSCode] 回退了 2.1.288 中对 `claude auth status` 的更改，该更改可能导致了更频繁的退出登录
+- 优化了插件代码窗格中打开大文件的速度，通过在其最终宽度下仅对高亮视图进行一次布局
+- 修复了从本地文件夹市场安装的插件在执行 `plugin list`、`plugin eval` 和 `plugin update` 时显示过时副本的问题，以及符号链接 `--plugin-dir` 的热重载问题
+- 修复了升级后的首次会话中已安装的 mod 无法加载的问题
+- 修复了在全屏打开 Background tasks 对话框时，提示符上方的插件行显示过时行的问题
+- 修复了当链接使用 localhost 地址、路径中包含 `@`、大写主机名或 `file:` 路径时插件窗格渲染为空白的问题
+- 修复了用户安装的插件能够重写组织托管的 MCP 服务器登录工具描述的问题
+- 修复了当插件绘制了终端无法识别的边框样式的 Box 时，启动时卡死或被强制退出的问题
+- 修复了当插件的屏幕处理程序抛出异步异常时导致受监管会话和后台会话退出的问题
+- 修复了当高度为 0 的插件区域持续增长时导致会话因界面错误退出的问题
+- 修复了当沙盒自动允许命令时，带有展开值的环境变量前缀之后的命令（例如 `TZ="$HOME" rm -rf build`）会漏过 Bash deny 和 ask 规则的问题
+- 修复了在沙盒自动允许的情况下，当命令前带有裸变量赋值时会跳过 Bash deny 或 ask 规则的问题
+- 修复了当文件夹同时包含市场清单时 `claude plugin validate` 会跳过该插件的问题
+- 为协作成员添加了 `agent.spawn` 支持、跨插件钩子事件的统一 agent id，并在 `$.agent.list()` 中添加了 idle 和 waiting 状态
+- 修复了当 mod 的 `ui.render` 钩子写入的值导致某行在渲染时抛出异常从而使会话以“unrecoverable interface error”退出的问题；引擎现在会自行绘制该行替代
+- 修复了包含制表符、多余转义符和 C1 控制字符的文本，或包含制表符和 CRLF 换行符的简短文本覆盖下方行绘制的问题
+- 修复了 mod 的窗格或横栏中的右对齐内容绘制在关闭标记或 `[-]` 下方的问题，现在这些标记也会距终端边缘保持一列间距
+- 修复了 mod 的 `Client` 在渲染时失败会导致 mod 周围绘制的所有内容一同崩溃的问题；现在它仅自身失败并抛出 `ui.fault`
+- 修复了 `claude plugin validate` 判定 Anthropic 市场自带插件校验失败并在 `--json` 中列出干净 `plugin.json` 的问题
+- 修复了 mod 绘制失败的横栏会短暂导致其下方的卡片避让错位的问题
+- 修复了失败的插件组件在故障未携带错误信息时显示 `Error` 或空白原因的问题
+- 优化了 mod 的横栏或窗格绘制失败时 mod 作者看到的提示行：明确指出该 mod 名称并提示未绘制任何内容
+- 修复了已发布的 artifact 页面在遇到包含大量未闭合 `<script>` 标签的简短代码块时导致读者浏览器标签页卡死或崩溃的问题
+- 修复了终端在绘制 mod 的 Client 区域抛出异常后，该区域在整个会话期间一直保持失败状态的问题
+
+## 2.1.288 (2026-10-02)
+
+- 为 mods 增加了 `$.ui.selection()`：返回全屏模式下最近选中的文本；若选区位于单行转录记录内，则同时返回该行
+- 为镜像中缺少 GitHub CLI 的云端会话新增了内置 `gh api`，并修复了该内置命令将文件名、jq 过滤器或 GitHub 错误中的控制字符输出到终端的问题
+- 增加了使用 Ctrl+C 清除输入内容后的恢复功能：在空输入框中按向上键（Up）即可恢复草稿，包括粘贴的文本和图片
+- 增加了重新认证提示，当 MCP 服务器在工具调用期间请求更多 OAuth 作用域时触发
+- 为 /code-review 增加了 `--max-findings <n>|all` 选项，以报告超出或少于通常限制的审查发现项；该选项会持续沿用，直到传入 `--max-findings default`
+- 增加了 Ctrl+F 用于按名称查找会话，以及 Alt+↑/↓ 用于在智能体视图的分组之间跳转；两项快捷键与重命名均可在 keybindings.json 中重新绑定
+- 增加了屏幕阅读器模式下批准计划时的全新权限模式播报，包括通过 Shift+Tab 批准的情况
+- 修复了响应中途发生 API 超时导致整轮对话失败的问题：非交互式会话和子智能体现会基于部分响应继续运行，且仅包含思考过程的响应会自动重试
+- 修复了当最新回复报告的 token 使用量为 0 时，长对话未自动压缩而是报错“Prompt is too long”的问题
+- 修复了 `--resume` 有时会丢失压缩刚恢复的文件及其他上下文的问题
+- 修复了恢复的会话有时未保存当轮对话的最后一条响应，导致下一次 `--resume` 时显示提示词未得到回复的问题
+- 修复了恢复操作偶尔会加载被截断的转录记录的问题（当同一会话在加载过程中重写了该文件时发生）
+- 修复了恢复在 2.1.286 或更早版本启动的对话时会丢失模型先前思考内容的问题
+- 修复了在 Mantle 上或拒绝结构化输出的网关后，会话标题、记忆召回和提示词钩子失效的问题；新增了 `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` 用于关闭结构化输出
+- 修复了当被拦截的工具非 Bash 时，自动模式的拒绝提示仍将 Claude 指向 Bash 权限规则的问题
+- 修复了在 Bedrock 和 Mantle 上，自动模式在向旧版模型发出请求（如 WebFetch 摘要或 `sonnet` 子智能体）后，会在会话余下时间内切换为本地分类器的问题
+- 修复了在选用新模型后重启的云端会话，在服务器拒绝该模型后仍使用该模型进行回复的问题
+- 修复了 Cowork 云端会话中未批准 URL 的 WebFetch 权限提示在 5 分钟未作答后，会话仍一直保持“等待输入”状态的问题
+- 修复了手机加入在其他设备上启动的 Cowork 云端会话时不显示提示建议的问题
+- 修复了在 Claude Code 重启前渲染的视图上点击 mod 按钮时，有时会触发另一个按钮操作的问题
+- 修复了当单个 `Code` 元素包含无法解析的 diff 时插件面板显示为空白的问题；现已回退渲染为普通代码
+- 修复了插件 LSP 服务器在 `initializationOptions` 和 `settings` 中收到字面量 `${user_config.*}` 和 `${CLAUDE_PLUGIN_ROOT}` 占位符而非替换后的实际值或清单默认值的问题
+- 修复了在 worktree 中运行的子智能体内，插件的 `tool.call` 钩子会导致 Bash 执行失败且文件搜索读取错误文件夹的问题
+- 修复了在较旧的 git 版本（2.39 之前，如 Ubuntu 22.04 的 2.34）上安装 `git-subdir` 插件失败或缓存不完整插件的问题
+- 修复了通过 `--plugin-dir` 加载的插件在 `/plugin` 中不显示“Configure options”的问题
+- 修复了当插件的定时器或读取任务仍在运行时，重新加载或禁用该插件会导致后台会话终止的问题
+- 修复了在沙箱自动放行策略下，当定界符未加引号的沙箱 heredoc（`python3 <<EOF`）正文仅包含纯文本和简单 `$VAR` 引用时，每次运行仍会要求批准的问题
+- 修复了 Bash 工具权限检查：对于值会被 shell 视作算术表达式求值的 `BASHPID` 赋值，改为在执行前提示确认，而非静默放行
+- 修复了在插件或 mod 于提示框上方显示多行内容时打开后台任务对话框，导致全屏会话因“unrecoverable interface error”退出的问题
+- 修复了当发往另一个会话的消息被该会话暂存挂起时，Claude 仍报告已送达的问题：通知现会标明未送达并指出会话名称；在 SDK 会话中，Claude 现可在轮次中途感知该状态
+- 修复了在 `-p` 和 SDK 会话中以及 PreToolUse 钩子批准时，OpenTelemetry 的 `claude_code.tool.blocked_on_user` spans 报告 `unknown` 来源或决策的问题
+- 修复了在 `-p` 或中断轮次中未作答即结束的权限请求未触发 `tool_decision` 事件的问题
+- 修复了 Cowork 云端会话中的编辑与重试（Edit and Retry）拒绝处理 `/compact` 之前发送的消息的问题，尽管其历史记录仍有保存
+- 修复了无人值守会话（`CLAUDE_CODE_RETRY_WATCHDOG`）在极长的响应流失败后持续重试数小时的问题；Claude Code 现会重新建立流式传输，并在三次超时后放弃重试
+- 修复了凭据无法保存到安全存储时 `/login` 仍提示“Login successful”的问题；现会显示失败原因，并在新登录未生效时提供重试选项 (anthropics/claude-code#73861)
+- 修复了在 Bedrock 凭据查找期间点击 Stop 有时会将发往降级模型而非直接结束请求的问题
+- 修复了当笔记本电脑从休眠唤醒且另一个 Claude Code 进程正在登录时，会打开多余的第二个 `gcpAuthRefresh`/`awsAuthRefresh` 浏览器登录页面的问题
+- 修复了智能体团队（agent teams）问题：按名称生成的插件定义智能体现会使用自有的提示词、工具、disallowedTools 和 effort，而非默认配置
+- 修复了当类似 `timeout` 或 systemd 的监控进程在发送 SIGTERM 的同时也发送 SIGCONT 时，无头（`-p` / SDK）会话偶尔会忽略 SIGTERM 的问题
+- 修复了重启后的云端会话会恢复已被组织强制模型列表拒绝的模型的问题
+- 修复了当远程服务器返回结果超过 16 MB 或无法解析时，MCP 工具调用有时会重复执行两次的问题
+- 修复了 Claude Desktop 的 Code 选项卡中的子智能体无法获取名为 `memory` 的用户配置 MCP 服务器工具的问题
+- 修复了在自动模式不可用（如设置了 `disableAutoMode` 或使用旧模型）时，Claude in Chrome 在已允许的网站上每次截屏和读取页面都会弹出确认提示的问题；键盘输入、导航和 JavaScript 执行仍需提示
+- 修复了在未配置 GitHub SSH 密钥的 macOS 和 Linux 机器上，`claude plugin install` 安装 GitHub 源插件失败的问题：克隆操作现会降级回退至 HTTPS 并输出通知
+- 修复了当启用了 `permissions.blockReadsOutsideWorkingDirectories` 时，针对 git 配置文件设置的 `sandbox.credentials.files` 项无法生效的问题
+- 修复了在 Team 和 Enterprise 方案或具备托管设置的机器上，使用 Artifact 工具制作幻灯片或设计稿时，Claude 会遗漏组织设计规范（design systems）的问题
+- 修复了 Claude Code 自行重启（首次登录 Claude 应用网关、提供商配置、`/tui`）后 Windows 上键盘失效的问题
+- 修复了启动 `tools:` 中列出大量 `Agent(...)` 条目的智能体时界面卡死的问题
+- 修复了在整份 PDF 载入对话后，Claude 3 Opus 和 Claude 3 Sonnet 上的会话每轮均告失败的问题
+- 修复了当平台原生二进制文件下载失败且仅安装了占位用的 `claude` 存根时，npm 自动更新器仍报告成功的问题
+- 修复了 Remote Control 清理操作归档仍处于连接状态或刚被另一个 Claude Code 进程重新附加的会话的问题
+- 修复了 `owner/repo` 插件市场在 SSH 和 HTTPS 拉取均失败时仅显示第二次尝试错误的问题；现会同时显示两处错误，并将首选传输协议的错误置顶显示
+- 修复了当 Write 或 Edit 在其范围内创建或修改文件时，按路径限定作用域的 `.claude/rules` 及嵌套 CLAUDE.md 文件未能加载的问题（此前仅 Read 会触发加载）
+- 修复了在 bypassPermissions 模式或 shell 放行规则下，`bash -c` 或 `sh -c` 脚本内危险的 `rm` 命令（如针对 `/` 或家目录）无需确认即可运行的问题 (anthropics/claude-code#96300)
+- 修复了当语言服务器使用动态功能注册或停止响应时，LSP 工具调用无限挂起的问题；请求现会在 60 秒后超时（遵循每服务器的 `requestTimeout` 设置）
+- 修复了后台智能体仍在运行时触发 `idle_prompt` 通知钩子的问题 (anthropics/claude-code#93672)
+- 修复了当匹配失败或工具输入无法序列化为 JSON 时跳过 PreToolUse 和 PermissionRequest 钩子的问题；此类调用现会被拦截
+- 修复了在全新环境或切换模型后的首次请求中使用内置输出上限和自动压缩窗口而非服务器配置的问题；该请求现最多可能等待 1.5 秒
+- 修复了使用 ctrl+enter 发送排队消息后，Interrupted（已中断）行仍显示“What should Claude do instead?”提示的问题
+- 修复了 `--bare` 会话中的 `/login` 会执行该会话从未读取的登录流程，进而可能覆盖已保存登录凭据的问题；现会明确说明当前有效的凭据
+- 修复了当子智能体访问文件加载规则或嵌套 CLAUDE.md 时，InstructionsLoaded 钩子遗漏 agent_id 和 agent_type 的问题；文件访问加载的规则和嵌套 CLAUDE.md 文件现也会上报 effort
+- 修复了 `claude mcp serve` 中的 Agent 工具始终报告无可用智能体并拒绝所有 subagent_type 的问题
+- 修复了全屏转录记录查看器的搜索框以及 `/theme` 的自定义颜色搜索中终端光标不跟随键入文本移动的问题
+- 修复了屏幕阅读器模式下的 `/permissions` 问题：输入规则编号现会直接选择该规则，而非打开搜索框
+- 改进了自动模式：当对话长度超出客户端安全分类器的审查能力时，系统现会对其进行压缩，而非针对每次工具调用都弹出确认或直接报错
+- 改进了屏幕阅读器模式：较短的播报（例如删除单词）现会在屏幕上持续保留，直到按下下一个按键或屏幕上方内容发生变化
+- 改进了屏幕阅读器模式：问题对话框中已回答的问题现会在输入框旁提示“answered”
+- 改进了向所在组织已关闭用量额度申请的 Team 和 Enterprise 成员展示的 `/usage-credits` 提示信息
+- 改进了云端会话：新对话的首轮交互不再等待配置了 `alwaysLoad: false` 的 stdio MCP 服务器
+- 改进了“You should know”提示说明，根据决策责任方分别显示为“we”、“the main agent”或“you”
+- 改进了工件（artifact）数据库写入因达到大小上限而被拒时的错误提示：现会明确指出限制大小以及释放空间的方法
+- 改进了 Bash 权限提示，当命令的部分内容在运行前无法完成检查时，提供更为简要的说明原因
+- 自托管 Runner：改进了内置 `gh api`：被拒绝的 gh 命令现会输出对应的 `gh api` 等效命令，`--paginate` 支持遍历仓库列表的所有分页，且嵌套执行 `claude` 不再会将其移除
+- 改进了 Remote Control 从服务器凭据过期状态中的恢复能力：刷新期间会话保持连接，若因服务器宕机放弃重试，会话仍会被保留
+- 将后台命令执行时间限制调整为仅适用于无人值守会话（`-p`、Agent SDK、CI、云端）；终端、桌面应用和 VS Code 会话不再受限
+- 将客户端自动模式分类器调整为忽略指向 Claude Sonnet 5.5 或 Opus 5.5 的 `ANTHROPIC_DEFAULT_SONNET_MODEL` 固定版本设置，改为使用 Claude Sonnet 5
+- 将 `claude project purge` 更改为 `claude purge`；旧命令仍可使用并会输出提示
+- 调整了智能体视图中的 `n:` 过滤器（及 Ctrl+F 搜索），按 Enter 键将打开名称匹配度最高的会话，而非首行会话
+- 将 `/autocompact` 更改为按模型保存自动压缩窗口，切换模型时各自保留独立配置
+- 调整了无法报告操作完成状态的 MCP 服务器 URL 提示，改为等待确认“I'm done, continue”后再继续执行工具调用，以便用户先在浏览器中完成操作
+- [VSCode] 修复了授权后 claude.ai 连接器仍卡在“Needs authentication”的问题：MCP 服务器对话框现提供 Check connection 选项
+- [VSCode] 修复了可选的“新建对话”快捷键（Cmd/Ctrl+N）会在所有可见的 Claude 视图中启动对话而非仅在当前活动视图中启动的问题
+- [VSCode] 修复了聊天视图在归档当前展示的会话后会自动恢复下一个已保存会话的问题；现会改为启动新对话
+- [Cloud sessions] 修复了在某项不相关的安全设置正在加载或加载失败期间，Claude Code 管理设置中的 Cloud sessions 开关持续锁定在关闭状态的问题
+- [Cloud sessions] 修复了在自托管 runner 仍在启动期间点击 Stop 未能取消已排队消息的问题，该消息此前可能会在 runner 启动就绪后继续执行
+- [Claude Tag] 修复了在设置系自动创建的频道上，Claude Tag 管理设置仍提供“Remove this scope”选项（且点击始终失败）的问题
+- [Claude Tag] 改进了 Claude 的上下文追踪能力：现可同步追踪其仅拥有读取权限的其他频道中的相关 Slack 线程，使该线程的更新能同步到依赖它们的对话中
+- [Claude Tag] 改进了频道 Configure 页面上的保存错误提示：频道指令过长时现会提示缩减长度，因失去访问权限而被拒的保存操作不再提示重试
+- 修复了当 `claude plugin test` 仅读取了过期的保存设置时，错误报告 mods 已在远端关闭的问题
+
+## 2.1.287 (2026-10-01)
+
+- 新增 Claude Mods：插件现在可以修改更深层的行为
+- 新增 You should know，这是一个内置 mod，后台 agent 会为你保驾护航，指出你或 Claude 可能遗漏的事项。可通过 `/plugin enable cc-plugin-you-should-know@builtin` 开启（适用于开启遥测的第一方会话）
+- 在 agents 视图中为匹配会话名称和任务新增了 `n:<text>` 过滤器；过滤器现在会在折叠区域中显示匹配项，按 Enter 即可打开第一个匹配项
+- 在 OpenTelemetry 的 `user_prompt` 事件中新增了 `prompt_text`（即 `prompt` 的副本，适用于嵌套点号键的后端）；在任何丢弃或屏蔽 `prompt` 的地方，也请丢弃或屏蔽它 (anthropics/claude-code#70763)
+- 基于 2025-11-25 协议新增了来自 MCP 服务的 URL 提示（例如用于登录）。如果更新后服务器无法连接，请在其 MCP 配置项中添加 "bareElicitationCapability": true
+- Windows：新增了启动警告，当拒绝 Bash 工具同时导致 PowerShell 工具关闭时触发，以防 Claude 没有可用的 shell 工具
+- 自托管 runner：为在未安装 GitHub CLI 的 macOS 和 Linux 机器上使用 Anthropic 托管 git 的会话新增了内置 `gh api`（仅限 REST）
+- 修复了在无用户帐户的 agent 所拥有的远程会话中，即使组织允许，fast 模式仍保持关闭的问题
+- 修复了当重新连接请求未收到响应时，Remote Control 会数分钟接收不到消息的问题；现在会在 30 秒后放弃并重试
+- 修复了配置有 `asyncRewake` 的 hook 在脚本文件丢失时，会不断用 "found issues" 通知唤醒 Claude 的问题；现在损坏的 hook 仅报告一次
+- 修复了当模型的响应流停滞且无数据到达时，工具心跳无法送达 SDK 主机的问题
+- 修复了 Bedrock 和 Vertex 启动时的模型检查忽略强制 `availableModels` 列表的问题，该问题可能导致 `/model` 折叠为仅剩一行 Opus
+- 修复了在无法连接 Chrome 时，Claude in Chrome 浏览器选择器显示 JSON 解析错误的问题
+- 修复了通过 claude.ai 登录时在 `/model` 中选择 Fable 会保存当前版本 ID 的问题，现在保存的默认值会像 Opus 和 Sonnet 一样跟随最新的 Fable
+- 修复了在 Opus 5.5 和 Sonnet 5.5 之间切换（`/model`、`opusplan`）时重写先前的 MCP 工具声明，从而可能丢失先前 extended thinking 的问题
+- 修复了在回复以 thinking 开头时，响应途中到达的 Amazon Bedrock Guardrails 拦截会导致回合以 API 错误而非护栏消息结束的问题
+- 修复了危险的 `rm`（如针对 `/` 或主目录）在同一命令将输出重定向到 `~` 或通配符路径时丢失“始终询问”保护措施的问题
+- 修复了在回复生成过程中切换模型后，`claude -p` 和 SDK 会话会在后续每条消息上重复模型回退的问题
+- 修复了在恢复会话或压缩（compaction）后，目录的 CLAUDE.md 会被重复附加的问题
+- 修复了后台会话在 agent 退出并移除会话启动时所在的工作区（worktree）后，无法从 `claude agents` 重新打开的问题
+- 修复了 `/advisor` 配对检查：Sonnet 5.5 现在可以指导 Opus 4.7 和 4.8，且 API 会拒绝的 advisor 会在前期标出，而不是被静默忽略
+- 修复了 Bash 权限提示显示内部解析器名称（如 "Contains simple_expansion"）而非清晰解释的问题
+- 修复了在较慢或繁忙的机器上，长对话中按住滚动键时全屏会话因 "Claude Code exited after an unrecoverable interface error" 退出的问题
+- 修复了针对名为 `__proto__` 的 MCP 工具，组织级别的每个工具权限上限被静默忽略的问题
+- 修复了 Claude 被提示使用 Read 的 offset 和 limit 来对保存为 JSON 的大型 MCP 结果进行分页的问题，该方式无法拆分单行长文本
+- 修复了提交归属（commit attribution）提醒在压缩后被作为工具结果发送的问题
+- 修复了屏幕阅读器模式下，搜索框（如 /resume 和 /permissions）和登录验证码输入框中的光标偏离所键入文本的问题
+- 修复了屏幕阅读器模式下，在未输入任何内容时按 Enter 键会被 /rewind 的总结选项拒绝的问题（其补充上下文为可选输入）
+- 修复了屏幕阅读器模式在审批提示上显示 "Tab to amend" 提示的问题，此时 Tab 键无任何操作
+- 修复了屏幕阅读器模式在 /permissions 和 /mcp 中列出无操作的方向键，并在菜单为空或搜索框占用按键时朗读 "Select with numbers" 的问题
+- 修复了屏幕阅读器模式在文件编辑审批提示和其他 diff 中遗漏变更行的问题
+- 修复了屏幕阅读器模式在每个加载动画帧重复将 `claude --teleport` 进度界面以及正在检查的 MCP 表单字段发送给屏幕阅读器的问题
+- 修复了 `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` 未从会话标题和 prompt-hook 请求中移除结构化输出格式的问题（Bedrock 支持的网关会拒绝该格式）
+- 修复了当前一屏高度超过终端窗口时，屏幕阅读器模式遗漏第二个审批提示的顶部行、变更的 /config 行或拒绝计划行的问题
+- 修复了 `--include-partial-messages` 过晚或从不发送被截断回复的 `message_stop`，导致应用可能显示回复仍在进行中的问题
+- 修复了 `claude agents` 有时无法显示后台会话正在等待的权限提示的问题
+- 修复了当上传由于无法读取已提交的 `.gitattributes`（例如保存为 UTF-16）而中止时，`/ultrareview` 提供有关 `.git/info/attributes` 建议的问题
+- 修复了 `claude remote-control` 在 HTTP 代理后注册失败并显示误导性错误 "Check your organization permissions" 的问题 (anthropics/claude-code#97352)
+- 修复了 Linux 上沙盒化的 Bash 命令继承 Claude Code 可执行文件的打开句柄的问题
+- 修复了开启“减少动画”（Reduce motion）设置时工具运行点和三个加载图标仍在移动，以及在键入备注时 /rewind 确认屏幕仍在更新其 "ago" 时间的问题
+- 修复了屏幕阅读器模式下 `claude agents` 中的时间每秒变化一次的问题；现在最多每 10 秒变化一次
+- 修复了已吊销的 claude.ai 登录显示通用的 `API Error: 401` 而非 "OAuth token revoked" 的问题；在 `-p` 模式下，该错误现在以 "Failed to authenticate" 开头
+- 修复了 `/ultrareview` 上传被拒时建议你将仓库设置文件中指定的变量复制到个人用户设置中的问题
+- 修复了通过键入 `/<skill>` 作为 prompt 运行带有 `context: fork` 的 skill 时，`--output-format stream-json` 和 SDK 未像 Skill 工具的 fork 那样流式传输回合内容的问题
+- 修复了 /feedback 和 /bug：预填的 GitHub issue 不再包含你近期的错误信息，确认屏幕现在将它们作为报告的一部分列出
+- 修复了当仓库通过纯 http 提供服务时，`claude plugin marketplace add --sparse` 和 `git-subdir` 插件安装失败并提示 "transport 'http' not allowed" 的问题
+- 修复了云端会话在正在压缩时发生重启可能丢失早期对话的问题
+- 修复了与启动时的 `--plugin-url` 下载重叠的插件重新加载导致损坏会话缓存的插件归档副本的问题
+- 修复了在打开 Claude Desktop 超时或输出过多内容时，`/desktop` 引用部分输出的问题；错误信息现在会指明原因
+- 修复了当 MCP 连接器服务端更改其支持的 MCP 协议版本时，连接器工具调用偶尔执行两次或连接器调用失败直至重启的问题
+- 修复了同步插件的 SessionStart hook 在新的云端会话中不运行的问题
+- 修复了 transcript 的 "N hooks ran" 摘要和详细调试日志中的匹配 hook 计数包含 Claude Code 内部回调，导致配置的一个 hook 显示为两个的问题
+- 修复了 Claude 从云端和 Remote Control 会话发送的文件在上传刚好超过 30 秒超时完成时失败的问题；现在等待 35 秒
+- 修复了在云端和 SDK 会话中途添加的仓库在 Claude 更改目录后未加载其 skill 和插件，且加载 CLAUDE.md 延迟的问题
+- 修复了单边超过 8,000 像素的 PNG、JPEG 和 WebP 图像无法从远程会话发送的问题；Claude 现在会发送按比例缩小的副本
+- 修复了从 Claude 应用发送带有 17 到 20 个附件文件的消息时仅送达前 16 个的问题
+- 修复了 headless 会话在一次调用被拒后将 MCP 服务器报告为需要身份验证的问题，即使后续调用成功也是如此
+- macOS：修复了使用 `claude remote-control` 启动的 Remote Control 会话在 Mac 进入空闲睡眠时在回合途中停止的问题
+- Windows：修复了当输入被管道传输或重定向时，交互式 `claude` 挂起或崩溃并提示 "Raw mode is not supported" 的问题；现在会说明原因并退出（管道输入请使用 `-p`）
+- Bedrock、Vertex、Mantle：修复了在 `CLAUDE_CODE_SKIP_*_AUTH` 下模型可用性检查在 `ANTHROPIC_CUSTOM_HEADERS` 重复设置时发送与实际请求不同的 `Authorization` 请求头的问题
+- 改进了 `/config`：可循环切换的设置项显示 ‹ › 并可通过 ←/→ 双向调节，窄终端会将各值垂直排列在其标签下方，PgUp/PgDn 可对列表进行翻页
+- 改进了插件市场错误提示，用通俗语言说明市场被忽略或拒绝的原因以及应对措施
+- 改进了插件列表，注明插件依赖项未安装的情况，且更新插件现在会重试未完成的安装
+- 改进了 Amazon Bedrock 拒绝模型 ID 时 Claude 应用网关的错误提示：开发者现在可以看到哪个模型不可用，且网关日志会指出发送的 ID
+- 改进了 SDK 会话，以优先级 "now" 发送的消息不再取消正在运行的网络抓取或网络搜索；它们会继续在后台加载
+- 改进了 `/memory`：左右方向键现在可以切换其开关设置，例如 Auto-memory
+- 改进了在消息中间输入的 `/skill` 名称：Claude 现在会被告知它们是 skill，包括配置为 `disable-model-invocation` 的 skill
+- 改进了浅色主题下 prompt 输入边框以及早期消息前面的 ❯ 符号的对比度
+- 改进了 Claude 从云端会话和 Remote Control 发送文件的传输：因超时、网络错误或 502、503、504 导致失败的上传现在会重试一次
+- 改进了当文件因可能暂时的原因无法发送时 Claude 的说明：现在会提示你可以在几分钟后再次索取该文件
+- 改进了来自其他会话的保留消息的提示，在虚线之间显示该消息，与其他权限提示保持一致
+- 改进了 MCP 和其他工具的权限提示，在虚线之间显示工具调用，与文件编辑提示保持一致
+- 改进了 headless 模式下的 MCP 启动：首次连接出现临时失败的远程服务器现在会立即重试，而无需等待最慢的服务器完成连接
+- 改进了 Claude 从远程会话发送的文件：大文件现在从磁盘流式传输而不是读取到内存中，且超过大小限制的文件会被拒绝并指明服务器的限制
+- 改进了当服务器拒绝从 Remote Control 或云端会话发送的文件（如超大图像）时 Claude 给出的解释
+- 改进了大型 MCP 工具结果的处理：更低的内存占用、更小的会话文件，且对于远超限制的结果无需额外上传来统计 token
+- Windows：通过移除在每个命令前运行的 subshell 提升了 Bash 工具的速度
+- 更改了通过仓库提交的软链接向敏感文件或工作树外部进行的 shell 写入行为，现在会指明写入位置并等待人工确认，针对目标包含 `~` 的行亦是如此
+- 更改了 Opus 4.7+ 和 Fable 在 Bedrock、Vertex、Foundry 和 Claude 应用网关上默认使用 1M 上下文窗口，无需 `[1m]` 后缀（`CLAUDE_CODE_DISABLE_1M_CONTEXT=1` 可保留 200K）
+- 更改了来自 `claude agents` 的回复，使其作为排队消息到达；在回合运行期间发送的除 `/stop` 以外的 slash 命令现在会在回合结束时运行
+- 更改了针对整个工具的 `Bash` 允许规则和允许 hook，对于 Claude Code 文件工具直接拒绝的文件（Anthropic 配置存储、主机凭据文件），改为提示进行确认，而非直接执行写入
+- 更改了 Windows 和 Linux 上的右键粘贴以及 Linux 上的中键粘贴，使其在按键释放时触发；在释放前移开指针可取消粘贴
+- 更改了 MCP 服务器的 `alwaysLoad: false` 设置，将其所有工具延迟到工具搜索后加载
+- 更改了屏幕阅读器模式，在写入新增或更改的行时不再先将光标停顿在行首；设置 `CLAUDE_AX_PREPARK_MS=50` 可恢复该停顿
+- 更改了消息被标记后的自动模型切换逻辑，保留你当前的 effort 级别，而非使用新模型的默认值
+- 更改了等待中的权限提示以按从旧到新的顺序显示，新提示不再遮盖你正在阅读的提示（带有倒计时的提示仍会在最上层打开）
+- [VSCode] 为正在运行的命令或子 agent 新增了 "Run in background"，可将其转入后台并继续工作
+- [VSCode] 在 agent 地图的卡片中新增了后台 shell 和 Monitor 的输出
+- [VSCode] 修复了当 Claude Code 的回复过大而无法确认保存时，设置对话框报错为超时的问题
+- [VSCode] 修复了重新打开侧边栏已拉取到本机的云端会话时会在新标签页中再次打开的问题；现在改为显示侧边栏
+- [VSCode] 修复了侧边栏 Web 标签页未列出窗口加载后启动的云端会话的问题；加载失败现在显示 "Remote server is not connected" 而非 "No web sessions yet"
+- [VSCode] 修复了重载后恢复的标签页在侧边栏已打开的对话上启动第二个 Claude 进程的问题；现在会显示 "still open somewhere else" 通知
+- [VSCode] 修复了工具行的文件链接、会话列表链接和两个提示显示为纯文本的问题
+- [VSCode] 修复了后台 agent 仍在运行的命令在主回合结束后显示为失败的问题
+- [VSCode] 修复了从命令菜单中选取用户自己的 `/usage` 或 `/context` 命令时会打开扩展对话框而非直接运行的问题
+- [VSCode] 修复了计划预览标签页中的文件链接点击无效的问题；现在会像聊天回复中的链接一样打开文件
+- [VSCode] 修复了在 WSL 等远程主机上，当编辑器标签页打开缓慢时，在编辑器标签页中打开工具输入或输出会报错 "Timeout waiting after 1000ms" 的问题
+- [VSCode] 改进了 Manage plugins 对话框：市场添加、删除或刷新失败时现在会说明错误原因
+- [VSCode] 更改了 Claude in Chrome 的 "Enabled by default" 开关，使其同时连接编辑器自身的会话，但在浏览器执行操作前仍会询问
+- [Cloud sessions] 修复了当 GitHub 短暂拒绝新签发的访问令牌时，偶尔无法从 GitHub 拉取或推送到 GitHub 的问题
+- [Claude Tag] 修复了当 GitHub 活动等后台事件唤醒 Claude 且无人等待回复时，Claude 会在 Slack 话题中发布失败警告（如支出上限通知）的问题
+- [Claude Tag] 修复了在拥有众多频道的组织中，管理设置中的 Claude Tag 支出上限页面遗漏新创建频道和私有频道的问题
+- [Claude Tag] 改进了长 Slack 话题中的 Claude 任务列表：后台任务不再自行将其作为新消息重新发送，以免提醒关注该话题的人员
+- [Code Review] 修复了发现的评论及其 "Why this was flagged" 文本在句中截断的问题；现在均以完整句子结尾
+- [Code Review] 修复了当 Code Review 在前一个提交上失败两次后，在有新 push 时跳过 Pull Request 的问题；现在会审查最新的提交
+- [Code Review] 改进了处于锁定状态的 Pull Request 上的失败审查卡片：现在会说明锁定阻止了审查，且未发布任何内容或产生费用
+
+## 2.1.286 (2026-09-30)
+
+- 当多个权限请求堆叠时，在权限提示中添加了类似“2 of 5”的计数显示
+- 在全屏模式下为列表的“N more”行添加了鼠标支持：点击某一行可直接跳转到列表的对应末尾，支持悬停与按下状态
+- 修复了当 gcpAuthRefresh 或 awsAuthRefresh 凭据过期时，多个 Claude Code 进程与 IDE 插件会各自打开一个登录浏览器的问题
+- 修复了若较早的会话崩溃或被终止，`claude --resume` 和 `--continue` 有时会在一批并行工具调用后丢失后续所有轮次的问题
+- 修复了工具或 hook 返回对象、数字或布尔值而非文本后导致 API 400 错误的问题（包括在已恢复的会话中）
+- 修复了拥有海量历史记录的云端会话因容器在转录加载期间停止而永远无法唤醒的问题
+- 修复了 Claude 应用网关的支出计量器将 1 小时 prompt 缓存写入错误计为更便宜的 5 分钟费率，且在运行服务端工具（如网络搜索）的流式轮次中仅计算第一次模型调用的输入 token 的问题
+- 修复了当残留 `~/.claude/.credentials.json` 文件存在时，在另一个 Claude Code 窗口中成功执行 `/login` 后，macOS 会话仍显示“Not logged in”或“Login expired”的问题
+- 修复了当 Anthropic API 拒绝默认模型或模型别名解析到的模型时所有轮次均告失败的问题：Claude Code 现会对同级别的上一代模型重试一次
+- 修复了在组织策略关闭 Remote Control 后，Remote Control 会话（包括 `claude remote-control`）仍保持连接的问题；现在它们会断开连接并显示通知
+- 修复了当 fallback 模型无法快速运行时，拒绝重试和 `--fallback-model` 重试失败的问题；现在它们以标准速度运行，并在交互式会话中提供一次性通知
+- 修复了启用 MCP 发现缓存时，无头（headless）会话在重新认证成功后仍重复提示“MCP servers require authentication”的问题
+- 修复了 `claude auth status` 将 Console 登录存储的 API key 报告为 `claude.ai` 的问题；现在它会报告为 `api_key`，且 VS Code 插件会将该会话视为 API key 会话
+- 修复了 `/status` 在 API key 旁列出 Anthropic profile 导致看似两者同时生效的问题；该 profile 现在会被标记为未在使用
+- 修复了通过 Remote Control 发送的消息所附带的文件未能送达时未通知 Claude，以及文件最后一次下载尝试有时只有 10 秒超时的问题
+- 修复了在 Claude Code 退出时送达的 Remote Control 消息被标记为已送达但随后从未得到回复的问题；现在它会保持排队状态等待会话下次运行
+- 修复了当“Bearer”或“Basic”位于凭据键名之前时，MCP 错误消息会暴露凭据值的问题
+- 修复了经百分比编码的 Bearer token 在错误消息中仅被部分脱敏的问题
+- 修复了脱敏日志和转录中仍会显示键名包含零宽空格等不可见字符的密钥的问题
+- 修复了日志和转录中会显示 URL 密码部分内容的问题，涵盖密码包含 `)`、引号、`]`、`&` 或第二个 `@` 等标点，或在 ssh URL 中延伸越过 `/` 到 `[::1]` 等括号包裹的主机名的情况
+- 修复了 `/feedback` 保存到磁盘的 zip 包中，会话转录在密钥脱敏后包含无效 JSON 行的问题
+- 修复了在 MCP 服务器放弃旧版 MCP 握手后，MCP 连接器长达一天不列出任何工具的问题
+- 修复了来自 Claude 的重复 MCP 登录请求会覆盖待处理登录链接，导致该链接可能失效的问题
+- 修复了在 MCP 服务器仍处于连接中或刚连接完成（例如刚重启后）时发起的工具调用，`/usage` 未将其计入该服务器使用量的问题
+- 修复了在出现瞬态服务器错误后，claude.ai 上启用的插件偶尔会在某次会话中从 Claude Code 消失的问题
+- 修复了在运行中的子代理中输入的消息在子代理读取后，会在其转录中重复显示两次的问题
+- 修复了当子代理没有注册名称时，子代理移交（hand-back）消息显示原始任务 ID 而非代理名称的问题
+- 修复了在前台子代理中，即使会话已启用任务跟踪工具（TaskCreate/Get/Update/List、TodoWrite），这些工具偶尔仍会缺失的问题
+- 修复了使用 worktree 隔离创建的子代理在首次读取文件时，会从 worktree 副本中二次加载项目 CLAUDE.md 及其导入内容的问题
+- 修复了当连接在响应中途中断几分钟时，Workflow 工具子代理会从最初的 prompt 重新启动的问题
+- 修复了在查看后台代理或团队成员的转录时输入 `/compact`、`/clear` 和 `/rewind` 会静默作用于主对话的问题：现在会弹出对话框指明目标并预先确认
+- 修复了后台作业在等待您的审批时显示为已完成的问题
+- 修复了当模型 fallback 仅持续一轮时，commit 署名提醒会在工具输出中被重复发送的问题
+- 修复了在全屏模式下点击折叠行（如“Thought for 4s”）的字词间隙会高亮该行却不展开的问题
+- 修复了在列表界面中，无详情的行（例如名称较长的操作行）会将其他所有行的详情向右挤压的问题
+- 修复了名称极长的文件附加到云端会话时无法送达的问题
+- 修复了 Claude Code 拒绝加载某个 marketplace 时的插件错误：现在会说明原因和修复方法，而非仅提示“not found”
+- 修复了 `/plugin` 的 Discover 标签页在“Checking … for new plugins”一行中显示未加引号的 marketplace 名称，而下方各行已对该名称加引号的不一致问题
+- 改进了 commit 引导：当您的项目或用户 skills 中包含名为 `verify` 的 skill 时，现在会告知 Claude 在 commit 前执行它（纯文档和纯测试 commit 除外）
+- 改进了子代理视图中的立即发送功能（ctrl+enter）：现在会将子代理正在运行的命令转至后台，以便立即读取您的消息
+- 改进了后台代理对您消息的回复：不再在开头单独复述您所说的话
+- 改进了 claude.ai artifact 链接读取：WebFetch 现在会询问与 Artifact 工具读取相同的问题（会话网络访问开启时不提示 artifact，关闭时每个 artifact 提示一次），且在仅限人工回答处不再计入 auto-mode 的 yes
+- 改进了 fetch、skill、文件读取、沙箱网络、Claude in Chrome、workflow 脚本以及 notebook 编辑的权限提示，使其外观与文件编辑提示保持一致
+- 改进了 Bash、PowerShell 和 Monitor 权限提示：在虚线之间展示命令，与文件编辑提示保持一致
+- 改进了全屏模式下的列表滚动条：在大多数列表中，滚动条不再随“N more”行的出现与消失而发生偏移，现已提供可点击或按住以滚动的 ↑/↓ 箭头
+- 改进了外部编辑器调用（Ctrl+G）：支持行号参数的编辑器现在会直接在 prompt 中光标所在的行打开
+- 改进了安装大量 skill 或插件命令时键入斜杠命令建议的响应速度；命令描述现在按词前缀进行匹配
+- 改进了输出样式选择器：现在会直接定位到您当前的样式而非 Default，每个样式的描述显示在其名称下方的行中；数字键不再用于选择样式
+- 改进了 `/hooks`：hook 详情界面的结束语现显示为“this hook”而非“it”
+- 改进了模型 fallback 通知和 autocompact 颠簸错误提示，指明 fallback 是否已将上下文窗口从 1M 降至 200K token
+- 改进了当宿主为已连接的服务器重新发送 MCP 服务器启用请求时，SDK 和 `-p` 会话的响应速度
+- 改进了 Claude 应用网关在 `/protocol` 提供的协议页面：现在明确指出不要拒绝未知输入，并与 Claude Code 当前发送的内容保持一致
+- 更改了在没有任务运行或排队时发送 prompt 的显示效果：立即显示为正常文本颜色，不再显示为灰色
+- 更改了失败 API 请求的重试机制：现在单个上限覆盖整个模型调用，因此在默认重试设置下，失败的调用最多发送 14 次请求
+- 更改了 `--bare` 行为：仅连接命令行中指定的 MCP 服务器，不向模型发送系统提醒，且不启动后台任务；在 `--bare` 下，达到超时的 shell 命令现在会直接停止而非转入后台
+- 更改了立即发送快捷键（ctrl+enter）：将 skill 自身的 shell 命令转入后台而非直接终止
+- 更改了域名安全检查遭遇速率限制时的 WebFetch 错误：告知 Claude 不要循环重试
+- 更改了插件安装规则：拒绝使用作为 git 仓库或文件夹的 npm 源，且仅从 registry 包中安装插件依赖
+- 更改了列表界面（`/artifacts`、`/mcp`、`/skills`、`/hooks` 等）：始终将每行的详情对齐在名称后的一列中
+- 更改了列表的溢出提示行：显示为“↑ N more” / “↓ N more”，代替原有的“N more above” / “N more below”
+- 更改了 `/hooks`：打开即显示按事件分组的已配置 hook 单一列表，查看 hook 只需按一次 Enter 而非三次
+- 更改了主题选择器：改为适配终端尺寸的滚动列表，避免将预览内容挤出屏幕；数字键不再用于选择主题
+- 更改了 `/exit` 的 Remove worktree 逻辑：在 Claude Code 停止其在其中启动的服务器和 shell 之后执行，避免在 Windows 上因占用导致文件夹无法删除
+- 更改了 `claude-api` skill 的 Managed Agents 示例：创建受限网络环境
+- 移除了 `/ultrareview` 和 `claude ultrareview` 输出中的浏览器链接
+- Windows：修复了当 trust 记录以不同大小写保存时，`claude --bg` 和代理视图会拒绝 `claude` 已经信任的文件夹的问题
+- [VSCode] 新增书签功能：保存 Claude 的回复并将其常驻于 Bookmarks 侧边栏面板中
+- [VSCode] 在对话中加入了 Claude 提出的问题及您的回答：回答问题卡片后，Questions 行会显示每个问题及您的选择
+- [VSCode] 在聊天面板的问题卡片中新增选项预览：高亮选项的 mockup 或代码片段会显示在各选项旁边或下方
+- [VSCode] 在消息下方新增行展开项：可展开查看随消息一同发送的终端输出、浏览器标签页、浏览器指令以及选中的代码
+- [VSCode] 修复了当对话已在侧边栏打开时，标签页中又重复打开该对话副本的问题；侧边栏现在会直接切换至该对话
+- [VSCode] 修复了当 Claude Code 输出超过 1 MB 时，设置对话框未重新检查即报错保存失败的问题
+- [VSCode] 修复了插件停止响应时无限显示“Teleporting session…”加载指示器的问题
+- [VSCode] 改进了 Manage plugins 对话框：提示已关闭的插件为何仍因其他设置保持开启，并解释插件文件夹冲突原因
+- [VSCode] 更改了 Stop 和 Escape 行为：仅终止当前轮次；后台代理将继续运行，并可在 agent map 中逐个停止
+- [VSCode] 更改了状态栏项“✻ Claude Code”：使其在每个窗口中均显示，即使未打开任何文件也可启动 Claude
+- [Cloud sessions] 修复了当 Claude 发送消息后会话变为空闲时，已回答的问题卡片或已批准的工具调用无法获得回复的问题
+- [Cloud sessions] 修复了在管理员设置中清除组织环境的 setup 脚本后，新的云端会话仍会运行旧脚本的问题
+- [Cloud sessions] 修复了自托管环境管理页面上的 Runner actions 菜单在打开数秒后自动关闭的问题
+- [Cloud sessions] 修复了云端会话从未启动的 routine 运行在 Runs 面板、routine 页面和侧边栏中显示为 Succeeded 的问题；现在它们会正确显示为 Failed
+- [Cloud sessions] 修复了在云端会话的 Outputs 卡片中点击音频或视频文件时会打开空白文件搜索而非播放文件的问题
+- [Cloud sessions] 更改了 routine 页面：当计划运行延迟且尚未启动时，显示带有计划时间的“Due”，而非显示已过去的下次运行时间
+- [Claude Tag] 在管理员设置的 Claude Tag 支出上限页面中添加了 Add channel 按钮，以便通过频道 ID 或 Slack 链接为任何频道（包括私密频道）设置上限
+- [Claude Tag] 修复了无法使用默认 Sonnet 模型的组织中记忆召回检索不到任何内容的问题
+- [Claude Tag] 修复了当 Enterprise Grid 管理员将 Slack 频道移至另一工作区且迁移后首条消息未提及 Claude 时，该频道会丢失 Claude 设置的问题
+- [Claude Tag] 修复了在 Slack 线程中当您的回复回答了 Claude 刚提出的问题时，Claude 偶尔会在全新机器上重新启动并丢失尚未推送的工作的问题
+- [Claude Tag] 修复了在较大型组织中，管理员设置的 Claude Tag 支出上限页面上公开频道名称显示为原始 Slack ID 的问题
+- [Claude Tag] 改进了 claude.ai 上显示的从 Slack 发起的会话标题：现在直接显示为您输入的文字，去除了 Slack 用户 ID 和转义代码
+
+## 2.1.285 (2026-09-29)
+
+- 新增 `CLAUDE_CODE_DISABLE_WEB_FETCH` 环境变量，用于关闭 WebFetch 工具
+- 新增 `claude --desktop` 命令，用于在当前目录下打开 Claude 桌面端应用，或通过 `--continue` / `--resume <id>` 打开指定会话
+- 新增 `claude plugin configure <plugin>`，用于查看插件的配置项及哪些项未设置，或通过 `--values-stdin` 从标准输入读取并保存新配置值
+- 在 `claude plugin install --config` 中支持 `<server>.<key>=<value>`，以便在安装时即可配置捆绑的 `.mcpb` MCP 服务自身设置，无需进入 `/plugin` → Configure 即可直接启动
+- 新增 `allowedProviders` 托管设置，用于限制机器可使用的 API 提供商（Anthropic API、自定义端点、Bedrock、Mantle、Vertex AI、Foundry、Claude Platform on AWS 或 Cloud 网关）
+- 新增 `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` 环境变量，用于限制超时的非流式回退请求的重试次数上限
+- 修复了设置 `CLAUDE_CODE_FORK_SUBAGENT=1` 时运行 `claude -p` 的问题：子 Agent 自身的 Agent 调用现在会在前台运行，使子 Agent 能够获取子调用的结果
+- 修复了通过 SSH 安装和更新插件及市场时忽略 `GIT_SSH` 或 git 配置中 `core.sshCommand` 所设 ssh 程序的问题
+- 修复了当操作系统拒绝读取托管设置文件时 Claude Code 拒绝启动的问题；现在会发出警告并在不加载该文件策略的情况下启动。其他读取错误和无法解析的文件仍会终止所有会话
+- 修复了对话压缩后重启的云端会话会拒绝后续对该会话已读取或发布的 artifact 进行更新的问题
+- 修复了使用完整 `name@marketplace` 标识运行 `claude plugin disable` 和 `enable` 时，修改了其他大小写形式的设置项而非已安装插件自身设置的问题
+- 修复了通过 Remote Control 发送的消息所附带文件在单次下载失败后被遗漏的问题；网络错误、超时或服务器错误现在最多会重试两次
+- 修复了会话途中通过 `set_model` 请求（例如 Agent SDK 的 `setModel`）切换模型时，新模型在重启前仍保留内置输出 token 限制和自动压缩窗口的问题
+- 修复了脱敏日志和记录中包含 `@` 的 URL 密码会被部分显示、或当 URL 将 `@` 编码为 `%40` 时会全部显示的问题
+- 修复了来自 worktree 和 `/teleport` 获取操作的 SSH 密码短语与新主机确认提示霸占终端的问题；这些获取操作现在会快速失败而非弹出提示
+- 修复了在 SDK 和 `-p` 会话中关闭会话途中添加的 MCP 服务后其工具仍可用的问题
+- 修复了 `claude -p --permission-prompt-tool` 的问题：后台子 Agent 的权限请求现在会发送给提示工具，而不是被自动拒绝
+- 修复了 `claude mcp list`、`claude mcp get` 以及 `claude mcp remove`、`login`、`logout` 的未找到错误会输出 MCP 服务名称和值中的换行符及终端转义序列的问题
+- 修复了沙箱自动允许机制仅因许多内联脚本（`python3 -c`、`node -e`）包含 `=` 就对其每次运行都要求确认的问题
+- 修复了 fork 的子 Agent 未保留会话的 plan 模式或 `dontAsk` 模式的问题：fork 现在在其父级的权限模式下运行，且无法退出 plan 模式
+- 修复了 `claude remote-control --help` 提示 `--[no-]chrome` 默认采用本机的 `/chrome` 设置的问题；派生的会话将保持 Claude in Chrome 关闭，除非传入了 `--chrome`
+- 修复了 auto 模式下的后台子 Agent 在每次报告后提示产生第二条多余回复的问题
+- 修复了云端会话创建和 `/remote-env` 仅读取账户下最新的 20 个环境的问题
+- 修复了 Remote Control 在消息到达时立即标记为已读而非等 Claude 开始处理时才标记，以及终端退出时丢失仍在队列中的消息的问题（现在会在下次恢复时送达）
+- 修复了使用 `claude plugin install` 或 `/plugin` 安装插件时，若与已安装插件的 ID 仅在 `.`、`-`、`@` 或大小写（macOS、Windows）上不同，会将其放入已有插件的缓存或数据文件夹的问题；此类安装现在会被拒绝
+- 修复了当 plan 在同一响应中写入时，hook 和 SDK 权限回调在 ExitPlanMode 时看到缺失或过期的 plan 的问题
+- 修复了云端会话中首条回复延迟数十毫秒的问题（2.1.283 中的退化问题）
+- 修复了针对 Anthropic API 使用 `ANTHROPIC_AUTH_TOKEN` 进行身份验证的会话从不加载组织策略的问题
+- 修复了工作流脚本稍后或根本未 await 的失败 `agent()`、`parallel()` 或 `pipeline()` 调用被视作未处理的 Promise rejection，从而可能导致后台会话终止的问题
+- 修复了同步 hook 启动的后台进程（例如 `some-daemon &`）保持输出打开导致 Claude Code 挂起的问题；hook 现在会在其自身进程退出后不久即完成
+- 修复了 WebFetch 将因速率限制导致的域名安全检查报错误报为网络或企业策略拦截的问题
+- 修复了在包含数百次文件读取或搜索的轮次中打开全屏 ctrl+o 记录时短暂卡顿的问题；在记录打开时仍在运行的工具调用现在会在完成时显示其结果
+- 修复了 Amazon Bedrock 在流式传输中出现的 `modelTimeoutException` 和 `serviceUnavailableException` 错误显示原始 JSON 内容而非错误信息的问题
+- 修复了 `/autofix-pr` 和 `/schedule` 对尚未检查安装状态的仓库提示 Claude GitHub App 未安装的问题
+- 修复了在 `/artifacts` 中关闭某行 (x) 会解除其文件与 artifact 的关联，导致再次发布同一文件时会创建新的 artifact 而非更新已有 artifact 的问题
+- 修复了对话回退（Esc Esc）后 Artifact 工具发布会覆盖 Claude 仅在已回退轮次中读取过的文件更新内容的问题；在 Claude 重新读取该文件之前，发布现在会被拒绝
+- 修复了 `Artifact` 允许规则（"不再询问"）允许 Artifact 工具在不经询问的情况下发布工作目录之外的文件的问题；需通过 `--add-dir` 添加该文件所在文件夹后该规则方可覆盖它
+- 修复了当服务器以不同于客户端预期的回退模型响应拒绝时，`/cost` 和 SDK `modelUsage` 将该轮次归到错误模型下的问题
+- 修复了 Artifact 工具，使得当 Claude 先前的读取被截断或文件自那之后已被修改时，发布页面不再允许 Claude 在未重新读取的情况下覆盖其源文件
+- 修复了如果你之前在其他权限模式下批准过某个 artifact，auto 模式会跳过对 Artifact 工具资源上传及读取他人 artifact 的分类器检查的问题
+- 修复了项目文件夹短暂不可读时 `/ultrareview` 产生误导性的 "core.worktree is set" 错误的问题
+- 修复了 macOS 和 Linux 上的 `/ultrareview` 无法从独立 worktree 配置中设置了 `core.longpaths` 的 git worktree 上传工作区的问题
+- 修复了 Artifact 工具在重试临时服务器错误后，有时会将其报告为与其他会话冲突的问题（而实际上第一次尝试已成功）
+- 修复了 `/ultrareview` 上传包含扩展名前带冒号的凭据文件（如 `server:8443.key`）的未提交更改的问题
+- 修复了两个会话同时恢复崩溃进程留下的登录刷新锁时出现的罕见身份验证失败问题
+- 修复了当命令解析器启动失败（例如机器内存不足）时，PowerShell 工具的权限检查会跳过 deny 和 ask 规则并缓存该失败以供后续检查的问题
+- 修复了 macOS 和 Linux 上 `/ultrareview` 上传在遇到某些不寻常文件名时运行缓慢，以及其凭据文件检查遗漏带有大量备份或编辑器标记的文件或文件夹名称的问题
+- 修复了在设置过程中收到取消信号时，已取消的 shell 命令或 hook 仍会启动并运行至结束的问题
+- 修复了 vim 模式：在外部编辑器中编辑（Ctrl+G）后，NORMAL 模式下的 `x` 或 `r` 不再会破坏提示末尾的粘贴文本占位符
+- 修复了被 API 输出内容过滤器拦截的响应会被重新发送并重试（有时长达数分钟），而不是立即显示过滤器错误的问题
+- 修复了插件静默跳过仍需配置的捆绑 `.mcpb` MCP 服务的问题：`/plugin`、安装消息及 `claude plugin install` 现在会给出提示并引导至 Configure
+- 修复了当保存的记录中包含字段缺失或格式错误的压缩标记或循环唤醒条目时，压缩或恢复会话会失败、打开时丢失历史记录或崩溃的问题
+- WSL：修复了当变更文件的名称包含冒号或以点/空格结尾时，`/ultrareview` 拒绝上传 Linux 卷上的检出代码的问题
+- 修复了 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN` 重新运行因 `--max-turns` 达到上限而结束的轮次的问题
+- 修复了浏览器显示登录成功后可能无限等待的问题
+- Windows：修复了特定情况下 `/ultrareview` 会上传根目录位于用户主目录的仓库关联 worktree 的问题
+- 修复了云端会话在上传任何文件之前将 uploads 文件夹报告为缺失的问题
+- 修复了从 `claude agents` 发送给等待权限提示的后台会话的回复有时会自动批准待定命令的问题
+- 修复了当选项位于命令前面（例如通过 shell 别名触发）时，`claude attach`、`logs`、`stop`、`respawn` 和 `rm` 会以命令名作为提示词启动新会话的问题
+- 修复了 `claude mcp list` 遗漏 WebSocket（`ws`）MCP 服务的问题；现在每个服务都会列出其 URL 和运行状况
+- 修复了对配置项省略了 `type` 字段的 stdio 服务，`claude mcp get` 不显示 Type、Command、Args 或 Environment 的问题
+- 修复了配置了 git 的 trace2 输出时，在 git 仓库外部 `.claude/settings.local.json` 的 allow 规则被抑制的问题
+- 修复了 `/claude-api` 评测运行器脚手架和报告生成器会穿透写入输出文件处放置的符号链接或硬链接的问题
+- 修复了 `/claude-api` 评测运行器脚手架将因达到 `max_tokens` 而截断的响应计入平均分的问题；它们现在被标记为截断并单独统计
+- 修复了当回复使用 `&nbsp;` 缩进文本（如 markdown 表格中的行标签）时在终端中显示为字面文本的问题
+- 修复了非全屏模式下长会话进行到一半时出现短暂卡顿（长达一秒），且在 `/clear` 或 `/compact` 后再次出现的问题
+- 修复了当已批准的 Edit 目标为设备（例如符号链接到 /dev/null 的文件），且该批准来自 IDE diff 视图或修改了编辑内容时，编辑操作始终无法生效的问题
+- 修复了流式传输持续失败时失败的 API 请求最多重试 21 次的问题；非流式回退现在共享该请求的重试配额，而不是获取全新的重试次数
+- 改进了 Claude in Chrome：原生主机现在会报告计算机名称，以便已连接的浏览器可以按计算机标记，而不是显示为 "Browser 1" / "Browser 2"
+- 改进了 Bedrock 和 Vertex AI 会话：当管理员移除对默认模型的访问权限时，会切换到同等级别旧版本的可用模型而非直接失败；会话标题和摘要现在也会同步回退
+- 改进了插件市场错误提示：明确指出 git 地址被拒绝的原因，而非笼统归咎于企业策略
+- 改进了插件、市场以及当前仓库 remote 的 git URL 验证
+- 改进了 Artifact 工具结果：现在建议在编写或编辑页面的同一步骤中进行发布，从而节省一次往返交互
+- 改进了 Remote Control：向诸如 Claude Desktop 等应用托管的会话提出的 `/btw` 补充提问现在能够获取正在进行的轮次，而不仅是最近完成的轮次
+- 改进了 Claude 发送的 BMP、HEIC、HEIF、AVIF 或 TIFF 图片文件：在 Claude Code 能够转换的情况下，Claude 应用现在会显示预览
+- 改进了 auto 模式下的子 Agent：子 Agent 的运行现在会在将其报告返回给调用者后立即结束，而不再消耗多余的无人接收的轮次
+- 改进了 Bedrock 和 Vertex 启动时的模型检查：账户无法使用的模型现在最多记录一天，无需每次启动时重复检查
+- 改进了 Artifact 工具发布结果以减少 token 使用：更新 artifact 的说明更加简短，且在每次发布后不再重复提示在哪里查找您的 artifact
+- 改进了非流式回退请求期间的 SDK 活跃度保活：在开启 partial messages 时，在 Anthropic API、Claude Platform on AWS 及网关上现在每 30 秒发送一次 `ping` 流事件
+- 改进了针对后台运行会话的 `/resume` 和 `claude --resume`：现在会打开该会话而不是拒绝，且通过 `claude --resume <id> "prompt"` 提供的提示词将作为下一轮次发送给它
+- 改进了配置大量权限拒绝规则和 MCP 工具时的每轮性能
+- 改进了在关闭全屏渲染时长会话中离开 ctrl+o 记录视图时的响应速度
+- 改进了 Bedrock、Vertex 和 Mantle 启动模型检查，使其发送与常规请求相同的 User-Agent、x-app 和 session ID 标头
+- 变更了 MCP 工具：当工具自身将 `_meta['anthropic/alwaysLoad']` 设为 false 时，即使其 `--mcp-config`、Agent SDK 或插件服务设为 `alwaysLoad`，该工具仍保持延迟加载
+- 变更了后台 Bash 和 PowerShell 命令：在达到时间限制后停止（即带有 `run_in_background` 的 `timeout`，默认 30 分钟，上限 2 小时）；当命令停止时会通知 Claude
+- 变更了 Code Review 的 PR 审查及 `/ultrareview`：在开启 `disableWorkflows` 时仍可运行，除非运行审查的机器由其自身管理员（MDM 或托管设置文件）进行了该设置
+- 变更了使用自定义 `ANTHROPIC_BASE_URL` 的会话：使用支持 1M 上下文窗口模型（Opus 4.7+、Sonnet 5+、Fable）的 1M 上下文窗口；如果您的网关上限为 200K，请运行 `/autocompact 200k`
+- 变更了 Team 和 Enterprise 会话，以及 Claude Code 无法确定登录方案的会话：若启动时未能加载组织策略，则暂缓使用 WebFetch 直至策略加载完成
+- 变更了 /memory：Auto-memory 不再允许从后台会话或由 Claude Code 自身工具启动的会话中开启；在这些会话中关闭它依然有效
+- 变更了将 auto 模式设为默认权限模式的一次性提示：当用户设置默认为其他模式时，该提示现在也会在第三方提供商以及关闭遥测的情况下显示
+- 变更了第三方提供商或关闭遥测时的 `claude -p` 和 Python Agent SDK 会话：未配置权限模式时像交互式会话一样默认以 auto 模式启动；`--permission-mode` 仍可覆盖此项
+- 变更了 Bedrock、Mantle 和 Claude Platform on AWS 对非默认端口 base URL 的请求：在经过 SigV4 签名的 Host 标头中包含该端口
+- 变更了 MCP 服务名称 `widgets`，在云端会话和自托管 runner 上将其设为保留名称：该名称下的自定义服务或拼写相近的名称（如 `widgets_`）将不再加载，请对其重命名
+- 变更了 macOS 和 Linux 上的 `/ultrareview`：在上传本地检出代码时排除符号引用；当前分支为符号引用的检出代码现在会被拒绝并给出说明
+- Windows：变更了项目和本地设置中的 `env`，不再允许设置 `ALLUSERSPROFILE`、`SystemDrive` 或 `CommonProgramFiles` 变量；请改为在用户或托管设置中进行配置
+- 变更了 `/tasks`：将 Claude Code 为自身运行的后台工作折叠至单行 "System tasks" 下；在其上按回车键可展开显示这些任务
+- 变更了 macOS 和 Linux 上的 `/ultrareview`：上传本地仓库需要 git 2.31 或更高版本；使用 `--separate-git-dir` 创建的检出代码现在会被拒绝，而不再使用旧方法上传
+- 变更了 macOS 和 Linux 上的 `/ultrareview` 上传：在 git 2.31 或更高版本上将部分克隆（partial clone）作为工作区快照发送，而不再在 git 版本看似过旧时回退或拒绝
+- 变更了 macOS 和 Linux 上的 `/ultrareview` 上传：在旧版本 git 上，若部分克隆缺少工作区的部分文件则直接拒绝而非执行拉取；未使用 `--filter` 创建的克隆仍可正常上传
+- 变更了 Bedrock、Vertex 和 Mantle 启动时的模型检查：像其他 Claude Code 请求一样将自身标识为 Claude Code
+- 变更了 `claude mcp get`：隐藏由插件提供的 stdio MCP 服务的命令、参数和环境变量值；变量名仍会显示
+- 变更了 `/claude-api`：不再允许从 Remote Control 客户端运行
+- 变更了 `/config chrome=true`：引导进入 /config 面板，而不再默认启用 Claude in Chrome；`/config chrome=false` 在其开启时仍可将其关闭
+- 变更了沙箱设置：项目设置无法放宽或关闭管理员要求的沙箱、替换托管拒绝列表背后的代理、扩展严格的允许列表，或重新打开受管的读取拒绝
+- [VSCode] 新增了在窗口重新加载中断且后续不会有回复时，在已恢复标签页的最后一条消息下方显示提示说明的功能
+- [VSCode] 在 Manage plugins 中新增插件配置项表单：安装带有配置项的插件时会提示填写未设置的项，且其对应行上的齿轮图标可供后续修改
+- [VSCode] 新增按需诊断工具，使面板中的 Claude 可以随时读取 Problems 面板当前的错误和警告，而不仅限于编辑文件之后立即读取
+- [VSCode] 修复了输入斜杠命令后按回车会运行模糊匹配选中的无关菜单项或毫无反应的问题
+- [VSCode] 修复了长会话期间打开的 Agent 记录会丢失该 Agent 较新消息的问题
+- [VSCode] 修复了引用 Claude Code 或 IDE 标签的消息在聊天中丢失其余文本的问题
+- [VSCode] 修复了在 Claude 处理任务期间发送的消息在会话重新打开后从对话中消失的问题
+- [VSCode] 修复了切换账户后会话列表的 Web 标签页仍显示上一账户会话的问题
+- [VSCode] 修复了当 VS Code 在设置了 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN` 的情况下启动时，即使关闭了 Continue After Reload，已恢复的标签页仍会重新运行被中断轮次的问题
+- [VSCode] 修复了点击命令菜单某一行后按 Escape 会停止正在运行的轮次而非关闭命令菜单的问题
+- [VSCode] 修复了打开 Past conversations 会用已保存的副本替换实时对话的问题
+- [VSCode] 修复了插件重启后重新加载的 Claude 标签页保持空白而不提示如何恢复的问题
+- [VSCode] 修复了打开已在其他窗口或应用中打开的对话时会在未警告的情况下启动其第二个副本的问题；现在会先进行确认
+- [VSCode] 修复了窗口重新加载后 hook 拦截或停止提示的原因消失的问题
+- [VSCode] 修复了标签页卡在无法恢复的对话上的问题：错误提示现在会明确说明并提供发起新对话的选项
+- [VSCode] 修复了当编辑器在工具运行前对插件的自动保存停止响应时，所有文件的 Read、Write 和 Edit 操作会停滞十分钟随后被跳过的问题
+- [VSCode] 修复了 Agent 图中子 Agent 被标记为会话模型而非其实际运行所用模型（例如在 `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` 或 Agent 自身的 `model` 下）的问题
+- [VSCode] 修复了从 Manage plugins 对话框卸载插件时会删除错误的安装项或针对项目安装的插件卸载失败的问题
+- [VSCode] 修复了返回并再次选择相同的登录方式后登录仍停留在授权码步骤的问题
+- [VSCode] 修复了长会话裁剪其最早行时聊天面板发生卡顿的问题
+- [VSCode] 修复了运行大量 Agent 时对话从会话中消失的问题
+- [VSCode] 修复了会话通过 /rename、SessionStart hook 或在 claude.ai 上重命名后编辑器标签页仍保留旧名称的问题
+- [VSCode] 修复了 Agent 图的记录视图中遗漏发送给正在运行的 Agent 的消息的问题
+- [VSCode] 改进了 Manage plugins 对话框：失败的插件操作现在会弹窗说明原因，并在有解决方案时提供修复方法
+- [VSCode] 变更了 Manage plugins 对话框：在移除市场或关闭项目共享 `.claude/settings.json` 中启用的插件之前进行确认
+- [Cloud sessions] 修复了例程上的 Run now 在运行启动前被拒绝时显示内部错误文本的问题；现在会显示与例程失败通知相同的说明信息
+- [Cloud sessions] 变更了在云环境的环境变量（而非设置文件）中设置的 `MCP_DISCOVERY_CACHE=1`：在会话重启后复用连接器的工具列表；其他 MCP 服务不再被缓存，并在启动时连接
+- [Claude Tag] 为拥有 Enterprise 计划 Standard 或 Usage-Based Chat 席位且同时拥有 Cowork 的成员新增与 Claude 的私信功能；不再需要包含 Claude Code 的席位
+- [Claude Tag] 修复了管理员设置和频道 Configure 页面中的 Default model 设置提供组织无法使用的模型，导致保存或新建会话失败的问题
+- [Claude Tag] 修复了 Claude 的 Slack 消息下方说明其使用回退模型回答及原因的附注在 Claude 随后编辑该消息时消失的问题
+- [Code Review] 修复了 Code Review 的 "Add a repository" 对话框中组织菜单仅显示部分 GitHub 组织的问题；现在滚动时会加载更多
+- [Code Review] 改进了 Code Review check run：在仓库的 REVIEW.md 未生效时（例如在超大 PR 中或 REVIEW.md 为符号链接时）给出说明
+
+## 2.1.284 (2026-09-28)
+
+- 新增 Claude Sonnet 5.5（`claude-sonnet-5-5`），现已作为 Anthropic API 上的默认 Sonnet 模型——支持 1M 上下文，每百万 Token 输入/输出价格为 $2/$10，缓存读取价格为 $0.20/Mtok
+- 在 auto 模式读取工作目录外部内容前的提示中新增“Yes, but ask again next time”选项，以便允许本次读取的同时在后续读取时仍会进行确认
+- 当网关运行此版本或更高版本时，在 `/usage` 和状态行中为 Claude apps gateway 支出限额添加了具体美元金额（例如“$271.40 / $500.00 spent this month”）；状态行的 `rate_limits.spend_limit` 也新增了 `used_usd`、`limit_usd` 和 `period` 字段
+- 新增 `effortSlider:decreaseEffort`、`increaseEffort` 和 `toggleUltracode` 快捷键动作，以便在 `keybindings.json` 中重新绑定 `/effort` 滑块的方向键和 Tab 键
+- 面向 claude.ai 订阅用户在 `/help` 和命令菜单中新增 `/rate-limit-options`，以便在提到该选项的用量限制通知中指向一个可找到的命令
+- 在交互式终端中新增 `/mcp reconnect all`，用于一次性重试所有连接失败或需要身份验证的 MCP 服务器
+- 新增 Claude apps gateway 启动警告：当托管策略的 `availableModels` 为空，或未设置 `model` 或 `enforceAvailableModels` 且遗漏了 Claude Code 启动时所用的模型时触发
+- 为 Claude apps gateway 的 `telemetry.forward_to` 目标新增 `auth: { google: {} }`，以便使用网关的 Google Cloud 凭据将遥测数据直接导出到 Google Cloud 的 OTLP 端点
+- 在 Claude apps gateway 与其身份提供商之间新增证书客户端身份验证（`private_key_jwt`），适用于签发证书凭据而非客户端密钥的身份提供商
+- 修复了损坏的响应流显示诸如“JSON Parse error”或“undefined is not an object”等原始错误，或在回答中写入“undefined”字样，而不是进行重试或报告为响应中断的问题
+- 修复了紧随 thinking 块之后收到的过载或服务器错误会导致回合以报错结束而不是进行重试的问题
+- 修复了压缩后仍出现“Prompt is too long”错误的问题：当压缩后的请求仍然过长时，Claude Code 现在会再次压缩，保留更少的近期对话内容
+- 修复了当会话的模型不可用且没有剩余备用模型时，仅显示简略的“is currently unavailable”消息（或云端会话中的“Something went wrong”），而未显示模型不可用通知及其 Learn more 链接的问题
+- 修复了当用户消息包含 `source` 格式错误的图像时 Agent SDK 会话崩溃，以及在格式错误的文档块之后每个后续回合均失败的问题；格式错误的图像现在会被替换为说明性备注
+- 修复了恢复会话中 MCP 工具调用在其服务器仍在连接时因“No such tool available”而失败的问题；调用现在会等待服务器最多 10 秒
+- 修复了套餐用量端点在限流或拒绝登录后仍被重复调用的问题：`/usage`、`/extra-usage` 和 IDE 用量视图现在会进行退避而不是重新请求
+- 修复了当托管设置将 MCP 服务器限制为插件时 `claude mcp add` 仍报告成功的问题；它现在会拒绝并提示后续操作，而不是保存一个永远不会加载的服务器
+- 修复了 `/plugin` 配置界面：布尔选项现在为 true/false 选择而非自由文本，数字选项会拒绝无效输入，且 ←/→ 用于更改选项字段而非切换标签页
+- 修复了 `ANTHROPIC_FOUNDRY_RESOURCE` 未经校验便插入到 Foundry 端点主机中的问题；非纯资源名称的值现在会被拒绝
+- 修复了位于 Claude apps gateway 之后的 Claude Desktop 未提供 1M 上下文选项的问题：网关现在会自动为 Desktop 标记每个支持 1M 的模型
+- 修复了 shell 模式下按 ↓ 键会选中隐藏的后台任务标签，导致 Backspace 和 Ctrl+U 无法编辑提示词的问题
+- 修复了在 Windows 上启用多个插件时 Bash 工具失败的问题：不存在的插件 `bin/` 目录不再添加到 PATH，继承的条目也不会被重复添加
+- 修复了在较早版本的 git（2.39 之前）上，`sparsePaths` 插件市场克隆为空并替换正常工作的本地副本，导致每次刷新均因“marketplace.json file is no longer present”而失败的问题
+- 修复了在 transcript 模式下按 `[` 将对话写入回滚缓冲区时，全屏渲染会擦除会话上方的终端输出的问题（macOS 和 Linux）
+- 修复了在向上滚动时，当回复流式传输完成会导致全屏滚动位置跳至上一条消息或底部的问题
+- 修复了在窄终端中 `/config` 和 `/plugin` 等对话框的标签栏会在词中截断标题和标签文本的问题；无法容纳的标签现在会整体移至下一行
+- 修复了 `/model` 选择器在滚动到最后一个模型后列表下方仍显示“+1 model”的问题；计数现在仅包含可见行下方的模型
+- 修复了 `/keybindings` 为无操作的页脚动作向生成的 `keybindings.json` 中写入 Backspace 和 Delete 绑定的问题
+- 修复了重新绑定的 Agent 面板关闭按键（`footer:close`）在所查看 Agent 的所在行输入“x”而不是触发自身动作的问题
+- 修复了 vim 模式下 `.` 无法重复极快输入（例如通过 ssh 或在 tmux 中）或未通过 bracketed paste 粘贴的文本，以及在重复未键入内容的更改（例如 `cw` 后按 Esc）后使提示词保持在 INSERT 模式的问题
+- 修复了 vim 模式在最后一行执行 `dd` 或在提示词末尾执行 `yy` 后，光标停留在图像占位符的左括号上，导致按 `r` 或 `x` 会损坏或删除图像的问题
+- 修复了终端重新获取焦点的瞬间按键会在 Remote Control 启用提示的短暂安全延迟重新计时之前作出响应的问题
+- 修复了当 Claude Code 在 home 目录启动时，切换渲染器或更新后工作区信任对话框会再次出现的问题
+- 修复了从项目外部软链接到 `.claude/rules` 的规则会被跳过且从未显示外部导入审批提示的问题；从项目外部软链接的 `.claude` 目录现在也会请求相同的审批
+- 修复了来自市场、claude.ai 和 npm 的插件在受管 `allowManagedPermissionRulesOnly` 下通过 `allowed-tools` 预先批准自身工具的问题；现在只有来自 Anthropic 官方来源或受管设置担保来源的插件才能保留该预先批准
+- 修复了当无法满足依赖项版本范围时，首次执行 `claude plugin install` 失败仍会导致插件处于已启用和已记录状态的问题
+- 修复了当失败的 hook 同时写入 stdout 时调试日志会丢失其 stderr，以及对于无输出的失败 hook 不记录任何内容的问题；失败的 hook 现在还会记录其状态码
+- 修复了 Elicitation 和 ElicitationResult hook 返回的 `{"decision":"block"}` 被忽略的问题；它现在会拒绝 MCP 引出（elicitation），与退出代码 2 行为一致
+- 修复了在未携带 `SendMessage` 工具启动的会话（例如由 Claude Desktop 启动）中，仍被提示使用该工具向其他会话发送消息的问题
+- 修复了通过 Remote Control 从 Claude 应用发送的照片在排队消息被撤回至终端提示以进行编辑时丢失，以及无说明文字的照片会导致光标移动一个字符的问题
+- 修复了在用量限制自动等待期间输入消息会导致该回合再次达到限制时脱离“Continue automatically at usage limit”设置控制的问题
+- 修复了用量限制警告向已处于最高 Max 套餐的用户建议 `/upgrade` 的问题；警告和 `/upgrade` 本身现在会在可用时指向 `/usage-credits`
+- 修复了当会话运行 Claude Code 无法识别的模型 ID（例如代理背后的自定义模型）时，Explore 子代理会在 Claude API 上切换至 Opus 的问题；Explore 现在会继承该模型
+- 修复了自步调模式下 `/loop` 状态更新经常不显示的问题（因 Claude 仅将其写在推理过程中）；Claude 现在会将每次更新以及循环停止时的结果作为可见文本输出
+- 修复了在 macOS 或 Linux 上从 Claude 桌面应用创建的 git worktree 中启动 `/ultrareview` 时无法上传工作区的问题
+- 修复了在 Linux 上当工作目录被拒绝写入且包含拒绝读取的目录时，沙盒化 Bash 命令启动失败的问题
+- 修复了工件数据库写入结果提示 Claude 所有查看者都能看到对某个查看者私有 `data/users/` 子树的写入的问题，并为 `as_level` 添加了“view”级别
+- 修复了当身份提供商列出大量用户组时，Claude apps gateway 对该登录发出的每个请求均响应 `431 Request Header Fields Too Large` 的问题；现在支持最大 256 KiB 的请求头
+- 改进了用量限制等待体验：限制状态和带有 usage-credits 选项的倒计时现在在提示下方合并为一个区块显示，且限制消息不再重复显示倒计时
+- 改进了未带前缀调用 Claude in Chrome 工具时的“No such tool available”错误：现在会指明应调用的工具名称
+- 改进了 Monitor 事件行：显示各事件实际打印的内容而非重复描述，并在每个事件后不再重复未发生变化的“Waiting for N … to finish”提示行
+- 改进了 Workflow 工具沙盒加固，针对异步脚本 hook 抛出的错误进行了增强
+- 通过仅构建配置文件实际使用的设置模式（schema）部分，优化了启动时间和内存占用
+- 改进了 `/claude-api`：`hillclimb` 不再将轮次浪费在评测无法衡量的微小提示词改写上，且在 `report.html` 之外额外请求的页面将构建为不从网络加载任何内容的单个本地文件
+- 改进了 `/tasks`、`/copy` 和 `/hooks` 等列表：每个名称后面的详细信息在空间充裕时会对齐为单列，否则靠右侧边缘显示
+- 改进了 `claude plugin marketplace add`：当替换来自不同源但同名的已添加市场时会进行提示，并说明如何撤销操作
+- 改进了当受管设置要求登录（`forceLoginMethod` 或 `forceLoginOrgUUID`）且配置了 API 密钥、令牌或 `apiKeyHelper` 时的启动拒绝提示：现在会指明正在使用的凭据、设置位置以及移除方法
+- 改进了自动记忆加载：在不可见字符和模仿 Claude Code 自身标记的标签传递给 Claude 之前，于 `MEMORY.md` 和召回的记忆便签中对其进行消除处理
+- 改进了 `claude remote-control`：在尚未信任的文件夹中，现在会在终端请求工作区信任而不是直接退出
+- 改进了工件页面：Claude 会将设计方案写入页面而非回复中，并将您已指定的名称作为页面标题
+- 改进了 Artifact 工具：当向 Claude 提供 claude.ai 对话或项目链接、对话中的工件或单个工件 ID 时，它会请求正确的链接或内容而不是直接中断
+- 变更：在所有套餐和提供商中，未配置权限模式时交互式终端和 VS Code 会话默认以 auto 模式启动；`permissions.defaultMode` 仍具有优先覆盖权
+- 变更：Ultracode 在 `/effort` 中变更为独立的开关（按 Tab 键，或使用 `/effort ultracode [on|off]`）：不再强制使用 xhigh effort，并可在任意 effort 级别保持开启
+- 变更：响应中断连接后的重试现在与请求的其余重试共享同一重试预算，从而使失败的请求能更快放弃
+- 变更：当 Sonnet 模型的安全防护机制标记消息时，显示的通知会解释原因并提供编辑和重试选项
+- 变更：针对使用 `ANTHROPIC_DEFAULT_OPUS_MODEL` 或 `modelOverrides` 固定 Opus 模型的会话中与安全相关的模型切换：在 Anthropic API 上，API 现在会针对各类标记选择要切换到的模型，而非固定指定的模型
+- 变更：即使 `CLAUDE_CODE_MCP_STARTUP_WAIT_MS` 为 `0`，非交互式首个回合仍会等待由 `--allowedTools` 或 `mcp_tool` hook 指定的连接中 MCP 服务器最多 2 秒
+- 变更：当 `/recap` 从对话线程（包括您自己的对话）、routine 或 webhook 转发而来时，将以简短通知予以拒绝；在终端、Claude 应用、Remote Control、`-p` 或 SDK 主机中键入时，仍如常运行
+- 变更：`/artifacts` 现在使用与 `/config` 和 `/plugin` 相同的标签栏，在标题旁以单字标签（All、Mine、Shared）显示筛选标签页
+- 变更：工件发布现在会拒绝网络共享上的文件（`\\host\share` 路径或 `/net` 自动挂载），除非该文件位于通过 `--add-dir` 添加的已映射网络驱动器上
+- [VSCode] 在每个提示词和回复上方新增可选的时间戳，跨天时显示日期分割线（Claude Code: Show Message Timestamps 设置，默认关闭）
+- [VSCode] 在 Manage plugins 行中新增插件加载错误和提示信息，并提供用于禁用、卸载或复制错误的弹出菜单
+- [VSCode] 在 Effort 滑块下方新增 Ultracode 开关，取代了滑块上的 Ultracode 档位；模型标签（pill）在任意 effort 级别均显示“· Ultracode”
+- [VSCode] 修复了从 Memory 对话框执行 Reload Claude 在已编辑文件保存之前就重启的问题
+- [VSCode] 修复了恢复的标签页会直接打开另一个 Claude 进程仍在占用的对话的问题；现在会先进行确认
+- [VSCode] 修复了在子 Agent 工作期间或当 Focus 视图区块的首个步骤移出视图时，展开的区块会自动关闭的问题
+- [VSCode] 修复了输入 `/model` 并按回车会在聊天中输出用法文本而不是打开模型选择器的问题
+- [VSCode] 修复了在 Vertex、Bedrock 和 Foundry 上点击发送后 `/feedback` 会被拒绝的问题；报告现在会保存在本机上，与终端行为一致
+- [VSCode] 修复了窗口重新加载后登录需等待 Python 扩展最多一分钟的问题
+- [VSCode] 修复了在 Restart Extensions 后 Claude Code 标签页停止响应的问题：现在会在其对应对话中重新打开
+- [VSCode] 修复了来自未记录发送者的其他 Agent 消息在聊天中显示为原始 XML 的问题
+- [VSCode] 修复了来自其他 Agent、会话或频道的消息在重新加载后消失的问题
+- [VSCode] 修复了用户自定义的 `/mcp`、`/config` 或 `/settings` 命令被扩展自身的对话框遮蔽的问题
+- [VSCode] 修复了在没有回合运行时按 Escape 键会停止所有后台 Agent 的问题
+- [VSCode] 修复了插件安装链接会替换已有同名市场的问题
+- [VSCode] 修复了消息中附加大型文本文件时在压缩后仍出现“Prompt is too long”错误的问题
+- [VSCode] 修复了路径中包含非 ASCII 字符、空格或括号的文件在聊天中的链接无法打开的问题
+- [VSCode] 变更：`claudeCode.environmentVariables` 设置中的 `CLAUDE_CONFIG_DIR` 仅在为绝对路径时生效，并将其传递给继续聊天的终端
+- [Cloud sessions] 修复了离线时 routine 的 Edit 和 Duplicate 控件提示 routine 仍在加载的问题；现在会提示您处于离线状态
+- [Claude Tag] 为线程、频道默认设置或私信新增诸如“Opus (latest)”等模型系列选项，以便所选模型自动跟随该系列中的最新模型
+- [Claude Tag] 在分析支出预测图表中新增计入全组织限额的支出金额，并显示该限额的已用比例
+- [Claude Tag] 修复了当 GitHub Enterprise 主机名包含下划线时，早期 Claude in Slack 应用的进度卡片和链接预览会遗漏仓库和 Create PR 按钮的问题
+- [Claude Tag] 修复了当环境拒绝启动 Claude 时其在频道中保持沉默的问题；现在会发布一条通知提示您联系管理员，并在被 @ 时重试
+- [Claude Tag] 变更：当未关联 Claude 账号的用户 @ Claude 时，Claude 每次均会发布私密登录通知，而不再是仅在第一次后便保持沉默
+- [Claude Tag] 改进了管理员设置中的“Notify members now”：只需点击一次即可送达组织在 Enterprise Grid 中认领的每个工作区，并覆盖大型工作区中的更多成员
+- [Claude Tag] 改进了在具有按需 runner 的自托管环境中的 Claude 等待通知：现在会指明 runner 是否正在启动、启动是否会重试，或不会启动任何 runner
+- [Claude Tag] 改进了因无法确认频道的 Slack 工作区已连接到您的组织而添加频道管理员失败时所显示的错误提示
+- [Claude Tag] 改进了管理员设置中的频道访问列表，以显示 auto-join 模式附加的连接器、仓库和插件及其各自来源
+- [Claude Tag] 改进了作为频道管理员添加仓库的流程：当您的 GitHub 登录无法确认您是仓库管理员时，页面会提示您使用 GitHub 登录
+- [Code Review] 修复了当 Pull Request 上存在其 GitHub App 下未提交的审查时，Code Review 会直接放弃而不发布已完成审查的问题；现在会优先重试发布
+
+## 2.1.283 (2026-09-25)
+
+- 在网关提示请求头中新增了 `x-claude-code-prompt-id`，以便 LLM 网关将服务于同一用户 prompt 的请求进行分组；可通过 `CLAUDE_CODE_GATEWAY_HINT_HEADERS=1` 启用
+- 新增了 `availableModelsMatch` 托管设置：当设置为 `"exact"` 时，`availableModels` 条目仅允许其指定的确切模型版本，因此新发布的版本在列出前将保持拦截状态
+- 新增了 `deniedModels` 托管设置以拦截特定模型，即使 `availableModels` 允许它们也是如此
+- 当 `OTEL_LOG_TOOL_CONTENT=1` 时，将 MCP 工具、WebFetch 和 WebSearch 的输出添加到 `tool.output` OpenTelemetry span 事件中
+- 新增了 `/doctor prompt-audit`（以及 `/checkup prompt-audit`），用于审查 CLAUDE.md 文件、skills、agents 和 commands 中针对旧模型编写的 prompt 模式
+- 在全屏模式下，为来自其他会话的截断消息新增了点击展开功能
+- 在 stream-json `system/init` 的 `plugin_errors` 中为 `--plugin-dir` 加载失败条目新增了 `path`，指明未加载成功的目录
+- 在 Claude 应用网关配置中新增了可选的 `load_test_mode` 块：请求会被构建并签名但不会发送至上游，客户端会收到预设回复，以便对部署进行负载测试
+- 在 Claude 应用网关中为 Amazon Bedrock 的 Mantle 端点新增了 `mantle` 上游提供方
+- 修复了 SDK 会话在轮次提前结束时丢失延迟工具调用或已完成工具结果、在 worker 重启后丢失挂起的审批提示，以及非流式回退的 `result.usage` 丢失的问题
+- 修复了长时间运行的工具调用转入后台后 MCP 进度通知被丢弃的问题；后台任务现在会显示最新进度
+- 修复了会话在 stdio MCP 服务器仍在启动时结束会导致其残留在后台运行的问题
+- 修复了无状态远程 MCP 服务器返回短暂的 HTTP 404（例如代理正在重新部署中）会导致该服务器在会话剩余时间内不可用但仍显示为已连接的问题
+- 修复了没有有效 URL 的服务器进行 MCP 登录时因晦涩的 SDK 错误而失败的问题；`/mcp` 不再为这些服务器提供 Authenticate 选项
+- 修复了禁用遥测时，每周 Fable 配额限制未显示在 `/usage` 和 VS Code 用量仪表中的问题
+- 修复了在纯 ID 被拒绝的情况下，如果 ID 带有日期或 `-v1:0` 后缀，`/model` 却接受带有 `[1m]` 的 Sonnet 4.6 或 Sonnet 5 的问题
+- 修复了当 `ANTHROPIC_DEFAULT_HAIKU_MODEL` 固定了不同模型时，`/model` 选择器仍显示硬编码的 Haiku 版本和价格的问题
+- 修复了在模型回退期间启动的动态工作流会在回退模型上运行每个 agent，而不是重试所配置模型的问题
+- 修复了当 Haiku 为会话主模型时 `DISABLE_PROMPT_CACHING_HAIKU` 无效的问题
+- 修复了 `claude plugin validate` 提示 Claude Code 接受其无法安装的插件或市场名称的问题；`marketplace.json` 中的此类名称现在验证失败
+- 修复了 `claude plugin validate` 放行 `outputStyles`、`themes`、`monitors` 或 `lspServers` 路径缺失或指向插件目录之外的插件的问题
+- 修复了 `claude plugin details` 对在 `plugin.json` 中声明服务器的插件显示 0 个 MCP 服务器的问题
+- 修复了 `claude plugin marketplace remove` 未说明其随市场一同卸载了哪些已安装插件的问题；现在会列出这些插件
+- 修复了当指定的插件在该作用域内没有 `enabledPlugins` 条目时，`claude plugin uninstall` 会误删两个仅大小写不同的已安装插件中的另一个（连同其选项和机密信息）的问题
+- 修复了未声明版本的插件在缓存文件缺失时，会被静默恢复为其来源的最新 commit 而非已安装 commit 的问题
+- 修复了在主目录或配置目录移动后（例如在绑定挂载的 devcontainers 中），用户安装的插件和市场因 "cache-miss" 加载失败的问题
+- 修复了当 `installed_plugins.json` 包含无效插件 ID 的记录时显示无插件的问题；此类文件现在可以重新正常加载
+- 修复了当 `installed_plugins.json` 包含当前版本无法读取的记录时会被重写导致记录丢失的问题；`claude plugin` 命令现在会指出该记录并说明恢复方法
+- 修复了屏幕阅读器模式下的权限对话框将带引号的命令和路径当作对话框自身文本朗读的问题
+- 修复了 `/context` 未将 MCP 服务器指令计入统计的问题：它们现在作为单独一行显示并计入总数
+- 修复了 Warp 终端中 Markdown 链接渲染为纯文本而非可点击超链接的问题
+- 修复了在用户或本地配置文件无法写入（例如在沙箱内）时，`claude mcp add`、`add-json` 和 `remove` 仍报告成功的问题
+- 修复了云会话中回复的前几个词有时出现延迟，而不是随 Claude 输入流式显示的问题
+- 修复了 Claude 内置快捷键指南称组合键超时为 1 秒（实际为 3 秒），以及称 `cmd` 为 `meta` 的别名导致产生大多数终端从未发送过的 `cmd+` 快捷键的问题
+- 修复了 `keybindings.json` 静默接受拼写错误的修饰键（如 `ctl+k`）的问题；现在会在调试日志中发出警告并提供修复建议
+- 修复了在 `keybindings.json` 中重新绑定或解绑 `footer:openSelected` 后，页脚提示仍显示 "Enter to view" 的问题
+- 修复了快速连按按键（预输入、按键重复、通过 ssh 或 tmux 突发输入）有时会针对过时状态进行处理的问题
+- 修复了当 CA 证书作为 `GIT_CONFIG_COUNT` 环境变量对传递给 git 时，worktree 检出证书验证失败（例如在 Git LFS 下载时）的问题
+- 修复了沙箱中的 `git` 请求凭据助手存储沙箱代理登录信息并输出 "failed to store" 的问题
+- 修复了当某个嵌套值无效时，托管的 `sandbox` 设置会被完全忽略的问题；现在无效值会安全失败，而该块的其余部分仍然生效
+- 修复了当 Claude Code 在 git 仓库的子目录中启动时，Claude 对自身 auto-memory 笔记的编辑被作为敏感文件写入而拦截的问题
+- 修复了当通过 `DISABLE_TELEMETRY` 或 `DO_NOT_TRACK` 关闭遥测时，付费套餐中 Remote Control 不可用的问题
+- 修复了在窄终端中 `/remote-control` 菜单将二维码提示信息在单词中间截断的问题
+- 修复了 vim 模式下 `.` 会丢失 Shift+Enter 换行、将光标停留在带重音符号的字母内部，以及在最后一行执行 `3J` 或 Visual 模式 `J` 后重复更早更改的问题
+- 修复了 vim 模式下的光标定位问题：在 normal 模式下召回超过 10,000 字符的 prompt 不再将光标留在末尾之后，且 `V` 后跟 `p` 现在会落在第一个非空白字符上
+- 修复了 vim 模式下 `J` 连接行时的空格处理与 Vim 不一致（例如在 `)` 前或 tab 后添加空格），以及在最后一行执行 `3J` 或 Visual 模式 `J` 时光标移动与 Vim 不一致的问题
+- Windows：修复了 PowerShell 工具允许 `cmd /c rd`、`rmdir`、`del` 或 `erase` 删除驱动器根目录、主目录以及 `Remove-Item` 拒绝删除的其他文件夹的问题
+- 改进了 `/mcp` 工具列表：一次显示更多工具，支持翻页键和鼠标滚动，并使用警告图标标出组织拦截的工具
+- 改进了 MCP 工具结果：MCP 工具返回的图片现在也会保存到文件中，以便 Bash、Read 和其他工具打开
+- 改进了 `/tasks`：各行显示状态图标、名称和完整事实信息，任务较多时标题和按键提示保持显示在屏幕上，列表支持翻页键、鼠标滚轮和点击
+- 改进了 `/help`、`/hooks`、`/copy`、`/chrome`、`/memory`、`/ide`、`/release-notes`、`/rewind`、`/diff`、`/remote-env`、`/plugin` 以及其他选择器中的列表，支持翻页键、鼠标滚轮和点击
+- 改进了搜索框旁的列表（如 `/skills` 和 `/artifacts`）：当搜索框获取键盘焦点时暗淡显示其指针，确保只有一个指针高亮
+- 改进了压缩加载动画：计时器现在于压缩开始时启动，并在流式传输时统计摘要的 token 数，取代了百分比进度条
+- 改进了登录 MCP 服务器后显示的浏览器页面：居中布局、深色模式以及全新图稿
+- 改进了当某个 skill 属于加载失败的插件时 Skill 工具的回复，Claude 会提示插件无法加载，而不是称该 skill 未安装
+- 改进了针对 Claude Code 配置的 `prompt-audit`：过期路径、过期命令和相互矛盾的指示文件现在排在报告最前，并保留了 Claude Code 文档中记录的 thinking 关键字
+- 改进了从完全无法读取的 `installed_plugins.json` 中恢复的机制：在重建之前，其内容会被保存在同级文件中，且 `claude plugin list` 会指明该文件
+- 改进了 artifact 数据库读取：返回整页的有序查询现在会说明这是一页以及如何读取剩余内容
+- 改进了首个回复的延迟：原本在会话首个回复结束时运行的模式编译步骤，现在于回复流式传输期间并行运行
+- 通过复用预连接的 API 连接改善了首次请求的延迟
+- 改进了启动性能：`claude -p` 和 Claude Code Remote 不再加载交互式 UI，auto-mode 分类器规则和 Artifact 工具改为在首次使用时加载而非启动时加载
+- 改进了首次运行时尚不清楚 Artifact 工具功能的 claude.ai 账户的启动流程：prompt 不再等待长达 1.5 s 来检查它们；如有需要，第一条消息会等待
+- 将第三方提供商或关闭遥测的交互式会话更改为：在未配置权限模式时以 auto 模式启动；`permissions.defaultMode` 仍具有更高优先级
+- 更改了 `/ultrareview` 启动对话框，提示审查本地分支可能会上传已跟踪文件的未提交更改
+- 更改了 `/model` 选择器的 Opus 行和 Default 模型的名称，在 Opus 已经具备 1M 上下文窗口的地方去掉了 "(1M context)"；窗口大小保持不变
+- 更改了终端中的 prompt 建议显示逻辑：连续 20 次未使用后出现频率会降低；使用一次即可恢复
+- 更改了 `--system-prompt` 和 `--append-system-prompt` 以同时支持文本形式及其 `-file` 形式；文件的文本优先
+- 更改了 `Skill(anthropic-skills:<name>)` 拦截规则，当 Claude Desktop 将其作为插件分发时同样拦截该 skill；`Skill(skill:<name>)` 拦截规则现在也会匹配该 skill 的别名和显示名称
+- 将 `/rewind` 和 `/diff` 列表更改为使用与其他列表相同的快捷键动作（`select:*`）移动；`messageSelector:*`/`diff:*` 重新绑定仍然有效
+- 将 `/workflows` 运行列表更改为与其他列表相同的尺寸：内联占用半个终端高度，并在下方显示 prompt 时将标题保持在屏幕上
+- 更改了 `claude plugin eval`：在已安装 git 时要求 git 2.31 或更高版本；在旧版本 git 上运行会被拒绝，并显示提示具体版本的消息
+- 更改了 artifact 监听机制：自动启用的监听（非主动请求的监听）在 3.5 小时无活动后结束；重新发布或监听该 artifact 会重新启用
+- Self-hosted runner：更改了生命周期钩子的 git 行为，使其跳过仓库的 Git LFS `pre-push` 钩子，忽略可写的系统 `core.hooksPath`，且未指定 `--configure-git` 时不对 commit 进行签名
+- Self-hosted runner：更改了 Anthropic 托管 git 下的 `GIT_SSL_CAINFO` 和 `GIT_SSL_NO_VERIFY`：runner 自带的 git 始终验证 Anthropic 的 git 路由，并通过警告行说明各项配置的应用范围
+- 还原了 2.1.282 对 `claude-ai` 名称的保留：以此命名的 skills、commands、workflows 以及 MCP 服务器的 skills 和 prompts 可以重新加载，且 `Skill(claude-ai:*)` 规则恢复为普通前缀规则
+- [VSCode] 修复了在自动切出 auto 或 bypass 模式失败后，会话继续在这些模式下运行但权限模式指示器仍显示 Default 的问题；切换操作现在会持续重试直至生效
+- [VSCode] 修复了从 Web 端迁移过来的会话丢失了 Claude 工作期间发送的消息的问题
+- [VSCode] 修复了当旧版本保存了 Web 会话的空本地副本时，该会话在会话列表中保持隐藏且打开一个空聊天取而代之的问题
+- [VSCode] 修复了重新打开的会话在 Claude 轮次中途接收到的消息（例如自动续写）处拆分轮次的问题
+- [VSCode] 修复了重新加载的会话显示已撤回的轮次，或仅显示压缩前的行的问题
+- [VSCode] 修复了在窄面板中页脚的 agents 胶囊图标偏离居中、状态圆点靠边绘制的问题
+- [VSCode] 修复了将以换行符结尾的多行文本粘贴到长 prompt 后，聊天输入框中文本显示略微低于光标和选区的问题
+- [Cloud sessions] 改进了向正在运行的云会话添加仓库的功能：你的 GitHub 账户有读取权限但无推送权限的私有仓库现在可以附加为只读
+- [Cloud sessions] 修复了云会话从服务端重启恢复后，偶发性重复执行已完成步骤（例如重复发表评论或重复推送）的问题
+- [Cloud sessions] 更改了新建 routine 的调度时间，默认设定在整点过几分，并提示设定在整点的 routine 可能会推迟几分钟启动
+- [Claude Tag] 新增了 "Channels Claude can search" 管理员设置，将 Claude 的 Slack 搜索范围限制为其已被添加至的公开频道，支持按组织、工作区或频道进行设置
+- [Claude Tag] 在连接 Claude 账户后显示的页面中新增了 Back to Slack 按钮，可返回发起连接的讨论串
+- [Claude Tag] 修复了当频道通过附加规则获取访问包时，频道的配置页面未列出任何连接器或插件的问题；现在会显示通过规则附加的访问包
+- [Claude Tag] 修复了在限制为大量已选仓库的 GitHub App 安装中，访问包仓库搜索遗漏仓库的问题
+- [Claude Tag] 修复了当新消息在回复中途打断时，Claude 偶发性将同一回复发送两次的问题
+- [Claude Tag] 修复了在 Slack 频道 ID 发生变更（例如经过 Slack Connect 共享）的旧私有频道中，频道 routine 停止运行的问题
+- [Claude Tag] 修复了在设置为 "Channel only" 的频道中，当非访客成员加入且 Slack 确认其成员身份较慢时，频道内对话全部结束的问题
+- [Code Review] 修复了 GitHub 未能返回 pull request 时 "@claude review" 请求没有响应的问题：请求会重试一次，若仍然失败则发表评论说明原因
+- [Code Review] 修复了审查因达到时间限制而停止且未验证任何内容时的计费问题：现在会显示为未完成、不予计费，并重试一次
+
+## 2.1.282 (2026-09-24)
+
+- 新增 `maxProseWidth` 设置，在宽终端中限制 Claude 正文文本的宽度，同时表格和代码块仍保持全宽
+- 新增启动提示，并在 `/status` 和 `claude doctor` 中列出项目配置文件中被忽略或关闭了遥测功能的遥测变量条目
+- 新增托管设置 `allowClaudeInChromeWithManagedMcp`，允许 `claude --chrome` 与独占的 `managed-mcp.json` 并行运行；Chrome 被阻止时显示的错误信息现在会明确指出该设置
+- 在 Claude 应用网关中新增 `store.readiness_grace_seconds`，使 `/readyz` 能在短时间的 Postgres 中断（例如数据库故障转移）期间保持就绪状态
+- 在全屏模式下的 `/feedback` 草稿列表中新增滚动条；当鼠标悬停在列表上时显示
+- 修复了在历史记录中包含 API 无法解密的网络搜索结果的会话中（例如通过第三方网关回答的轮次），每次请求都会失败并报错 400 的问题
+- 修复了在继续或恢复会话（`--continue`、`--resume`）时以修改后的形式重新发送先前消息的更多情况，该问题可能导致 API 丢弃 Claude 先前的推理内容
+- 修复了在 Claude 工作期间使用 `/model`、`/rename`、`/artifacts` 或其他即时斜杠命令时，先前扩展思考（extended thinking）被丢弃的问题
+- 修复了继续或恢复的会话在重新启动时，如果传入的 `--tools` 列表遗漏了对话先前提供的内置工具，会导致先前扩展思考丢失的问题
+- 修复了会话在每个轮次中都因 API 报错 "Invalid `data` in `redacted_thinking` block" 而失败的问题；Claude Code 现在会丢弃会话中的思考块并重试一次
+- 修复了摘要请求被拒绝时上下文压缩（compaction）失败的问题；现在会在后备模型上重试
+- 修复了在关闭思考且 effort 高于 high 的会话中，触发安全相关的模型切换后轮次失败（"Effort 'xhigh' isn't available with thinking turned off"）的问题
+- 修复了在由 SDK 托管的会话（例如 Claude Desktop）中未回答 Fable 使用积分提示时会切换模型的问题；现在改为结束当前轮次，且 Remote Control 客户端现在会看到模型切换提示
+- 修复了在使用完整的 Fable 模型 ID 执行 `/model` 时，如果套餐需要尚未启用的使用积分，会直接停在 API 错误而不是弹出使用积分提示的问题
+- 修复了在另一个 Claude Code 进程在刷新登录凭据中途被关闭或杀死后，请求会在长达一分钟内因登录错误 "another Claude Code process is refreshing it" 而失败的问题
+- 修复了在另一个 Claude Code 窗口正在刷新登录凭据时启动的会话（常见于打开多个 VS Code 窗口的情况）不会重试获取组织策略的问题
+- 修复了在启动时通过仓库符号链接读取 CLAUDE.md 和规则时，若链接通过 `..` 或 `/.vol` 风格的内核路径访问 macOS 的 `/Network`，或列出指向 macOS `/home` 的规则链接时的问题
+- 修复了配置文件中模式中间带有 `:*` 的 Bash 权限规则被跳过，而 `--allowedTools` 却能正常生效的问题；现在来自所有来源的规则均可正常生效，并在启动时发出关于其匹配方式的警告
+- 修复了远程会话的工作节点重启时，在已恢复的权限提示中批准的命令会执行两次的问题
+- 修复了托管设置会忽略布尔锁定键（如 `disableClaudeAiConnectors` 或 `allowManagedPermissionRulesOnly`）中拼写错误的值的问题；锁定现在会生效，且启动时会列出具体键名
+- 修复了托管的 `permissions`、`autoMode`、`worktree` 和 `attribution` 设置在某个嵌套值无效时被整体忽略的问题；该配置块中其余有效的部分现在仍会生效
+- 修复了在启用了托管的 `allowManagedPermissionRulesOnly` 时，仓库、用户和 `--add-dir` 的 skill、命令以及 skill 目录插件清单仍能通过 `allowed-tools` 预先批准自身工具的问题
+- 修复了 Amazon Bedrock 和 Bedrock Mantle 上的安全防护拦截消息不显示请求 ID 的问题；拦截消息现在还会显示消息 ID
+- Vertex AI：修复了对于 Claude Code 尚未识别的模型（例如新发布的模型）不提供网络搜索功能的问题
+- 修复了 Bash 和 PowerShell 将磁盘配额已满掩盖为 "Exit code 1" 并在临时目录中残留大型输出文件的问题
+- 修复了工具输入验证错误在同一次调用中存在其他无效参数时，仅提示其中一个未知、缺失或拼写错误的参数的问题；现在这些无效参数均会被列出
+- 修复了在会话中途终端的带括号粘贴模式（bracketed paste mode）被重置后，粘贴的多行文本被逐行提交的问题
+- 修复了在包含 `SessionStart` 钩子的项目中，输入提示的示例文字在启动时闪烁并消失的问题
+- 修复了在全屏模式下启动时，首帧渲染前出现空白屏幕闪烁的问题
+- 修复了非全屏渲染器在屏幕变矮但仍高于终端高度时（例如在 Shell 命令流式输出期间删除提示行）出现乱码和行错位的问题
+- 修复了当重绘行的 CJK 字符或表情符号换行到下一行时，diff 的最后一列会残留旧字符的问题
+- 修复了从历史记录调出的提示中包含制表符（tab）时，光标未能停在提示末尾的问题
+- 修复了在将 Ctrl+Enter 作为换行符发送的终端（1.25 之前的 Windows Terminal）上，立即发送提示仍显示为 ctrl+enter 的问题；现在在这些终端上会显示为 ctrl+x ctrl+s
+- 修复了 `claude remote-control --debug` 报错 "Unknown argument: --debug" 的问题，尽管 Remote Control 自身的使用资格错误提示建议使用 `--debug` 运行
+- 修复了 `/install-github-app` 提示 "cancelled" 后仍会推送分支并保存 API 密钥 Secret 的问题；现在退出操作会终止后续步骤并报告已完成的操作
+- 修复了在 Bedrock、Vertex 和其他第三方提供商上使用 /feedback、/bug 和 /share 时，在保存过程中取消仍会保存报告文件的问题
+- 修复了在插件的配置文件仍启用该插件或文件无法读取时，卸载插件仍报告成功并删除该插件已保存选项的问题；现在操作会终止并指出该文件
+- 修复了在移除后无法读取已安装插件列表时，卸载插件会删除该插件已保存选项和 Secret 的问题；现在这些内容会被保留，且卸载过程会予以说明
+- 修复了在 `/skills` 中键入 `/` 后紧接着按键会移动技能列表而不是输入到搜索框的问题
+- 修复了键入时终端光标从 `/skills` 搜索框跳到技能列表，导致光标可能被隐藏并将输入法（IME）输入置于错误位置的问题
+- 修复了带滚动条的列表（例如 `/skills` 和 `/mcp`）在非全屏模式下宽度少了两列的问题，而在该模式下滚动条本就不会出现
+- 修复了在重新绑定的快捷键较长时 Agent 面板页脚会折行成两行，以及其 "Esc to collapse" 提示忽略重新绑定的折叠键的问题
+- 修复了在 `keybindings.json` 中解绑停止所有 Agent 的快捷键后，`/tasks` 对话框页脚中出现重复的 ` · ` 分隔符的问题
+- 修复了当 Claude 为版本指定的标签超过 60 个字符时发布 Artifact 失败的问题；该标签现在会被自动截短
+- 修复了屏幕阅读器模式、引用列表和超长列表中，直接或在引用内作为列表项开头的代码块顶部的空行被丢弃的问题
+- 修复了 PDF 页面读取错误信息：包含重音符号或非拉丁字符的路径现在能清晰显示，且名为 "password" 或 "invalid" 等的文件夹不再会导致错误信息报告错误的原因
+- 修复了 vim 模式下 `>>` 会缩进空行、`r` 配合超出当前行长度的计数时会修改文本、`2J` 会多拼接一行，以及在最后一行使用计数（`2dd`、`2>>`）时会导致其移位或删除的问题
+- 修复了 vim 模式下的光标定位问题：执行 `dd`、`dj`、`dG` 或整行 `p`/`P` 后光标会停在第一个非空字符上，`yy` 不再移动光标，在表情符号后按 Esc 不再使光标停留在表情符号内部
+- 修复了 vim 模式下重复 `x`、`s`、`p`、`d` 或 `c` 时忽略在 `.` 之前输入的计数，以及当上方某行折行时整行 `p`/`P`、`o`、`O`、`J`、`>>` 和 `<<` 作用于错误行的问题
+- 修复了 vim 模式在普通模式下调出历史记录或从队列取回提示时光标停在提示末尾之后，导致 `x` 无响应的问题
+- 缩短了恢复超大级别会话（包括从未经过上下文压缩的会话）所需的时间
+- 改进了 Windows 上因转录文件无法读取（EBADF）而无法恢复会话时显示的错误提示：现在会列出可能的原因及尝试解决方法
+- 改进了 Claude Desktop 的未知模型错误提示，建议切换至其他模型
+- 改进了权限提示中非常规 Unicode 字符的渲染效果
+- 改进了 `/artifacts`：标题单列对齐，详细信息会完整省略而不是从词中截断，列表现已支持 PgUp/PgDn、Home/End、鼠标滚轮及点击操作
+- 更新了 `claude-api` skill：输出前拒绝的计费说明现已链接至 How refusals are billed 文档，流式传输中途拒绝按正常费率计费，输出前拒绝计入速率限制
+- 更新了 `claude-api` skill，推荐使用 `ant apply` 将 Managed Agents 资源保留为受版本控制的文件
+- 修改了 auto 模式：在遥测关闭且直连 Anthropic API 时，默认使用服务端分类器（可通过设置 `CLAUDE_CODE_AUTO_MODE_SERVER=0` 选择停用）
+- 修改了 `sandbox.excludedCommands`：当托管设置或 `--settings` 设置了 `allowUnsandboxedCommands: false`，或托管设置设置了 `allowManagedDomainsOnly: true` 时，忽略项目和本地设置中的条目
+- 修改了项目和本地设置，使其忽略启用导出、设置端点或捕获内容的 OpenTelemetry 变量（例如 `CLAUDE_CODE_ENABLE_TELEMETRY` 和 `OTEL_LOG_*`）
+- 修改了 Windows/WSL 托管设置：当存在但无效或不可读的管理员策略（HKLM、`managed-settings.json`）时，阻止用户可写的 HKCU 和 WSL `/etc/claude-code` 生效
+- 修改了 `Skill(anthropic-skills:*)` 和 `Skill(claude-ai:*)` 的允许规则，使其仅覆盖从 claude.ai 同步的 skill，而不覆盖仅使用该名称的插件或其他 skill
+- 修改了 `anthropic-skills` 或 `claude-ai` 命名空间下的 skill 文件夹、命令文件和工作流命令，使其不再加载；同名的插件仍会加载，但在命名冲突时优先让位于同步的 skill
+- 修改了以 `anthropic-skills` 或 `claude-ai` 命名的 MCP 服务器，使其不再列出任何 skill 或 prompt（其工具仍可正常使用）；若要重新列出，请在 MCP 配置中重命名该服务器
+- 将 `/effort` 和提示输入中的 `ultracode` 视觉效果改为普通样式（移除了波纹、边框修饰和关键字微光效果），并移除了 dynamic-workflows 旋转指示器提示
+- 修改了启动横幅中吉祥物 Clawd 的脚部位置，使其位于身体角落正下方
+- [VSCode] 修复了长回复落后于流式传输进度的问题：面板不再在每次更新时重新解析整段回复
+- [VSCode] 修复了当消息输入框高度足以滚动时，听写麦克风按钮遮挡输入框滚动条的问题
+- [VSCode] 修复了在本机启动的 Remote Control 会话无法从会话列表中的 Web 条目打开的问题；现在除非其正在其他地方运行，否则会直接打开本地会话
+- [VSCode] 修复了扩展主机重启后，编辑器标签页中的登录界面无响应静默卡死的问题；现在同样会显示 "stopped responding" 提示
+- [Cloud sessions] 在 Settings › Connectors › GitHub 中新增 Claude GitHub App 状态：显示该应用是否已安装且可供您的账户访问，并提供连接、安装或重新连接的步骤
+- [Cloud sessions] 为代码仓库托管在除 GitHub 以外的 Git 服务器上的云端会话，在其仓库菜单中新增了 "Open repository" 和 "Open compare page" 链接
+- [Cloud sessions] 新增支持为已关联仓库的正在运行的云端会话（包括从 Slack 启动的会话）关联来自其他 GitHub 所有者的仓库（例如 fork 的上游仓库）
+- [Cloud sessions] 修复了在印度等半小时时差时区的用户所看到的每小时例行任务（routine）下次运行时间偏差 30 分钟的问题
+- [Cloud sessions] 提升了历史会话中调度了大量签入提醒的账户在加载 Routines 页面和侧边栏 Scheduled 列表时的速度
+- [Claude Tag] 修复了在 Enterprise Grid 全组织安装中，Claude Tag 管理员设置中为单个工作区保存的自动加入频道规则被忽略的问题；Claude 现在会自动加入匹配的新频道
+- [Claude Tag] 修复了在同一个组织的两个工作区之间共享的 Enterprise Grid 频道中，若该频道的 Claude Tag 版本保存自另一个工作区，则 Claude 不响应的问题
+- [Claude Tag] 修复了早期 Claude in Slack 应用在 GitHub Enterprise Server 仓库会话中的进度卡片问题：现在会显示仓库名称并提供可正常使用的 Create PR 按钮
+- [Claude Tag] 修复了模型已下线的 Slack 线程在每次回复时都会回退到另一个模型，导致速度变慢且每次都会显示回退提示的问题；该线程现在会直接迁移至可用模型
+- [Claude Tag] 修复了 Claude 上传到 Slack 的文件说明（caption）无法包含表格的问题；文件说明现在会使用与回复相同的格式进行渲染
+- [Claude Tag] 修复了在 Slack 的 Agents & tools 视图中 Claude 线程有时按首条消息而非名称列出的问题；后续重命名现在也会同步更新列表
+- [Claude Tag] 修复了在断开某个 GitHub 组织连接后，从 Claude Tag 管理员设置中访问捆绑包（access bundle）的 Repositories 标签页移除该 GitHub 组织的授权时无法保存的问题
+- [Claude Tag] 修复了在与尚未添加该应用的 Grid 工作区共享的频道中，Claude 始终回复 "Couldn't check this channel just now" 的问题；提示现在会说明哪个工作区需要安装该应用
+- [Claude Tag] 修复了会话的云端工作节点重启后，Claude 回复页脚中的费用和 token 总数显示偏高数倍的问题
+- [Claude Tag] 将 Claude 在 Slack 回复中用于计划、表格和详情的带边框卡片改为默认宽屏渲染，而非窄宽度
+- [Claude Tag] 修改了新连接的 Slack 工作区配置，使其跟随当前的默认模型，而非始终保持连接时的默认模型
+
+## 2.1.281 (2026-09-23)
+
+- 为 `desktop` 策略块中较新的 Claude Desktop 键添加了 Claude apps gateway 支持，包括 `blockReadsOutsideWorkingDirectories` 和 `disableBypassPermissionsMode`
+- 在 Claude apps gateway Bedrock 上游添加了 `assume_role`：网关通过 STS 扮演 IAM 角色来调用 Bedrock，若有需要可在另一个 AWS 账户中扮演，支持按开发者为每个会话单独设置
+- 在 Claude apps gateway Bedrock 上游添加了 `guardrail: {id, version}`，以便对经由它们发送的每个请求应用 Amazon Bedrock 护栏（需在所有 Bedrock 上游统一配置或完全不配置）
+- 在 Claude apps gateway 配置中添加了 `telemetry.resource_attributes`，以便为 Claude Desktop 和 `/login` 会话的遥测数据添加固定标签
+- 在 `settings.json` 中添加了 `"attribution": false` 以隐藏所有 commit 和 PR 署名；旧版 CLI 会跳过包含此配置的设置文件，因此在跨版本共享的文件中请保留对象形式
+- 在 2026-07-28 协议连接上添加了 MCP URL 模式诱导（URL-mode elicitation），允许服务器请求 Claude Code 打开基于浏览器的流程；当服务器无法确认完成状态时，屏幕上不会残留等待对话框
+- 在 `claude plugin validate` 中添加了 MCP 服务器检查：报告加载时会被静默丢弃的 `.mcp.json` 条目、未声明的 `${user_config.*}` 引用以及不安全的 URL
+- 在 `/insights` 中添加了 auto 模式建议，可估算在您近期的会话中 auto 模式本可以代为处理的权限提示数量
+- 在全屏模式下的 `/skills`、`/mcp` 和 `/plugin` 已安装列表中添加了滚动条，类似于 `/workflows` 现有的滚动条：当鼠标悬停在列表上时显示，支持点击或拖动
+- 修复了在重试 API 请求时可能终止会话的崩溃问题（“unrecoverable interface error”）
+- 修复了当模型交替出现无法解析的工具调用与输出限制截断时，轮次可能无休止重试且忽略 `--max-turns` 的问题
+- 修复了恢复会话时以变动后的形式重发先前轮次（并行工具调用轮次、MCP 工具调用的输入、服务器仍在重连时的工具搜索结果，或加载轮次中断的工具搜索结果）的问题，该问题可能导致 API 丢失对话先前的推理
+- 修复了恢复超大体量会话时有时仅还原最后几条消息的问题
+- 修复了在权限提示挂起期间重启后恢复会话会发送与此前不同的历史记录，从而导致该节点之后的 prompt 缓存失效的问题
+- 修复了恢复在工具调用期间结束的会话的问题：Claude 现在能看到该调用并获知其结果未知，且手动恢复不再添加隐藏的“Continue”消息
+- 修复了包含早期 advisor 结果（API 已无法读取）的会话每轮都会失败一次请求并反复丢失先前推理的问题；现在历史记录仅会被修复一次
+- 修复了在关闭工具搜索的情况下（例如在代理或网关后方），MCP 服务器在对话中途中断连接或在恢复后仍在连接时导致 prompt 缓存丢失的问题
+- 修复了代理或网关正常关闭流导致响应被截断时仍无警告地显示为完整，以及流事件重复导致工具调用运行两次的问题
+- 修复了代理在响应中途丢弃流事件时响应报错“Content block not found”的问题；现在部分响应会被保留，web 搜索也会保留已返回的结果
+- 修复了连接在流的最终事件到达前断开时，空的已完成响应会被重复请求两次的问题
+- 修复了代理发送末尾仅包含 usage 的帧时导致停止原因（stop reason）丢失的问题
+- 修复了 `CLAUDE_CODE_RETRY_WATCHDOG` 会话在经历一连串 429/529 等待后遇到首次 5xx 或连接断开便直接失败，以及在收到 5xx 的较长 `Retry-After` 时无上限且静默休眠的问题
+- 修复了当服务器发送 `Retry-After: 0` 时，fast 模式连续不断重试受限请求的问题
+- 修复了工具返回过大图片时导致同级的其他工具调用未获应答且仍在运行，或轮次直接结束而没有最终消息的问题
+- 修复了模型使用过长的名称调用工具后，对话永久卡在“tool_use.name: String should have at most 200 characters”的问题
+- 修复了当 Claude Code 无法读取自身内存使用情况时（例如文件描述符耗尽），工具调用报错“Failed to get memory usage”或在运行后被报告为失败的问题
+- 修复了当早先的 assistant 消息包含纯字符串内容时，`--input-format stream-json` 会话（Agent SDK、VS Code 扩展）以及定时云端会话每轮均报错失败的问题
+- 修复了非交互式会话（`-p`、Agent SDK）在启动目录于会话中途被删除后在下一轮失败的问题
+- 修复了带有宿主端（SDK）MCP 服务器的无头会话在宿主握手中途停止响应时卡在首条消息的问题；远程会话现在最多只等待数秒
+- 修复了未配置 MCP 服务器或插件时，交互式启动仍会等待托管设置网络请求（约 80 毫秒，网络不可达时达 17 秒以上）的问题
+- 修复了读取或 @ 提及大于 3 MB 的 PDF 时响应前延迟长达两分钟的问题
+- 修复了中断特定 PDF 页面的 Read 操作后，页面渲染仍在后台运行长达两分钟的问题
+- 修复了权限对话框和附件检查在获得批准前读取 macOS 的 `/.vol`、`/.nofollow` 或 `/.resolve` 路径（可能触及网络挂载）的问题
+- 修复了目标仅为命令替换输出的递归 `rm`（例如 `rm -rf "$(pwd)"`）在 auto 和 `--dangerously-skip-permissions` 模式下无需提示即可运行的问题；现在即使配置了 Bash 允许规则也会进行提示，除非使用 `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT=1` 运行
+- 修复了包含 NUL 字节的权限规则被展开为通配符匹配的问题；此类规则现在不会匹配任何内容
+- 修复了沙箱 `excludedCommands` 条目无法匹配 `git rev-parse --git-dir`、与 shell 内建命令同名的程序，以及包含 `[WIP]` 或 `#` 行的 commit 消息的问题
+- 修复了设置 `CLAUDE_CODE_TMPDIR` 时沙箱内的 Bash 命令无法写入 `$TMPDIR` 的问题
+- 修复了 `claude --bg` 在尚未通过工作区信任提示的目录中启动后台会话并运行项目 Hook 的问题；现在它会先提示信任，在非交互式运行时则直接退出
+- 修复了 `--setting-sources`（以及 SDK 的 `settingSources`）未转发给衍生会话的问题：teammates、`/bg`、`claude agents` 会话以及 `--worktree --tmux` 现在启动时将继承父会话的限制
+- 修复了 Read、Write、Edit 和 NotebookEdit：包含空字节的文件路径现在会使该工具调用失败并给出明确错误，而不是终止整个轮次
+- 修复了 Write 拒绝在两个参数名下以相同值重复传入文件路径或内容的调用的问题
+- 修复了在无头会话和 SDK 会话中，工作目录内来自 `--add-dir` 目录的 CLAUDE.md 和规则文件被重复发送给模型两次的问题
+- 修复了权限提示与沙箱网络访问提示重叠且均已应答后，远程会话仍停留在“needs approval”并显示过时提示的问题
+- 修复了云端会话未告知 Claude 在 worker 重启前刚刚完成的后台 agent 的问题
+- 修复了远程会话中的定时日常和通知轮次在第一次工具调用之前收不到轮次开始通知（新增可用工具、MCP 变更、日期、待办事项）的问题
+- 修复了定时任务和 `/loop` 唤醒在传递失败时每秒重新触发一次，从而可能导致 Claude Code 在轮次结束时退出的问题
+- 修复了组织策略尚未完成加载时 Remote Control 即报错“disabled by your organization's policy”的问题；现在它会重试拉取并提示无法验证
+- 修复了通过 `claude remote-control` 启动以供在 Claude Desktop、claude.ai 或移动应用中打开的 Remote Control 会话中缺失 Artifact 工具的问题
+- 修复了当登录钥匙串处于锁定状态（例如刚从睡眠中唤醒）时，macOS 凭据写入操作会丢失已保存的 MCP OAuth 令牌或删除钥匙串条目的问题
+- 修复了当 Claude Code 退出或刷新超时后，`gcpAuthRefresh`/`awsAuthRefresh` 登录进程仍残留运行（并在 Windows 上占用其 localhost 回调端口）的问题
+- 修复了从另一个 Claude Code 进程登录后，当前会话中仍然残留“Not logged in · Run /login”页脚且缺少 claude.ai 连接器的问题
+- 修复了阻塞事件（PreToolUse 及类似事件）上的 `mcp_tool` Hook 在其 MCP 服务器仍在连接时被跳过的问题；现在它们会等待连接，最多等待至 MCP 连接超时
+- 修复了当插件或 claude.ai 连接器与配置的服务器在其 URL 拼写上存在差异（主机名大小写、默认端口、末尾斜杠）时，同一个 MCP 服务器会被连接两次的问题
+- 修复了 `MCP_CONNECTION_NONBLOCKING=0` 在 1 秒后便放弃连接 claude.ai 连接器，而没有遵循 `MCP_CONNECT_TIMEOUT_MS` 的问题
+- 修复了 `--channels` 插件条目仅依据已安装插件的 marketplace 进行校验的问题；现在已安装插件的名称也必须与该条目匹配
+- 修复了对包含 `.claude-plugin/marketplace.json` 的插件文件夹使用 `--plugin-dir` 时，加载了一个空插件而不是其中插件的问题
+- 修复了 `claude plugin uninstall` 拒绝移除未启用的项目级插件，提示其“enabled at project scope”，而 `claude plugin disable` 却提示其已被禁用的问题
+- 修复了省略 `--scope` 时 `claude plugin update` 在项目级插件上失败的问题——现在它会解析插件实际安装的作用域，而不是默认假定为 user
+- 修复了 `claude plugin validate` 将 plugin.json 中的 `privacyPolicyUrl`、`supportUrl` 及其他上架元数据键报告为未知字段的问题
+- 修复了当无法访问远程端且 `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE` 保留了现有克隆时，`known_marketplaces.json` 仍将该 marketplace 记录为已刷新的问题
+- 修复了 `/plugin` 的 Errors 标签页在最后一个错误解决后不显示确认信息的问题
+- 修复了在首次操作仍在运行时再次按下 Enter 会导致 `/plugin` 对同一插件启动第二次卸载或更新的问题
+- 修复了在 `/plugin` 检查 marketplace 源时长按 `y` 会在“Add marketplace?”问题刚出现且来不及阅读时便立即添加该 marketplace 的问题
+- 修复了在光标停在 No 上时按 `1` 仍会在 `/permissions` 的删除和移除目录确认中应答 Yes，从而导致按住 `1` 会接连移除工作区目录的问题
+- 修复了 Alt+T 和 `/config` 在不支持关闭思考的模型上仍提供关闭思考选项的问题；现在在这些模型上思考将保持开启，并用一行原因说明替代开关
+- 修复了 `/context` 总计遗漏自上一次响应以来新增的消息的问题；现在它与各分类保持一致，且数值可能高于状态行显示的数据
+- 修复了当 API 拒绝所选模型时 `/model` 显示原始 API 错误 JSON 和请求 ID 的问题；现在它会显示服务器消息并说明模型未更改
+- 修复了 HTML 错误页面（例如代理的 429 或 502 页面）引起的 API 错误会打印页面原始标记或遗漏 HTTP 状态，以及当服务器错误文本以换行符结尾时错误消息会折到第二行的问题
+- 修复了在发送过程中取消报告后，/feedback、/bug 和 /share 仍会继续发送报告的问题
+- 修复了对话框打开期间收到 Remote Control Stop 后，/feedback、/bug 和 /share 每次发送均报错“Couldn't send feedback”的问题
+- 修复了 `/ide` 在列出正在运行的 IDE 的同时仍显示“No available IDEs detected”的问题
+- 修复了 `/setup-bedrock` 或 `/setup-vertex` 重启 Claude Code 以应用新设置时终端处于损坏状态（崩溃或输入乱码）的问题
+- 修复了 `~/.claude.json` 中的 `respectGitignore` 或 `copyFullResponse` 为 `null` 时导致 `/config` 退出的问题
+- 修复了 Claude 提问单选/多选题期间由 /rename 设置的会话名称会消失的问题，以确保并排会话始终可识别
+- 修复了来自 VS Code 或 Remote Control 的 prompt 以及展开的粘贴占位符中，单行粘贴内容在发送的消息中独占一行显示的问题
+- 修复了在 Claude 处理期间排队的消息会丢失或改变编写时选中的 IDE 选区，以及排队消息不显示其选区的问题
+- 修复了快速按两次 Shift+Tab 会停留在错误的权限模式上的问题
+- 修复了在其余对话框和选择器中（例如 `/memory`、`/hooks`、`/mcp`（包含服务器登录界面）、`/export`、`/copy`、`/theme` 以及 `/teleport` 的未提交更改和登录提示，此前按 Esc 也会退出）连按两次 Ctrl+C 或 Ctrl+D 会直接退出 Claude Code 而不是关闭对话框的问题
+- 修复了一次性连带输入的按键（例如通过 Remote Control），如方向键后紧跟 Enter、`x` 或 `s` 时作用于先前选项的问题：包括 `/effort` 和模型选择器中过时的 effort 级别，以及 `/skills`、prompt 下方的后台任务行、MCP 服务器提示和 `/install-github-app` 中先前高亮显示的行
+- 修复了 `/install-github-app` 在选择“Skip workflow update”后仍更新工作流、重复按 Enter 时运行两次设置，以及在未检测到代码仓时仓库步骤中的 ↑ 键会阻碍键入仓库名的问题
+- 修复了 vim 模式问题：`dj`/`dk`/`dG`/`dgg` 及其 `c`/`y` 形式仅作用于行的一部分；`1G` 跳转到最后一行；`d0`/`c0`/`y0` 无响应；使用 `.` 重复插入后光标偏移一位；以及在以 `!` 为前缀的行上按 `o`/`p` 会切换到 shell 模式
+- 修复了 vim 模式问题：在空格、空行、单词末尾字母或单字母单词上执行 `cw` 还会修改下一个单词；印地语、孟加拉语等文字中单词移动在词内停顿；以及使用 `.`、`p` 或 `P` 插入以 `!` 开头的文本时会切换到 shell 模式、丢失文本或修改错误字符
+- 修复了重音符作为独立按键键入后 prompt 光标多移动一个字符的问题
+- 修复了在屏幕阅读器模式、引用列表和长列表中，文本在项目符号下一行起始的列表项上方会出现多余空行的问题
+- 修复了纯数字无序列表（如 `- 316.`）显示为字母、罗马数字或错误数字的问题
+- 修复了 agent 面板页脚提示忽略 `keybindings.json` 中重新绑定的按键，以及在未绑定停止所有 agent 快捷键时显示多余 ` · ` 的问题
+- 修复了 agent 面板页脚在您已查看的 agent 上仍提供“Enter to view”和“x to stop”（此时 x 会键入其输入框中），以及在 main 已显示时仍在 main 行提供“Enter to view”的问题
+- 修复了用鼠标点击 agent 面板中的某一行后键盘光标仍停留在先前选定行上的问题
+- 修复了按 Esc 会中断正在运行的轮次而不是取消选中所选 agent 面板行的问题
+- 修复了全屏模式下在对话框列表（例如 `/skills`）中按 PgUp 和 PgDn 无响应的问题
+- 修复了内存实际上在 JS 堆快照中时 `/heapdump` 摘要却显示大部分内存在原生堆中的问题
+- 修复了 Bash 编辑差异快照目录在临时文件夹中堆积的问题：废弃的目录现在会立即删除，其余目录会在 Claude Code 退出时删除
+- 修复了列表打开期间有新运行启动时，/workflows 会将指针移至另一运行且按 `x` 会停止该运行的问题
+- 修复了在禁用彩色显示（`NO_COLOR`）时，标签式对话框（`/config`、`/plugin`、`/permissions`）中选中的标签在标签栏拥有焦点时不显示高亮的问题
+- 修复了在 `/plugin` 已安装列表上滚动鼠标滚轮时滚动的是列表背后的面板而非列表本身的问题
+- 修复了全屏模式下滚动或筛选使列表行移开鼠标后，悬停高亮仍残留在该行上的问题
+- 修复了较长的列表行（例如 /remote-control 菜单中）在较窄终端中会折到第二行的问题；现在它们会被截断并显示为 …
+- 修复了在较窄终端中 `/hooks` 和 `/mcp` 详情视图会将较长值重叠打印在其下方一行上的问题
+- 修复了屏幕阅读器模式下无法通过键入数字来选择列表项（例如 `/plugin` 中技能的状态选项）的问题
+- Windows：修复了写入 `$TMPDIR/…` 的 Bash 命令报错“Permission denied”的问题
+- Windows：修复了同时更新的多个 Claude Code 会话可能互相删除彼此的 `claude.exe` 备份，从而可能导致没有遗留任何 `claude.exe` 的竞态条件问题
+- 改进了 Claude Desktop 登录和使用配额限制的错误消息，指引指向应用程序而非终端命令
+- 改进了启动流程：托管设置和策略拉取不再重试绝不可能成功的请求
+- 改进了交互式启动耗时：git 读取、启动遥测以及 Bedrock/Vertex 模型升级检查不再在首帧渲染前运行
+- 改进了恢复读取过大量文件的长会话的耗时；恢复后的文件缓存现在与文件被读取时的状态保持一致
+- 改进了恢复已压缩的超长会话的耗时，通过 Agent SDK 和 Claude Desktop 体验尤为明显
+- 改进了由超大首个 prompt 主导的会话中“Prompt is too long”的恢复机制：现在该 prompt 会单独进行总结，而不是被排除在总结之外
+- 改进了在新进程中恢复会话后的 auto 模式：权限分类器现在可以复用其先前的 prompt 缓存，而无需重新写入
+- 改进了 auto 模式的拒绝消息，使 Claude 将拒绝视为针对操作结果，而不仅限于确切的命令本身
+- 改进了 dangerous-rm 检查：增加了对 shell 变量后接顶级目录名、派生自工作目录的变量或仅包含反斜杠的目标进行删除的风险标记
+- 改进了 macOS 上的沙箱指引：当本地开发服务器无法绑定端口时，Claude 现在会指引使用 `sandbox.network.allowLocalBinding`
+- 改进了 `--agents`：支持接受 JSON 文件的路径（配合 `-p`）以及内联 JSON，并允许空的 `prompt`
+- 改进了 `/batch`：使其可以在由 WorktreeCreate Hook 提供 agent 工作树的环境中运行，而不仅限于 git 仓库内部
+- 改进了插件 Hook 失败错误，指明有问题的插件；并在 shell 形式的 Hook 未对 `${CLAUDE_PLUGIN_ROOT}` 加引号时在 `claude plugin validate` 中添加了警告（包含空格的插件路径会导致其异常）
+- 改进了 `/` 菜单、`/skills`、`/context` 以及 `/plugin` 已安装列表：在没有其他命令占用时，从 claude.ai 同步的技能将显示其简称，而不是 `anthropic-skills:<name>`
+- 改进了面对长研究简报时 `/deep-research` 的可靠性：移除了范围步骤输出中未使用的必填字段
+- 改进了已发布产物页面的文案编写：内置的 artifact-design 技能现在会要求 Claude 生成朴实、直接的文本
+- 改进了慢速网络连接下的产物发布：大型页面上传现已压缩传输
+- 改进了启动时超大 CLAUDE.md 提示：现在将指令文件合并计算，以便捕获大量中等大小的文件和 @ 导入
+- 改进了调试日志：指明因会话启动环境已设置而被忽略的设置 `env` 变量
+- 改进了标签式对话框（如 `/permissions` 和 `/usage`）中的键盘导航：↑/↓ 可在标签栏与内容区域之间切换焦点，且列表仅在拥有焦点时响应按键
+- 改进了 `/help` 和 `/sandbox`：在标签页列表内按 ←/→ 和 Tab 可切换标签，且在 `/help` 中空的 Custom commands 标签页上按 ↓ 不再导致按键卡住直到按 Esc
+- 改进了 `/install-github-app`、`/desktop`、`/permissions` 的 auto 模式环境提示，以及 `/plugin` 的“Add marketplace?”与“Run this command?”提示：现均采用带有按键提示的标准对话框边框，且与其他对话框一样，连按两次 Ctrl+C 或 Ctrl+D 可取消
+- 改进了 `/workflows` 和 `/mcp` 列表：支持分页（PgUp/PgDn、Home/End），与其他列表一样支持 j/k 及鼠标操作，方向键遵循 `select:previous`/`select:next` 的重新绑定，且在 `/workflows` 中按 `x` 可停止光标所在的运行
+- 改进了 `/plugin` 插件与 marketplace 详情菜单以及 `/remote-control` 已连接菜单：现已支持 Home/End 及点击行操作
+- 改进了 prompt 下方的后台工作流行：现在显示名称、进度条、在宽终端下的 agent 数量、耗时、总 token 计数以及大型工作流警告
+- 改进了 /plugin 已安装列表：各部分中的行现在按列对齐（状态、名称、类型、详细信息）
+- 改进了 `/skills`：每行开头显示技能名称，单独使用 ✔ 或 ◯ 表示开启或关闭，并在较窄终端中保持单行显示
+- 改进了较窄的列表行（`/skills`、`/workflows`、`/feedback`）：名称在其首个详情旁保留 20 列，且详情要么完整显示要么完全不显示
+- 改进了 `/diff`：显示滚动条以指示在较长变更文件列表中的位置，且较长的路径不再折行
+- 改进了 `/hooks`：Hook 的详情界面现在会说明 Hook 的种类以及修改位置，而不再总是指向 settings.json；禁用 Hook、安全模式和仅限托管 Hook 的提示均用单句简单说明当前状况
+- 改进了 `/mcp` 中的屏幕阅读器输出：禁用的服务器会被朗读为“off”而不是“pending”
+- 改进了 Remote Control 确认逻辑：在终端窗口重新获取焦点后选项会短暂再次处于未激活状态，防止在切换回来时按下的按键误作应答
+- 将立即发送（ctrl+enter 或 ctrl+x ctrl+s）变更为将正在运行的工具移至后台，而不是取消当前轮次
+- 更改了 auto 模式：在分类器审查于服务端运行的情况下，只读和沙箱内的 shell 命令也会等待该审查，并在被标记时予以阻止
+- 更改了 `CLAUDE_CODE_AUTO_MODE_SERVER` 使其同样适用于直连 Anthropic API：`0` 停用服务端 auto 模式分类器（本地分类器将计入用量），`1` 启用
+- 将 `--dangerously-skip-permissions` 和 auto 模式下的危险 `rm` 提示变更为等待应答 2 分钟，超时后拒绝命令并给出重写建议，以保证无人值守会话继续运行（`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT=1` 可关闭此机制）
+- 更改了 AGENTS.md 支持，使其同样适用于 Amazon Bedrock、Google Vertex AI、Microsoft Foundry、LLM 网关以及已禁用遥测的会话
+- 更改了 Claude apps gateway：当 `managedMcpServers` 条目的 `envHelper` 路径以 `\??\` 或 `/??/` 开头（当前 Claude Desktop 拒绝运行的路径形式）时拒绝启动
+- 将自托管 runner 变更为以私有文件形式而非命令行文本向 Claude Code 传递 system prompt，从而避免大型 prompt 导致启动失败；追加 `--system-prompt` 或 `--append-system-prompt` 的包装脚本或 `command` Hook 必须改用 `--system-prompt-file` 或 `--append-system-prompt-file`
+- 将排队的消息变更为在对话中显示在加载动画上方而非下方
+- 将 prompt 下方的会话产物链接变更为一个页脚药丸按钮（`⧉ name` 或 `⧉ N`），点击可打开 `/artifacts`，且现在会优先列出当前会话的产物
+- 更改了 Artifact 工具，允许 Claude 在产物页面中从 unpkg.com 加载脚本
+- 将全屏模式下（包括 `/config` 中）悬停列表行变更为给该行着色，而不是在获得焦点的行的指针旁绘制第二个 ❯ 指针
+- 更改了 /mcp：每个服务器的行现在以其状态图标和名称开头，说明一次其状态，并在较窄终端中缩短名称前先省略末尾信息（如“managed”）
+- 更改了 /workflows：每次运行的行以状态图标和耗时开头，较窄终端中会保留运行的名称和耗时，优先省略 agent 和 token 计数
+- 将 Remote Control 附件下载变更为复用连接并跳过会话中已下载过的文件
+- 将 MCP 资源列表（资源列表工具和 @ 提及建议）变更为跳过 MCP Apps UI 资源；通过 URI 读取仍然有效
+- 更改了 `claude plugin uninstall --json` 和 /plugin 对话框：当插件文件夹因其他已安装插件正在使用或无法读取安装记录而保留时，提示已保留该插件的数据
+- 更改了后台任务列表（`/tasks`）：在正在运行的 `/ultrareview` 上按 `x` 现在会在停止审查前请求确认
+- 移除了命令菜单和 `/help` 中残留的“(removed)”`/agents` 条目；键入 `/agents` 仍会说明向导迁移去向
+- [VSCode] 当 auto 模式回退到计费的分类器请求时，在 VS Code 和 JetBrains 面板中添加了 Continue/Stop 提示，取代了无法回应的警告行
+- [VSCode] 修复了打开无消息的 Web 会话时会保存无法恢复的空本地副本的问题；现在会报错指明在何处继续该会话
+- [VSCode] 修复了当服务器未能返回历史记录、部分历史记录加载失败或网络登录页面替代响应时，claude.ai/code 会话无报错地以空白或仅含部分对话打开的问题；现在会显示错误且支持重新打开
+- [VSCode] 修复了扩展主机重启后编辑器标签页中的对话静默卡死的问题；标签页现在会提示您从会话列表中重新打开
+- [VSCode] 修复了 Claude 在聊天面板中为单选/多选题附加选项预览的问题，而该面板中的问题卡片从不显示这些预览
+- [VSCode] 修复了会话管理器的费用与用量区块在较窄侧边栏中从文字中间换行，以及在切换账户后显示先前登录的总计数据的问题
+- [Claude Code on the web] 在云端会话的编写器模型菜单中添加了 Fast 模式开关，当您的套餐包含 fast 模式且所选模型支持时显示
+- [Claude Code on the web] 在 GitHub 设置提示中添加了设置快捷方式，并在仓库选择器中添加了“Troubleshoot GitHub connection”链接，两者均可打开您的 GitHub 连接页面
+- [Claude Code on the web] 修复了带有 PR 转为草稿的 GitHub 触发器的 routine 从不触发的问题；现在在 PR 转为草稿时会启动运行
+- [Claude Code on the web] 修复了非托管在 GitHub 上的仓库在云端会话中显示一个根本无法生效的 Create PR 按钮的问题；该按钮在此类仓库中现已隐藏
+- [Claude Code on the web] 修复了在仓库选择器打开期间，claude.ai/code 上的 GitHub 设置提示会遮挡选择器的搜索框和行的问题；现在它会避让直至选择器关闭
+- [Claude Code on the web] 改进了云端会话无法打开文件时显示的文件卡片：现在会说明是文件已不存在还是会话的权限设置阻止了读取
+- [Claude Tag] 在有人按下 Stop 后于 Slack thread 中添加简短的一行，指明是谁停止了 Claude 的响应，并提示提及 @Claude 以继续
+- [Claude Tag] 修复了在某些 Slack 频道中 Claude 可能永久停止响应 thread 内回复的问题；受影响的频道现在会在收到发送给 Claude 的下一条新消息时自动恢复
+- [Claude Tag] 修复了在 Slack 中按下 Stop 后 Claude 仍会恢复已停止请求（例如触发签到或后台任务结束时）的问题；响应中途发送的消息现在会被读取
+- [Claude Tag] 修复了 Claude 会话在任务中途崩溃（例如安装脚本失败）后 Slack 回复延迟数分钟甚至永未送达的问题；现在它会在数分钟内自动重启
+- [Claude Tag] 修复了当会话配置过大无法启动时，Slack 中的 Claude 承诺会自动重启随后出现常规报错的问题；thread 现在会说明原因及如何重试
+- [Claude Tag] 修复了超长 Slack thread 的问题：Claude 可能会结合数周前的消息进行判断后静默保留回复不发，且在 thread 深处重启可能会丢失近期上下文
+- [Claude Tag] 修复了在从 Enterprise Grid 全组织共享移入单个工作区的 Slack 频道中，Claude 对每次提及均回复“Couldn't check this channel just now”的问题
+- [Claude Tag] 修复了主要通过跨工作区共享频道访问的超大型 Enterprise Grid 工作区在沉寂一小时后再次出现“Couldn't check this channel”的问题
+- [Claude Tag] 修复了被组织推理 Hook 拦截的 Slack 请求显示常规重试提示的问题；thread 现在会显示 Hook 的拒绝消息且 Claude 不再重试
+- [Claude Tag] 修复了 Slack 中的 Claude 提供切换至您组织无法使用的模型的问题；现在仅列出并提供切换切实支持的模型
+- [Claude Tag] 修复了通过 Claude Tag 中的 AWS 连接发送至 DynamoDB 和 Kinesis 基于账户的端点的请求身份验证失败的问题
+- [Claude Tag] 修复了 Claude Tag 管理员设置中的 Plugins 区域对组织管理员加载失败并将关联插件列为原始 ID 的问题；现在能够正常加载并显示每个插件的名称
+- [Claude Tag] 将在 Slack thread 中询问时 Claude 给出的 routine 列表变更为默认显示该 thread 自身的定时任务，而非频道中的所有 routine
+- [Code Review] 修复了在未设置为审查每次推送的代码仓中，重试失败的审查期间被审查的 commit 被强制推送覆盖导致 PR 未获得任何审查的问题
+
+## 2.1.278 (2026-09-19)
+
+- 面向 Claude API 和 Enterprise 用户，以及在 Bedrock、Vertex、Foundry 和网关上，将 auto mode 默认调整为服务端分类器，该分类器不收取分类器开销费用（在 Bedrock、Vertex、Foundry 和网关上可设置 `CLAUDE_CODE_AUTO_MODE_SERVER=0` 选择退出）；发生计费回退时会发出警告。详见 https://code.claude.com/docs/en/auto-mode-classifier-billing
+- 在 `/status` 中新增了 `Auto mode server` 行，用于显示当前会话的 auto mode 分类器是否在服务端运行
+
+## 2.1.277 (2026-09-18)
+
+- 新增 AGENTS.md 支持：在没有 CLAUDE.md 的项目中，Claude Code 会改读 AGENTS.md；可在 `/config` 中的 "Project instructions" 下进行修改
+- 新增 `CLAUDE_GATEWAY_PROXY_IS_EGRESS_BOUNDARY=1` 配置，用于唯一出口为正向代理的 Claude apps 网关：每个出站请求都会将主机名直接交给代理，而不在本地解析
+- 在 Claude apps 网关上游中新增了可选的 `headers:` 映射，用于向你在提供商前端运行的代理发送静态请求头
+- 新增提示行：当打开类似 `/tasks` 等面板时后台任务完成，会提示后台任务的更新正在等待处理
+- 修复了 `claude -p` 和 Agent SDK 会话在发生内部错误后可能卡死且无结果的问题；现会报告错误并以退出码 1 退出
+- 修复了当较早的 assistant 轮次在其他内容旁包含空文本块时，导致后续每个会话请求均报错“text content blocks must be non-empty”的问题（包括在使用 `--resume` 之后）
+- 修复了当较旧版本的 Claude Code（例如 IDE 插件绑定的 CLI）与当前版本在同一台机器上运行时，会导致意外登出的问题
+- 修复了当 `~/.claude.json` 中包含格式错误的 `customApiKeyResponses` 值时，`ANTHROPIC_API_KEY` 用户交互式启动卡住或报错的问题
+- 修复了当代理返回无效版本时，更新检查每 30 分钟报错一次且在设置了最低或最高版本时 `claude update` 卡死的问题；格式错误的 `minimumVersion` 现在会被忽略
+- 修复了在通过 winget 或 apk 管理的安装中，版本查询失败时 `claude update` 仍显示“up to date”的问题
+- 修复了在重新安装当前会话或其它程序正在使用的插件版本时，`claude plugin install` 有时会失败并损坏已安装副本的问题；现在未更改的副本将保持原样
+- 修复了因系统耗尽进程、内存或文件句柄导致搜索无法启动时，Grep 和 Glob 报告无匹配项的问题；现在它们会返回明确说明该原因的错误
+- 修复了目标路径为已有目录时，Write 工具静默结束当前轮次并视为拒绝权限的问题；现在会报告明确的错误
+- 修复了 Edit 工具将转义反斜杠后接 `uXXXX` 文本视为 `\uXXXX` 转义序列，从而可能导致编辑非 ASCII 字符时错误重写转义反斜杠序列的问题
+- 修复了包含非 ASCII 文本的超大编辑内容与文件不匹配时，Edit 工具报错“Invalid regular expression: regular expression too large”而非“String not found in file”的问题
+- 修复了当工具调用的文件路径包含写为转义序列的 `\u0000` 时，轮次提前结束并提示“Path contains null bytes”的问题；转义控制字符现在会保留为字面文本
+- 修复了当插件的 LSP 服务器退出或关闭其 stdin 时，后台会话（`claude --bg`）退出的问题
+- 修复了 `~/.claude.json` 中的 `claudeAiMcpEverConnected` 值格式错误时，打开 `/mcp` 或 `/plugin manage` 发生崩溃（“Type error”）的问题
+- 修复了 `~/.claude.json` 中包含格式错误的 `theme` 值时启动崩溃的问题
+- 修复了当 prompt 包含终端颜色代码的文本（例如从历史记录调出的 prompt 或从外部编辑器加载的文本）时发生崩溃（“unrecoverable interface error”）的问题
+- 修复了恢复会话时，若保存的历史记录中包含以纯字符串形式存储的 assistant 消息会导致崩溃的问题
+- 修复了在响应缓慢或高负载机器上，首个加载动画出现时会话有时会退出并报错“Claude Code exited after an unrecoverable interface error”的问题
+- 修复了内部渲染错误后屏幕在会话剩余时间内可能停止更新的罕见问题
+- 修复了 Windows 上在 Claude 回复后轮次可能立即报错（如“Out of memory”）中止，导致该回复中的工具调用从未执行的罕见问题
+- 修复了在使用 `/clear`（重启、`--continue`、`--resume`）后继续的会话中，当 SessionStart 钩子打印输出时会导致其第一条消息丢失部分内容，从而引发 prompt 缓存完全未命中的问题
+- 修复了轮次进行中收到的来自其他 agent 的消息（例如 subagent 的 SendMessage）显示在“Ran N shell commands”行下方而非实际到达位置的问题
+- 修复了在全屏 `/resume` 选择器及其他遮挡 prompt 区域的面板中拖选文本后不显示“copied”提示的问题
+- 修复了在启用沙箱的情况下，于沙箱外部运行的 Bash 命令中 `$TMPDIR` 展开为空的问题
+- 修复了 Cowork 云端会话中的 WebFetch 和 WebSearch 未告知 Claude 请求被拒绝的原因（例如用尽抓取配额或管理员策略）的问题
+- 修复了在配置了代理的情况下，Claude apps 网关的遥测转发忽略了 `NO_PROXY` 中列出的收集器主机名或域名的问题
+- 修复了单个格式错误的 `strictKnownMarketplaces` 或 `blockedMarketplaces` 条目会静默禁用整个企业市场策略的问题
+- 修复了自动更新失败后在 `~/.cache/claude/staging` 中遗留大量分阶段下载文件的问题
+- 修复了 `/plugin` Installed 标签页中的消息（例如插件更新失败的错误）未去除终端控制字符的问题
+- 修复了当 skill 或旧版命令名称与内置 Object 属性同名（如 `constructor` 或 `toString`）时，`/plugin` → Installed 和 `/skills` 发生崩溃的问题
+- 修复了多选安装全部失败时 `/plugin` 退出且没有任何提示信息的问题
+- 修复了已卸载的插件在 `/plugin` Installed 中重新显示为“failed to load”行，且 Remove 无法清除该行的问题
+- 修复了来自官方市场的插件在 `installed_plugins.json` 中记录时缺少 commit，以及更新固定 commit 的插件后 `installed_plugins.json` 仍保留旧 commit 的问题
+- 修复了插件重新加载预览在退出前会一直保留所有已解压的插件归档预览副本，并在下载失败时覆盖重载回退所用的已缓存 `--plugin-url` 归档的问题
+- 修复了当 `~/.claude.json` 包含格式错误的占位记录时，Remote Control 会话记录追踪失败的问题
+- 修复了 claude.ai 登录失效后的错误提示归咎于 Anthropic 个人资料过期的问题；现在会优先提示使用 `/login`
+- 修复了在按键重复或极快输入期间，在 `claude agents` 调度输入框中键入或粘贴的文本偶尔出现错乱的问题
+- 修复了恢复会话时，若保存的记录包含没有合规钩子列表的 stop 钩子摘要会导致崩溃（“unrecoverable interface error”）的问题
+- 修复了当 `keybindings.json` 在 Chat 上下文中重新绑定了 Enter（例如绑定到 `chat:queueSubmit`）时，在选中的 agent 面板行上按 Enter 无响应的问题
+- 修复了 Windows 上当工作目录路径较长（约 120 个字符或更多）时 PDF 页面读取失败的问题
+- 修复了无头恢复（`claude -p --resume`、SDK、VS Code 扩展窗口重新加载）将该会话的成本和使用量统计归零开始计算的问题；无头会话现在会在退出时保存其统计总量
+- 修复了当 `.claude/skills` 未被跟踪时，主代码仓库的项目 skills 在 `--worktree` 会话中无法加载的问题
+- 修复了当仅有一部分匹配时，`sandbox.excludedCommands` glob 规则会将整个复合 Bash 命令免除沙箱限制的问题；现在必须每一部分都匹配
+- 修复了恢复的 subagent 和队友会重新渲染其已加载的 MCP 工具定义，从而破坏该 agent 的 prompt 缓存的问题
+- 修复了受速率限制的 artifact 发布告知 Claude 停止重试的问题；现在会告知 Claude 未发布任何内容，并提示何时重新发送相同的发布请求
+- 修复了在恢复或重新启动后，对话前期记录的附件被重新渲染，导致扩展思考丢失且未能命中 prompt 缓存的问题
+- 修复了当服务器拒绝创建 API key 时，Console 登录仅显示“Request failed with status code 400”的问题；现在会显示服务器的具体返回信息
+- 修复了在 Claude 仍在工作时键入的消息有时会被模型忽略的问题
+- 改进了 SDK 和无头（`-p`）模式下的会话启动：首轮交互不再等待每个目录的 CLAUDE.md 查询
+- 改进了 Claude apps 网关的回环错误消息，使其明确指明 `CLAUDE_GATEWAY_ALLOW_LOOPBACK`
+- 改进了 `/plugin` Installed：与插件分开列出的 MCP 服务器现在会显示其所属的插件
+- 改进了对已安装插件执行 `claude plugin install` 的体验：现在会在市场提供更新版本时进行提示，并指明 `claude plugin update` 命令
+- 改进了 logo 下方的启动通知折叠行提示：现在显示为“N more notices hidden”而非“+N more · /status”
+- 改进了 prompt 处理：prompt 中不可见的 Unicode 格式化字符和标签字符会被移除，并在发送前显示清理后的 prompt 供检查
+- 改进了无内容可供审查时的 `/ultrareview`：消息会说明你处于何种情况，提供审查最新 commit 的命令，并对新仓库的首个 commit 进行完整审查
+- 改进了 artifact 链接处理，使得在 Artifact 工具可用时，Claude 使用该工具读取 claude.ai artifact 链接而非 WebFetch
+- 改进了高风险 rm 命令的权限提示，明确指出被标记的 rm 命令并建议使用 `${VAR:?}` 防护，以便无头运行能够恢复
+- 改进了 Artifact 工具的权限提示：语句更简短，按标题或文件名指明页面与 artifact，并在文本之后列出链接
+- 调整了 Fable，使其始终显示在 Anthropic API 的 `/model` 中；仅在你的组织设置将其禁用时才会置灰显示
+- 将 Bedrock、Vertex 和 Foundry 上的 Bash 沙箱说明调整为第一方表述，将沙箱定界为任务被赋予的边界范围
+- 调整了非交互式会话中的 `/ultrareview`，当仓库没有基础分支或共同历史记录时直接拒绝执行
+- 调整了 subagent 结果传递给主 agent 的方式，将其置于标识为 subagent 输出的标头下并缩进结果内容，以防止 subagent 结果中的文本被当作会话自身的指令
+- 调整了 Bedrock、Vertex 和 Foundry 上工作流脚本计算出的 `agent()` prompt，使其以脚本编写文本的形式传递给 subagent，避免安全分类器将其识别为用户输入
+- 移除了在 SDK 或 IDE 之外启动的 `claude -p` 运行中的后台 Haiku 自动标题生成请求
+- 移除了已废弃的 TaskOutput 工具；Claude 改用 Read 读取后台任务的输出文件，且 `taskOutputMaxChars` 设置与 `TASK_MAX_OUTPUT_LENGTH` 不再起任何作用
+- [VSCode] 在面板菜单中新增了 Sign out 行，并在输入命令菜单中新增了 `/logout`
+- [VSCode] 在 agent 图中新增了后台 shell 和其他运行中任务，均配有 Stop 按钮，并支持通过输入的 `/tasks` 打开
+- [VSCode] 在回复上新增了 Copy response 按钮，并支持通过输入的 `/copy` 复制
+- [VSCode] 新增了非活跃会话自动归档时的一次性通知，并在 Archived sessions 分组上新增了“Unarchive all”操作
+- [VSCode] 在不适用套餐额度限制的场景（Vertex、Bedrock、Foundry、API key）下，将当前会话的成本与 token 使用量添加至 Account & usage 对话框以及会话管理器中
+- [VSCode] 修复了“General config”菜单行显示 `/config` 用法文本而非打开设置的问题，并使输入的 `/mcp`、`/hooks`、`/memory`、`/rewind` 及类似命令能正常打开其对话框
+- [VSCode] 修复了在已使用 `/effort` 保存过级别的模型上，effort 滑块级别无法持久化保存到后续会话的问题
+- [VSCode] 修复了当保存的模型设置为大小写不同的别名（如“Sonnet”）时，在已使用的面板中打开的对话模式选择器中缺少 Auto 的问题
+- [VSCode] 修复了 `/fast` 未将 fast 模式保存为默认设置，导致扩展重新启动 Claude Code 时丢失的问题
+- [Claude Code on the web] 在 Team 和 Enterprise 套餐的环境选择器中新增了 Personal 和 Organization 分区，管理员现可将个人环境共享给组织
+- [Claude Code on the web] 调整了组织环境在 Team 和 Enterprise 套餐下的 Code 标签页中的打开方式，改为只读摘要形式，编辑操作移至 Admin settings → Cloud environments 下
+- [Claude Code on the web] 修复了保存为 Custom 网络访问且未指定域名的云环境会静默恢复为 Trusted 的问题；该对话框现在会要求至少提供一个域名
+- [Claude Code on the web] 将管理员 Claude Code 设置中标记为“Web”的项更名为“Cloud sessions”，并移除了其下方多余的只读 Mobile 行
+- [Claude Tag] 修复了在 Enterprise Grid 全组织安装的 Slack 频道中创建的 routine 在运行时无法读取其工作区中其他公开频道的问题
+- [Claude Tag] 修复了 Claude Tag 访问包中凭据预设上的“Learn more”链接，使其打开各厂商的凭据设置页面而非通用的 API 参考
+- [Claude Tag] 调整了 Claude Tag 访问包中的 Pylon 凭据预设，以便管理员能够将其指向 Pylon 的欧盟主机
+- [Claude Tag] 修复了 Claude Tag 访问包中的 Google Cloud 凭据表单：被拒绝的密钥文件现会说明原因，网站和作用域保持锁定状态，且拒绝的轮换操作会保留已粘贴的密钥
+- [Claude Tag] 修复了 Claude Tag 管理员设置中的网络事件日志对使用 AWS 签名、客户端证书或自定义 CA 的连接请求不显示响应状态的问题
+
+## 2.1.276 (2026-09-18)
+
+- 修复了当 `ANTHROPIC_BASE_URL` 指向代理或网关时，所有请求均因 `400 … Input tag 'advisor_20260301'` 而失败的问题（2.1.275 回归）
+
+## 2.1.275 (2026-09-17)
+
+- 在 Claude apps 网关登录中加入了已登录账户：当网关指定该账户时，你在凭据保存前进行确认，且 `/status` 会显示该账户
+- 新增立即发送快捷键（ctrl+enter 或 ctrl+x ctrl+s），可中断当前轮次并一次性发送所有排队消息；已发送和排队的消息在模型接收前显示为灰色
+- 新增配置的 `otelHeadersHelper` 失败时的启动警告，以便及时发现未静默导出任何遥测数据的会话
+- 支持将你在 claude.ai 账户上启用的 skills 和 plugins 同步到使用该账户登录的终端会话；可通过 `syncClaudeAiSkills: false` 或 `syncClaudeAiPlugins: false` 选择关闭
+- 新增 `/plugin install <plugin> --marketplace <source>`，在安装插件前提示是否添加该 marketplace
+- 修复了内存压缩或恢复后，已恢复 memory 文件的留存时间备注在不同请求间发生变化，导致 prompt cache 未命中的问题
+- 修复了 `--forward-subagent-text` 的 stream-json 与 SDK 输出中，丢失由 `context: fork` skill 生成的子代理消息，以及由子代理或其他分叉 skill 调用的分叉 skills 消息的问题
+- 修复了在使用自定义 `fileSuggestion` 命令或输入 `@.`/`@./` 时，@-mention 文件建议被淹没在 MCP 资源下方的问题
+- 修复了全屏模式下后台任务完成通知显示在长轮次已折叠工具行下方而非其实际到达位置的问题；每条通知现在会关闭已展开的行
+- 修复了当获取失败且 marketplace 以其仓库命名时，`claude plugin marketplace update` 会删除 GitHub marketplace 本地副本的问题
+- 修复了插件和 marketplace 消息、日志以及 `claude plugin marketplace list` 会显示 git、ssh 或 marketplace URL 中存储的密码或令牌的问题
+- 修复了当排队消息取代了上一条消息后，恢复的云端会话在对话记录中残留未回答问题的问题
+- 修复了在 vim 模式下，使用点命令重复 "!" 或快速输入 "i!" 将非空提示切换为 shell 模式后，光标会向右偏移一个字符的问题
+- 修复了全屏模式下向上滚动浏览大型文件 diff 时可能卡顿或黑屏数秒的问题
+- 修复了回复中偶尔出现多余的 `</ccmemory>` 样式闭合标签的问题
+- 修复了插件消息、日志和 VS Code 插件对话框中某些 git 地址显示错误服务器的问题
+- 修复了对于处于网络网关后方（该网关在 beta 请求头被拒绝时会重写 API 错误响应）的用户，终端每轮都会报 `API Error: 400` 的问题
+- 修复了在 Linux 上当 shell 为 zsh 时，沙箱中的 Bash 命令执行失败却返回退出代码 0 的问题
+- 修复了在内存压力下大文件部分内容无法解码时，Read 工具挂起而非报错的问题
+- 修复了当已保存的历史记录包含格式错误的 task-reminder 或 @-file 附件条目时，`--resume`、resume 选择器预览、已恢复后台代理和对话记录视图失败的问题
+- 修复了恢复对话记录中包含格式错误消息条目的会话时发生崩溃，以及此类对话在向上滚动时接收新消息导致全屏崩溃的问题
+- 修复了当保存的对话记录包含格式错误的消息内容块时，会话无法恢复或启动的问题
+- 修复了 Grep、Glob 和 @-file 建议在搜索结果超过 20MB 输出上限时挂起或内存溢出，以及系统 ripgrep 在大量警告后报告“无匹配项”而非报错的问题
+- 修复了当会话的文件历史备份无法完整复制时，分叉或后台会话中的 `/rewind` 会恢复为零填充或截断文件的问题
+- 修复了全屏会话在斜杠命令下拉菜单打开状态下快速打字或按住按键时，有时会退出并提示 "Claude Code exited after an unrecoverable interface error" 的问题
+- 修复了当通过 stdin 输入的命令在文件描述符耗尽的机器上运行时，后台会话崩溃并重启其 worker 的问题
+- 修复了当 `~/.claude.json` 包含格式错误的 `mcpNeedsAuthNoticed` 值时启动崩溃的问题
+- 修复了当启动时自带的内置工具后来被服务端开关禁用时，`--resume` 和 `--continue` 会丢失对话早期 thinking 的问题
+- 修复了在全屏 `claude --resume` 会话选择器中使用鼠标选中的文本无法复制到剪贴板的问题
+- 修复了当插件从 `--plugin-dir` 或 `--plugin-url` 归档加载时，插件重新加载预览会替换正在运行会话中已解压插件文件的问题
+- 修复了带有 `--drain-wait-sec` 的自托管 runner 会丢失在 SIGTERM drain 期间完成的轮次的最终结果的问题；runner 现在会稍作等待以便上报该轮次
+- 修复了带有特定 `matcher` 的 `SubagentStop` 钩子会对代理类型为空的每个正在停止的子代理触发的问题
+- 修复了沙箱中的 Bash 命令无法写入名为 `hooks/` 或 `config/` 的项目目录的问题
+- 修复了会话在另一台机器上恢复或暂存区被清空后，Artifact 更新失败并报错 "File not found" 的问题：现已恢复页面最后发布的版本
+- 修复了 `/update-config` 写入了文件权限检查无法匹配的 `Write(path)` 权限规则，而不是 `Edit(path)` 规则的问题
+- 修复了内置 claude-api skill 的实时源表格中四个失效的文档链接（Pricing、Computer Use、Skills、CLI）
+- 改进了包含 `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__` 行的 `--system-prompt` 的 prompt cache：其上方文本现已全局缓存，与 SDK 的数组形式保持一致
+- 改进了 Claude Desktop 无法打开时的 `/desktop` 报错信息：现在会说明原因及后续操作建议
+- 改进了 Artifact 工具的发布和读取结果：现在会说明谁可以打开页面以及所有者的 Share 菜单提供了哪些选项
+- 改进了 artifact 发布结果：标明了发送的标签页图标，在页面包含空字符（NUL byte）时发出警告，并在旧版本发布后自动重试获取新页面以进行合并
+- 改进了粘贴和附加图片的处理：图片现在保存在 Claude 无需权限提示即可作为文件打开的位置，包括 Desktop 和 VS Code 中
+- 改进了 Artifact 工具的引导，使 Claude 在你拥有编辑权限时就地更新共享 artifact，而不是单独发布一份副本
+- 改进了套餐用量（plan-usage）读取机制：单台机器上的编辑器窗口和非交互式会话现在共享过去一分钟内的读取结果，而无需各自调用用量接口
+- 改进了 `ListPlugins` 工具描述，使 Claude 明确其列出的是你 claude.ai 账户上启用的插件，而非通过 `/plugin` 在本地安装的插件
+- 改进了终端缓慢或暂停时的响应能力：在终端追赶进度的同时，输出不再进一步滞后
+- 改进了已同步账户 skills 文件夹中文件的 Write 和 Edit 结果：现在会提示更改未保存至你的账户以及如何进行保存
+- 更新了 Claude apps 网关登录的 `/logout` 命令，使其在声明支持令牌吊销的网关上同时结束会话
+- 将托管会话更改为在容器重启后保留未回答的权限提示，而不是重新询问
+- 将 Artifact 工具更改为在首次发布时请求单个词作为标签页图标，而不是使用 emoji favicon
+- 将 Chrome 中的 Claude 在 auto 模式下更改为跳过扩展的每站点分类器批准检查（与 bypass 模式一致），修复了重定向后 `browser_batch` 出现 "Permission denied" 的问题
+- 将从 npm 源安装的插件更改为使用 `npm pack --ignore-scripts` 获取并进行完整性校验，不再运行包的安装脚本
+- 将计划运行和“立即运行”的 routine 改为在无需询问的情况下将数据保存至你可编辑的 artifact 并重新发布其页面；公共 artifact、首次发布和删除操作仍会提示确认
+- 移除了启动通知中关于自上次会话以来单次计划 routine 已运行的提示
+- [VSCode] 新增在 Memory 对话框内查看、编辑和删除已保存 memory 的功能
+- [VSCode] 新增无需输入任何文本即可发送附件图片的功能
+- [VSCode] 在 MCP 服务器对话框中，当服务器列表加载失败时新增重试链接
+- [VSCode] 在提议更改的 diff 标签页中每个更改下方新增接受和拒绝按钮，支持逐项审查修改
+- [VSCode] 修复了当权限卡片等待确认且新内容不断到达时，对话记录会逐步向下缓慢滚动的问题
+- [VSCode] 修复了回退和分叉的对话未保留你为原对话所选权限模式的问题
+- [VSCode] 修复了 `environmentVariables` 设置中空的 `CLAUDE_CONFIG_DIR` 项会导致 Claude Code 将文件保存在工作区中的问题
+- [VSCode] 修复了插件安装链接会针对无法在链接中使用的插件名称和 marketplace 地址打开管理插件对话框的问题
+- [VSCode] 修复了在 Claude Code 报告关闭失败后 Remote Control 仍显示为已连接的问题；现会正确显示为关闭
+- [VSCode] 修复了发送消息时自动滚动到底部在滚动期间回复开始到达时会在到达回复前停下的问题
+- [VSCode] 修复了在重新打开会话后，agent 地图将因崩溃而未完成的代理显示为已停止而非失败的问题
+- [VSCode] 修复了在后台任务仍在运行的情况下崩溃后重载窗口时，"Continuing the step" 通知未显示且继续次数限制被重置的问题
+- [VSCode] 修复了会话列表显示会话最近一次重新打开的时间（例如窗口重载后）而非最后一条消息发送时间的问题
+- [VSCode] 修复了在 Claude 正在处理时发送的消息之后立即使用 "Fork conversation from here" 会失败的问题
+- [VSCode] 修复了在重新打开包含 Claude 正在处理时所发送消息的会话后，prompt cache 时钟显示的分钟数过少的问题
+- [VSCode] 修复了在 Claude 运行工具期间完成的后台代理在窗口重载后丢失其完成通知和在 agent 地图上的结果的问题
+- [VSCode] 修复了在扩展卡顿数秒后，git-ignored 文件中选中的文本极少数情况下可能被发送给 Claude 的问题
+- [VSCode] 修复了重命名正在运行的会话会还原为生成名称的问题（2.1.269 中的回归缺陷）
+- [VSCode] 修复了在 Claude 正在回复时输入的斜杠命令会被作为文本发送给模型，而非在回复完成后执行的问题
+- [VSCode] 修复了在高对比度浅色主题下计划预览以及 Hooks 和权限规则对话框中代码无法看清的问题
+- [VSCode] 修复了在 Remote Control 仍在连接时 `/remote-control` 被忽略的问题：再次运行现在会立即关闭 Remote Control
+- [VSCode] 修复了向上滚动后随着回复流式传输对话会强制拉回底部的问题，并新增 `claudeCode.scrollToBottomOnSend` 设置以关闭发送时自动跳转到底部
+- [VSCode] 修复了管理插件对话框会显示在 marketplace URL 中输入的密码或令牌的问题
+- [VSCode] 改进了 agent 地图：胶囊标签显示运行中代理的数量并在失败后变红，地图滚动时主代理保持在视野中，且代理先按状态再按结束时间排序
+- [VSCode] 将 Claude 编辑器标签页中的新建会话更改为：当 Preferred Location 设置为 Sidebar 时在侧边栏打开，而非始终打开新标签页
+- [VSCode] 将在 Claude 正在处理时发送的消息更改为在对话底部等待，直到 Claude 开始处理该消息
+- [Claude Code on the web] 在 routine 链接失效时显示的页面中，于返回 routines 列表的链接旁新增 "New routine" 按钮
+- [Claude Code on the web] 修复了 routine 的 "paused" 和 "on hold" 通知在句子中间被截断的问题；订阅暂停通知现在会提示自行重新开启 routine
+- [Claude Code on the web] 修复了包含超长允许域名列表的云端环境能成功保存但每次会话启动均失败的问题；保存时现会直接报错并说明需要削减多少内容
+- [Claude Code on the web] 改进了个人账户上的云端会话被拒绝 GitHub 访问权限时 Claude 的指引：现在会链接至 claude.ai/connect-github 而非管理员设置页面
+- [Claude Code on the web] 改进了当被要求编辑、删除或运行非其创建的 routine 时 Claude 的提示：现在会链接到该 routine 的页面以便你自行操作
+- [Claude Tag] 在 Claude Tag 设置中为 access bundles 添加了附加条件：Owner 可以允许 bundle 同样适用于包含访客的频道或 Slack Connect 频道，而不仅限于仅限成员的频道
+- [Claude Tag] 在 Claude Tag 管理设置中 access bundle 的 Credentials 标签页下新增了 Amazon CloudWatch、CloudWatch Logs、Amazon SNS、Google Cloud Monitoring 和 Cloud Logging 预设
+- [Claude Tag] 新增了 US3、AP1、AP2 和 US1-FED 站点的 Datadog 预设；新的 Datadog 连接现在仅限于 Datadog 的读取和查询 API 路由
+- [Claude Tag] 修复了通过 AWS 连接发送时，较新 AWS CLI 和 SDK 版本的 S3 上传操作出现 502 错误而失败的问题
+- [Claude Tag] 修复了当 Claude 仍在通过 routine 或 thread 在某频道发言时，却将该频道视为非活跃并跳过其中未被 tag 消息的问题
+- [Claude Tag] 修复了在该 thread 背后的会话刷新或重启后，thread 的 "Claude [task]" 显示名称会还原为普通 "Claude" 的问题
+- [Claude Tag] 修复了在该 thread 的会话重启或刷新后，在 Slack thread 中切换的模型会静默还原为频道默认模型的问题
+- [Claude Tag] 修复了当其他应用或机器人在频道顶级消息中 @mention Claude 时，Claude 有时会回复两次的问题
+- [Claude Tag] 改进了 Claude 在跨工作区共享的 Enterprise Grid 频道中的通知提示：现在会说明何时未设置任何工作区，或为何仅应用组织默认配置
+- [Code Review] 修复了当审查代理之一以非预期格式返回结果时，review 偶尔会丢失部分分析内容的问题
+- [Code Review] 修复了拥有超过 100 次 Claude review 的 pull request 在每次从 base 分支进行干净合并时都会触发完整 re-review，而非更轻量的合并专用 review 的问题
+
+## 2.1.274 (2026-09-16)
+
+- 添加了在内存占用达到危险级别时的显式警告，并提供释放内存或安全重启的步骤
+- 添加了 `CLAUDE_CODE_MCP_STARTUP_WAIT_MS`，用于限制第一个非交互式轮次等待正在连接的 MCP 服务器的时长（`0` = 不等待）
+- 在 `claude_code.llm_request` OpenTelemetry trace span 中添加了 `effort` 属性，与 `api_request` 事件保持一致
+- 添加了 `claude_code.managed_settings_resolved` OTel 事件：包含受管设置（managed-settings）来源及策略助手状态；配置 `OTEL_LOG_MANAGED_SETTINGS=1` 时对设置与摘要进行脱敏
+- 在 Claude apps gateway 配置中添加了 `store.connect_timeout_seconds` 以延长 Postgres 连接超时时间（默认 5 秒），并优化了数据库不可达时的启动错误信息，使其明确指向 `store.postgres_url` 及配置的超时时间
+- 在 Claude Desktop 和 Cowork 通过 Claude apps gateway 发送的遥测数据中添加了 `enduser.sub`（IdP 主体）
+- 添加了 Claude apps gateway 告警，当单个副本打开的请求数超过其单次向上游发送的 256 个限制时触发，并在启动日志中输出该限制信息
+- 为全屏模式下折叠的队友（teammate）和 agent 消息添加了点击展开功能
+- 修复了会话因不断重试 "unexpected tool_use_id" 400 错误而卡死的问题：损坏的 transcript 记录现在会尽可能自动修复，否则将输出清晰的错误信息（附带 `/rewind` 提示）来终止循环
+- 修复了配置为 `http` 且仅支持传统 HTTP+SSE 的 MCP 服务器在首个请求返回 422 或其他 4xx 错误时连接失败的问题
+- 修复了即使为单个服务器设置了更长的 `timeout`，Streamable HTTP MCP 工具调用仍会在约 5 分钟后超时的问题
+- 修复了当服务器在未声明 `listChanged` 的情况下发送列表变更通知时，MCP prompt 和资源无法刷新的问题
+- 修复了因 403 insufficient_scope 被拒绝的 MCP 工具调用被报告为登录过期的问题：错误信息现在会指明缺失的权限并提示使用 `/mcp` 重新认证
+- 修复了 hook 驱动的会话（例如处于活动状态的 `/goal`）在被动压缩后上下文再次溢出时，以 "Prompt is too long" 报错结束而非执行压缩的问题
+- 修复了恢复（`--continue` / `--resume`）已压缩的会话时，活动的 `/goal` 会丢失的问题
+- 修复了 `claude agents` 在自动更新重启后丢失 `--model`、`--effort`、`--permission-mode`、`--allow-dangerously-skip-permissions` 和 `--agent` 参数的问题
+- 修复了当语言服务器为数千个文件发布整个项目的诊断信息时，每个轮次变慢的问题
+- 修复了在 Bedrock、Vertex 或 Foundry 上使用 `model: "opus"` 的子 agent 在其 id 无法识别模型族时偏离当前会话模型的问题（除非设置了 `ANTHROPIC_DEFAULT_OPUS_MODEL`）
+- 修复了自托管 runner 会话在几次令牌刷新失败后每轮都报 401 失败直至下一次计划刷新才恢复的问题；runner 现在会持续重试，并在遇到 401 后重新获取新令牌
+- 修复了在 VS Code 和其他需要 `file://` URI 的终端中，点击本地文件路径链接无响应的问题
+- 修复了 transcript 会对自己发送消息中的有序列表重新编号的问题（输入 "3. 2. 1." 会显示为 "3. 4. 5."）；数字和 "N)" 标记现在会按原样显示
+- 修复了 AskUserQuestion 预览备注被附加到先前选择的选项而非当前高亮选项的问题
+- 修复了 AskUserQuestion 预览模式下按回车提交备注时会丢弃当前高亮选项的问题
+- 修复了恢复执行的后台 agent 在其中一个调用被附带消息批准时，仍保留被中断的工具批处理中另一半的问题
+- 修复了使用 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN` 启动的本地 `claude -p --resume` 不报告前一个进程遗留的未完成后台任务的问题
+- 修复了云端会话的首个轮次有时会在仍处于连接中的 SDK 托管 MCP 服务器工具尚未加载的情况下启动的问题
+- 修复了后台 agent 通知声称该 agent 没有正在进行的后台工作，而实际上它仍在等待自身的后台任务并即将恢复的问题
+- 修复了 Claude Desktop 会话中的错误提示，改为建议使用如 `/usage-credits` 等斜杠命令，而非在该环境下无法使用的 CLI 标志
+- 修复了当 Claude 按照列出 routine 返回的结构写入 routine 时，`/schedule` 在保存 routine 的 prompt 时丢失了其 message role 的问题
+- 修复了 `/status` 未显示其自身错误横幅提示要检查的 `apiKeyHelper` 失败信息的问题
+- 修复了在组织的托管快速模式策略下，非交互式会话中的 `/fast on` 先报告开启随后又关闭的问题；现在会直接提示组织已禁用该功能
+- 修复了 Artifact 工具请求你批准 artifact 更新后，又因会话未读取最新版本而拒绝该更新的问题
+- 修复了开启网络访问的 Cowork 和 claude.ai 云端会话在读取队友的 artifact 时将其视为网络访问已关闭的问题
+- 修复了自身不含 git 仓库的插件或 marketplace 目录会从其外层 git 仓库（例如由 git 管理的 `~/.claude`）获取版本号的问题
+- 修复了携带空的 `--mcp-config` 使用 `--strict-mcp-config` 时，第一个非交互式轮次会在非核心 MCP 服务器上最多阻塞等待 `MCP_TIMEOUT` 时长的问题
+- 修复了 Stop prompt hook 在会话的每个 block 中都重新发送完整 prompt 的问题；重复的 block 现在会使用一个 500 字符的标签来指明条件
+- 修复了在 Linux Wayland 环境下，于 Cursor 或 VS Code 终端内运行时启动会多打开空白编辑器窗口的问题
+- 修复了在消耗检查（spend check）期间 Postgres 断开连接时，Claude apps gateway 中未处理的 promise rejection 问题
+- 修复了 Claude apps gateway 在接收到 SIGTERM 时中断所有打开的流的问题：现在退出前允许正在进行的请求最多运行 25 秒以完成处理（`CLAUDE_GATEWAY_DRAIN_TIMEOUT_MS`）
+- 修复了当插件策略来自远程受管设置时，`installed_plugins.json` 几乎每次启动都会被重写，导致 Claude Desktop 重新加载所有打开会话的插件的问题
+- 修复了无头（headless）及 SDK 会话在每个后台任务完成时都发起单独模型调用的问题；已排队的完成任务现在会合并为单次调用响应
+- 修复了 Bash 工具在每次插件重载后都重新 source shell profile（导致下一条命令卡顿数秒）的问题；现在仅在插件的 `bin/` 目录发生变动时才会重新执行
+- 修复了在 `hooks/hooks.json` 中包含顶层 `$schema` 的插件会显示 "unknown key" 提示的问题
+- 修复了 MCP 连接错误以及 MCP login 工具描述中泄露从 MCP 配置中的 `${VAR}` 占位符解析出的密钥内容的问题
+- 修复了循环遍历或对某些特殊 shell 变量赋值的命令的 Bash 权限检查问题；这些命令现在会请求权限
+- 修复了 worktree 隔离会话接受包含特定嵌套 shell 展开的 Bash 命令的问题；此类命令现在会被拒绝
+- 修复了在包含多字节字符的文件中，Edit 权限提示预览有时会显示与批准编辑不同的位置的问题
+- 修复了在轻度内存压力下的机器上，后台命令在空闲 30 分钟后被停止的问题；现在仅在内存严重不足时才会停止，并在调试日志中说明原因
+- 修复了子 agent 发送给主会话的消息在重启后从 Claude Desktop transcript 中消失的问题
+- 修复了从 `.zip` 加载的插件在多次重叠重载后仍使用过期的解压文件提供服务的问题
+- 修复了子 agent 的进度摘要被失控的多段落长回复覆盖的问题
+- 优化了 `--input-format stream-json` 会话的启动性能：第一个轮次不再为工具搜索延迟加载、仍处于连接中的 MCP 服务器等待最多 2 秒；这些工具将在后续轮次中引入
+- 优化了 Monitor 工具通知：脚本的最终输出及其退出状态现在合并为一条通知发送而非两条，从而节省一次模型轮次
+- 优化了 Artifact 工具的错误提示：未登录 claude.ai 时，终端会在首次尝试时明确提示，并更早告知 Claude 停止重试已被拒绝的调用
+- 优化了 artifact 发布逻辑：基于旧版本构建的发布会在发送前被拦截，并提示合并较新的页面
+- 改进了移除包含 submodule 检出的 agent worktree 之前的安全检查
+- 改进了 `OTEL_LOG_RAW_API_BODIES=file:<dir>` 输出：新增 `index.jsonl` 以及 `request_body_id` / `message.id` 事件属性，将每个响应与其请求文件和 transcript 消息关联起来
+- 优化了 Claude apps gateway 启动流程：现在退出前最多尝试连接 Postgres 三次，因此延迟数秒才可访问的数据库不再会导致启动失败
+- 优化了负载下 Claude apps gateway 的支出限制（spend-limit）检查：现在仅需一次数据库往返而非四次，从而减少了繁忙网关上的检查超时
+- 优化了 Claude apps gateway 登录速率限制错误：`/login` 现在会解释拒绝原因，网关日志也会说明触发了哪项限制以及需要调整哪项配置
+- 将 Bedrock、Vertex、Foundry 以及禁用遥测的安装环境默认更改为与直接 HTTP 服务器配合使用 v2 MCP 客户端和 MCP 2026-07-28 协商协议，与其他安装环境保持一致（可选退出：`MCP_SDK_GENERATION=v1` 或 `MCP_PROTOCOL_NEGOTIATION=legacy`）
+- 将 `/code-review` 改为对所有未单独调优设置的模型使用更轻量的内联审查 prompt，而不是生成大量审查子 agent
+- 将 `.mcp.json`、设置、插件和 agent 文件中的 `"type": "sdk"` MCP 条目改为跳过并发出警告：仅 SDK 宿主应用程序可以注册进程内服务器
+- 更改了本地会话中的 artifact 监听机制：在其他地方发布的新版本不再触发新的轮次；Claude 会在后续的 Artifact 工具结果中获知该更新
+- 将插件和 marketplace 的克隆行为改为保留 Git LFS 文件为指针文件而非直接下载；可在检出目录中运行 `git lfs pull` 来获取文件
+- 将自托管 runner 更改为在访问检查时被 git 托管方拒绝的只读仓库直接跳过，而不是导致会话启动失败
+- 将 `/status` 的 GitHub 行文案更改为 "Cloud sessions"，并将 `/web-setup`、`/ultrareview` 及 teleport 消息中的 "Claude Code on the web" 替换为 "cloud session"
+- [VSCode] 新增了在窗口重新加载后继续执行被中断步骤的功能，并在聊天中明确标注，可通过 Claude Code: Continue After Reload 设置关闭
+- [VSCode] 在 Customize 菜单中添加了 Memory 和 Instructions 入口：Memory 显示自动记忆开关、已保存的记忆和记忆文件夹，Instructions 用于编辑 CLAUDE.md 文件
+- [VSCode] 添加了 `claudeCode.lockEditorGroups` 设置，以阻止 Claude 锁定其所在的编辑器组
+- [VSCode] 修复了在新会话开始的几秒内使用 `/btw` 提问附带问题时，偶现显示其他会话附带问题历史记录的问题
+- [VSCode] 修复了扩展首次查找全局 gitignore 文件时出现的短暂卡顿问题
+- [VSCode] 修复了在 Claude 运行工具期间发送的消息在窗口重新加载后从对话中消失的问题
+- [VSCode] 修复了 Manage Plugins 启用切换开关和 MCP servers 对话框行无法通过键盘访问的问题
+- [VSCode] 修复了在 Environment Variables 设置中更改 `CLAUDE_CONFIG_DIR` 后，终端中的登录和注销状态直到重新加载后才显示的问题
+- [VSCode] 修复了在某些面板宽度下以及长折行文本中，聊天中的 Edit diff 底部被截断的问题；diff 框现在能够自适应显示的行数
+- [VSCode] 修复了扩展的重叠写入设置操作导致 `~/.claude/settings.json` 无法解析或丢失设置的问题
+- [VSCode] 修复了使用 Open in New Tab（Ctrl/Cmd+Shift+Esc）时新标签页的消息输入框有时未聚焦，导致必须点击后才能输入的问题
+- [VSCode] 修复了重新打开已关闭的 Claude 标签页时，若其锁定组仍包含另一个 Claude 标签页和文件会导致编辑器布局被拆分的问题
+- [VSCode] 修复了每当文件标签页与 Claude 标签页共享同一个组时，New session 都会打开另一个锁定编辑器组的问题
+- [VSCode] 修复了在会话选择器中输入搜索词时，会话名称会左右偏移的问题
+- [VSCode] 修复了当计划包含多条评论时，计划审查卡片会截断 Send feedback 按钮和原因字段的问题；评论列表现在支持滚动
+- [VSCode] 修复了 High Contrast 主题下聊天回复中的内联代码和代码块难以辨读的问题
+- [VSCode] 改进了屏幕阅读器对对话的导航支持：每条消息播报为 "You" 或 "Claude"，并在工具步骤中播报工具名称
+- [VSCode] 当 `XDG_CONFIG_HOME` 为绝对路径时，将默认全局 gitignore 文件更改为 `$XDG_CONFIG_HOME/git/ignore`
+- [Claude Code on the web] 在云端会话的 diff 视图中添加了 "Compare against" 分支选择器，以便将其更改与任意分支进行 diff 对比，而不仅限于基准分支
+- [Claude Code on the web] 修复了 GitHub 令牌续期出现短暂错误时，云端会话中的 git 操作因 "service unavailable" 报错而失败的问题
+- [Claude Code on the web] 修复了编辑 routine 偶现导致其触发两次，或重新启用了刚刚暂停的 routine 的问题
+- [Claude Code on the web] 修复了会话凭据刷新后的几分钟内，云端会话中的 commit 偶现因签名错误而失败的问题
+- [Claude Code on the web] 修复了保存无法关联 GitHub 触发器的 routine 后的 toast 提示，使其显示具体原因（例如每个仓库的触发器数量限制），而不仅是显示 "edit to retry"
+- [Claude Code on the web] 修复了将会话标记为已读后有时会立即变回未读的问题
+- [Claude Code on the web] 将 routine 更改为在所有者的 GitHub 连接缺失时跳过本次运行并重试最多 72 小时，而不是在首次检查失败时直接关闭 routine
+- [Claude Code on the web] 更改了 routine 的暂停提示：当订阅暂停时，现在会提示你自行重新开启 routine，而不是承诺自动恢复
+- [Claude Tag] 在 Claude Tag 管理员设置的 Add channel 和 Add workspace 表单中添加了 Guests 设置，以便所有者可以提前选择 Inherit、Allow、Channel only 或 Restrict
+- [Claude Tag] 修复了其他 Slack 应用或机器人 @ Claude 时其未予响应的问题；现在 @ 会收到回复，并会在因多日不活跃而停止关注的频道中唤醒 Claude
+- [Claude Tag] 修复了新 Slack 频道创建后立即 @Claude 的其他应用消息被 Claude 遗漏的问题；现在会在 Claude 加入后递送该消息
+- [Claude Tag] 修复了 Claude 在上一条 Slack 消息发出数分钟后将后续内容作为静默编辑折叠合并进去的问题；阻塞项等滞后更新现在会作为带有通知的新回复发送
+- [Claude Tag] 修复了 Claude 的 Slack 搜索在单个频道内搜索时报错失败的问题；现在会正常返回该频道的匹配消息
+- [Claude Tag] 修复了安全过滤器拦截在无人等待时静默重置 Slack 线程上下文的问题；Claude 现在始终会明确说明，且不再取消仍在运行的后台任务
+- [Claude Tag] 修复了 Claude 的 Slack 回复中电子邮件地址显示为带有可见 `mailto:` 前缀的问题；现在显示为简洁可点击的地址
+- [Claude Tag] 修复了从 Enterprise Grid 中的另一个工作区请求时，Claude 拒绝监听与整个组织共享的 Enterprise Grid 频道的问题
+- [Claude Tag] 修复了 Claude Tag 管理员设置中的 Environment 选择器针对已归档或由应用创建的环境显示原始环境 ID 而非环境名称的问题
+- [Claude Tag] 优化了 Slack 中 Claude 的实时进度清单：限制在 2,000 个字符以内，在繁忙的线程中最多每 15 分钟重新发送一次，并更新旧的 "Latest task list" 链接
+- [Claude Tag] 移除了在采用 "Channel only" 访客设置的频道中，Claude 每次编辑 Slack canvas 时重复附加的访客归属说明
+- [Code Review] 修复了重新审查偶现保持已解决问题的讨论线程处于开启状态的问题（当新审查在其下提交了较低严重级别的注释时）
+- [Code Review] 修复了当 GitHub 或内部服务在启动时发生短暂故障时，极少数审查以 "Code review encountered an error" 结束的问题；现在会等待并重试
+- [Code Review] 优化了 Code Review 对发布的每项审查意见的表述方式：使用简短明了的句子，开门见山说明受影响对象、代码出错位置以及修复方案
+- [Code Review] 优化了因组织限制而跳过审查时的 check-run 卡片和 PR 评论：每种原因现在都会链接到可修复该问题的管理页面
+
+## 2.1.273 (2026-09-15)
+
+- 为 LLM 网关新增了 `x-claude-code-request-class`、`x-claude-code-agent-type`、`x-claude-code-prev-tool-durations`、`x-claude-code-compaction` 和 `x-claude-code-context-compacted` 请求头；可通过 `CLAUDE_CODE_GATEWAY_HINT_HEADERS=1` 启用
+- 新增了会话中途 MCP 服务断开且自动重连放弃时的通知提示，引导使用 `/mcp`
+- 新增了从 Claude 应用派生（fork）通过 `claude --remote-control` 或 `/remote-control` 启动的会话的功能；派生的会话将作为后台会话在你的电脑上运行
+- 修复了权限检查器无法完全分析的 Bash 命令在 `permissions.blockReadsOutsideWorkingDirectories` 下跳过提示的问题，以及子 shell 在绕过模式下隐藏危险 `rm` 命令的问题
+- 修复了从 claude.ai 同步的 skill 在组织关闭 Skills 后仍然可用的问题；现在它们会被移入可恢复的废纸篓
+- 修复了同时存在服务端托管设置时，通过 MDM 或 `managed-settings.json` 设置的 `allowManagedMcpServersOnly`、`deniedMcpServers` 和 `disableClaudeAiConnectors` 被忽略的问题
+- 修复了 Bedrock、Vertex 和 Foundry 上的 401/403 错误以及 Claude 应用网关的 403 错误提示运行 `/login` 的问题；现在错误信息会指明需要刷新的凭据或提示联系你的网关管理员
+- 修复了 `/login`、`/upgrade` 和 `/extra-usage` 会丢弃对话中之前的思考内容（thinking），从而导致下一次请求时强制完全重写 prompt 缓存的问题
+- 修复了在云端或 Remote Control 会话中，当 Artifact 工具上传你在聊天中附加的文件时，自动模式会停下来等待批准的问题
+- 修复了当仓库的 `.git` 目录被删除或移走后，长时间运行的会话仍会重新创建占位 `.git/info/exclude` 的问题
+- 修复了在 shell 模式下输入主提示词时开头输入的 `!` 会被丢弃的问题，现在可以正常输入类似 `! grep …` 的取反命令
+- 修复了 macOS 上 Read 工具因“权限检查后符号链接解析发生变化”而拒绝拖入的截图或系统以第二路径报告的任何文件的问题
+- 修复了 `permissions.blockReadsOutsideWorkingDirectories` 问题：仓库设置选定的 memory 目录不再会被加载到 prompt 中、被召回、被索引或被 memory 提取使用
+- 修复了当最终流式回复缺少 token 使用量或未携带 model id 时，子 agent 和后台 agent 会被报告为失败且其结果从未传递的问题
+- 修复了上下文计量器和自动压缩（auto-compact）将 advisor 工具轮次的上下文大小计算为实际大小约两倍、导致自动压缩在实际窗口约一半时就触发的问题
+- 修复了因已经完成工作且不再显示在 agents 面板中的 agent-team 队友，导致 `/tui` 拒绝重启的问题
+- 修复了将 `.claude/scheduled_tasks.json` 复制到其他文件夹（例如新 worktree）后，保存的计划任务在错误的会话中运行的问题
+- 修复了在运行中途子 agent 被移至后台后（例如通过 `CLAUDE_AUTO_BACKGROUND_TASKS`），SDK 和 `--output-format stream-json` 输出会丢弃该子 agent 的剩余消息和最终报告的问题
+- 修复了 `/install-github-app` 将 SAML 单点登录拦截错误报告为“需要管理员权限”的问题
+- 修复了附加到 Claude Desktop、VS Code 或 JetBrains 会话的 Remote Control 客户端在请求该会话的上下文窗口使用量时被拒绝的问题
+- 修复了在压缩状态行（如“Running PreCompact hooks…”）中 spinner 会显示重复省略号（“……”）的问题
+- 修复了在读取或发布 Artifact 后，spinner 提示误报建议 frontend-design 插件的问题
+- 回滚了 2.1.268 中针对权限检查器无法分析的 Bash 命令行（`eval`、`env -C`）检查 Read 和 Edit 拒绝规则的更改；类似 `time -p make build` 的命令现在会重新提示确认而不是直接被拒绝
+- 改进了长会话中的响应速度：hook 进度和子 agent 活动在每次更新时不再重新处理整个对话
+- 改进了发布包含 Artifact 不支持的文件类型时 Artifact 工具的错误提示：Claude 会得知支持哪些类型及替代方案，终端则显示单行简明信息
+- 改进了 Artifact 工具的页面读取，为有发布权限的用户说明 artifact 服务针对该页面所具备的能力和数据库规则
+- 改进了 artifact 数据库写入：更新操作现在可以删除单个字段，而无需重写整个文档
+- 改进了 artifact 发布：在请求到达 claude.ai 后连接断开的发布操作现在会安全重发，而不会直接失败或产生重复版本
+- 改进了云端会话中因 IP 白名单、已暂停的应用安装或 SAML 单点登录导致的 GitHub 错误提示，现在会显示具体原因而不是通用的安装提示
+- 改进了 `/autofix-pr`：当 `gh pr view` 失败时，现在会显示 gh 自身的错误信息（登录、SAML、速率限制），而不是通用的退出码提示行
+- 改进了 `/autofix-pr`：说明无法为 PR 设置 GitHub webhook 推送的具体原因（例如未关联 GitHub 账号），而不是显示通用警告
+- 改进了 `/web-setup` 错误信息：GitHub token 被拒绝时现在会列出可能的原因和修复方法，连接失败时会指出已配置的代理或 TLS 证书问题
+- 改进了会话中的 SSL 证书和代理连接错误提示，会指出错误代码和解决方法，例如针对不受信任的企业 CA 提示使用 `NODE_EXTRA_CA_CERTS`
+- 改进了因 Claude 登录过期或被撤销而无法创建云端会话时的错误提示：现在会提示运行 `/login`
+- 改进了 MCP 服务的登录在会话中途过期时显示的错误信息，说明如何重新认证（`/mcp`）
+- 将 Bedrock、Vertex 和 Foundry 上的自动模式暂时调整为默认使用本地分类器；可设置 `CLAUDE_CODE_AUTO_MODE_SERVER=1` 使用平台的服务端分类器
+- 将 `OTEL_LOG_TOOL_DETAILS=1` 调整为在成本和 token 指标中也包含真实的 agent、skill、plugin 和 MCP 服务名称
+- 将使用 Claude 账号登录更改为同时请求访问你的 claude.ai 插件
+- 将 `/bug` 和 `/feedback` 报告更改为仅包含上一次 API 请求中的模型行为参数（model、system prompt、tools），省略请求元数据和 `CLAUDE_CODE_EXTRA_BODY` 字段
+- [VSCode] 修复了对于已禁用产品反馈的组织，“Report a problem”仍会显示且 `/bug` / `/feedback` 仍会打开反馈表单的问题
+- [VSCode] 修复了 Windows 上轮次完成后仍会显示红色的“Claude Code process exited with code 4294967295”横幅的问题
+- Windows：改进了通过 `--add-dir` 添加映射网络驱动器时对 UNC 路径的网络路径权限检查
+- [Claude Code on the web] 修复了管理员移除并重新添加组织连接器后，routine 会失去对该连接器的访问权限并仍然调用旧连接器的问题
+- [Claude Code on the web] 修复了从组织设置创建自托管环境偶尔会因服务器错误失败并残留半创建状态环境的问题
+- [Claude Code on the web] 将管理员的“Share cloud sessions”设置从 Claude Code 页面移至 Data and privacy 下，便于 Data and privacy 管理员对其进行管理
+- [Claude Code on the web] 在 New routine 页面或 Edit routine 对话框丢弃你输入的 routine 名称、提示词或编辑内容之前，新增了“Discard unsaved changes?”确认提示
+- [Claude Code on the web] 移除了 Mac 和 Windows 上没有云端环境的新用户所看到的全屏桌面应用下载界面；现在他们会直接进入设置流程
+- [Claude Code on the web] 改进了 routine 详情页：面包屑导航中提供菜单与重命名功能，开关与 Run now 置于顶部，运行历史记录置于 routine 设置旁
+- [Claude Tag] 修复了在 Enterprise Grid 断开连接但其中一个工作区仍保持连接时，重新安装应用数分钟后 Claude 会停止响应的问题
+- [Claude Tag] 修复了在组织共享的私有 Slack 频道中设置的计划任务静默无输出的问题；现在它们会在创建时的线程中继续运行
+- [Claude Tag] 修复了在 Claude 执行任务中途回复较早的 Slack 线程有时会导致其从头重启并丢失尚未推送的工作内容的问题
+- [Claude Tag] 修复了在账户 token 刷新后，Claude 偶尔会丢弃消息并错误提示“couldn't find a Claude Code environment”的问题
+- [Claude Tag] 修复了 AWS 连接拒绝无区域（region-less）端点（例如 Budgets、Savings Plans、WAF Classic 和 Import/Export）的问题；Global Accelerator 请求现在可以正确签名
+- [Claude Tag] 改进了 AWS 连接失败的处理：当请求无法签名（例如主机名缺少区域）时，会告知 Claude 原因及修复方法，而不是仅显示单纯的错误信息
+- [Claude Tag] 修复了当提供商返回小写 token 类型时 OAuth client-credentials 和 JWT-bearer 连接失败的问题；请求现在会发送标准的 Bearer scheme
+- [Claude Tag] 修复了在 Enterprise Grid 共享频道、尚未使用过 Claude 的频道以及旧版私有频道中添加频道管理员被拒绝的问题
+- [Claude Tag] 更改为 Claude 会自动开始关注相关的公共频道（例如对话所依赖的突发事件频道），而不仅是在被要求时才关注
+- [Claude Tag] 修复了即使已保存 memory，管理员 Memory 页面仍未列出 Claude 自动设置的 Slack 频道的问题；管理员现在可以打开、编辑和删除这些 memory
+- [Code Review] 修复了将基础分支合并到早期审查中包含“Additional findings”的 PR 时会触发完整重新审查的问题；此类推送现在会进行更轻量级的跟进审查
+- [Code Review] 修复了因 @提及、跨行代码片段或带反引号的 HTML 标签导致整个 REVIEW.md 被忽略的问题；现在仅链接到已更改文件的行会被保留处理
+- [Code Review] 改进了修复建议，说明当其他代码依赖于正在更改的行为时，该修复必须保持哪些功能正常工作
+- [Code Review] 改进了指向第二个受影响位置的审查评论，使用完整句子说明该位置的问题，而不是截断的残缺文本
+- [Code Review] 修复了 `/ultrareview --post` 在遇到 GitHub 错误后重试时能够准确发布一次审查结果评论，避免完全不发布或重复发布两次的问题；评论现在会指明所审查的 commit
+- [Code Review] 修复了在所有者或名称包含大写字母的 GitHub 仓库中，空推送或内容相同的推送被重新审查的问题；现在这些推送会被跳过
+
+## 2.1.272 (2026-09-14)
+
+- Bug 修复与可靠性提升
+
+## 2.1.271 (2026-09-14)
+
+- 在 Claude Code Remote 会话（云端与自托管 runner）中新增快速模式：在组织允许的情况下，主机的快速模式设置或在会话中输入的 `/fast` 即可生效
+- 为全屏模式下的 `/config` 面板新增鼠标支持：滚轮可滚动设置列表，点击设置的值可直接修改，且指针悬停的行会高亮显示
+- 新增 `claude self-hosted-runner --drain-marker-file <path>`：在收到 SIGTERM 进行排空（drain）时若该文件存在，runner 会向服务端将其退出报告为主机排空（仅用于遥测）
+- 在带沙箱的自动模式下，为 Bash、PowerShell 和 Monitor 新增基于命令维度的 `allowed_domains`：命令所需的主机会随命令一同接受审查并仅对该命令开放；其他主机会被拒绝
+- 在 agent frontmatter 和 `--agents` JSON 中新增 `omitClaudeMd`，允许自定义和插件 subagent 在不加载用户、项目及本地 CLAUDE.md 文件的情况下运行；托管策略文件仍会正常加载
+- 在 `claude plugin install` 和 `claude plugin update` 中新增 `--accept-command <sha256>`，用于精确接受先前 `--json` 运行所展示的命令，以替代 `-y`
+- 在 `modelPricing` 托管设置和 Claude 应用网关的 `pricing` 块中，新增对大于 1 且最高为 10 的 `multiplier` 的支持，用于加价后的内部转账计费费率
+- 新增加载提示（spinner tip），引导 Bedrock、Vertex AI、Foundry 和 LLM 网关用户使用 Claude 桌面应用；claude.ai 桌面应用提示现在会建议使用 `/desktop`，并提供应用下载选项
+- 修复了在切换账号、组织或 API 密钥后仍复用已缓存的组织策略，且在会话中途凭据变更时策略直到每小时检查才刷新的问题
+- 修复了启动后组织策略加载完成或在会话中途发生变更时，工具与命令列表未更新的问题
+- 修复了企业级 `managed-mcp.json` 无法读取或解析时被忽略的问题：现在它会保留对 MCP 的独占控制（不加载用户、项目和插件服务），并在启动时发出警告
+- 修复了组织策略会经由通过 `ANTHROPIC_UNIX_SOCKET` 设置的第三方本地代理拉取并被其拒绝的问题；这些代理现已恢复与其他自定义网关相同的处理方式，包括在 Remote Control 中的处理
+- 修复了当工作流或 agent 审批在会话 worker 重启后应用时，云端会话会拒绝所有 subagent 工具调用（“updatedInput … failed schema validation”）的问题
+- 修复了在组织禁用快速模式时，输入 `/fast off` 回复“Fast mode unavailable”而非关闭快速模式的问题
+- 修复了使用 `CLAUDE_CODE_SKIP_FAST_MODE_ORG_CHECK` 启动的会话在 API 拒绝快速模式后，每轮仍会重复发送快速请求的问题；现已被正确拒绝并显示原因
+- 修复了在 `CLAUDE_CODE_RETRY_WATCHDOG` 下，快速模式在遇到使用额度限制时导致当轮失败、或在过载时以快速速度重试，而不是降级到标准速度重试的问题
+- 修复了当读取的文件紧跟在检查器无法识别的选项之后时，Bash 权限检查会遗漏 `fmt`、`column` 及类似命令所读取文件的问题
+- 修复了当通配符位于命令的模式或选项值中时（例如 `grep -v dir/* file`），Bash 权限检查会跳过通配符所展开文件的问题
+- 修复了 Bash 权限检查，以防止 shell 变量声明标志对正在运行的命令产生误导
+- 修复了在绕过模式和自动模式下，包含两次目录切换、子 shell 或 `cd`+`git` 链的 Bash 命令在 `permissions.blockReadsOutsideWorkingDirectories` 规则下跳过确认提示的问题
+- 修复了在沙箱命令启动失败后，残留的 `.git/config.lock` 会导致该会话后续的 `git checkout -b`、`git push -u` 和 `git config` 失效的问题（Linux）
+- 修复了在系统文件事件服务饱和的 macOS 设备上，会话外部对设置文件的更改无法被察觉的问题；监听器现在会降级为轮询模式
+- 修复了工具全部来自 MCP 服务的已恢复 `claude -p` 会话因“At least one tool must have defer_loading=false”而失败的问题
+- 修复了当 LLM 网关以 `text/plain` 格式返回非流式响应时，轮次因“API returned an empty or malformed response”而失败的问题
+- 修复了 MCP 服务在死循环中发送 `list_changed` 通知时，导致持续高 CPU 占用和重复请求工具列表的问题
+- 修复了 MCP OAuth 对客户端注册处理不当的问题：拒绝授权会强制创建新注册、复用其他重定向 URI 的注册，以及并发写入可能删除有效注册或保留不匹配注册
+- 修复了当 Claude 使用裸名称而非完整的 `mcp__server__tool` 名称选择 MCP 工具时，工具搜索返回无匹配结果的问题
+- 修复了 Ctrl+O 会取消挂起的 MCP 服务重新连接，以及在对话记录视图打开时从 Remote Control 发送的 `/mcp` 会失败的问题
+- 修复了在 ToolSearch 不可用时，Claude in Chrome 提示词仍告知模型通过 ToolSearch 加载工具的问题
+- 修复了跨会话消息因接收方会话的权限模式策略被暂扣而未留下任何痕迹的问题：无头发送方现在会收到送达通知，且 `SendMessage` 的结果不再暗示消息已被阅读
+- 修复了在对话压缩后，Claude 会对仍在运行的后台命令（如监听任务或开发服务器）重复启动第二份实例的问题
+- 修复了切换回对话实际运行所用的模型时，`/model` 仍发出关于丢失对话缓存的警告的问题
+- 修复了在 `/cd` 之后，`/reload-skills` 报告的 skill 数量与斜杠菜单不一致的问题
+- 修复了在高度较小的终端中，全屏模式下的 `/resume` 和 `/continue` 仅显示 1-2 个会话的问题
+- 修复了 `/resume` 和 `/teleport` 会保留上一个对话的文件读取追踪记录，导致 Claude 可以编辑已恢复对话从未读取过的文件的问题
+- 修复了当恢复的会话的模型系列与配置的默认模型不一致时，`--resume` 会丢弃 1M 上下文窗口（`[1m]`）的问题
+- 修复了使用 `/artifacts` 附加的工件在 `--resume` 之后从会话中消失的问题
+- 修复了后台会话（`claude --bg`、`claude agents`）未监听其发布的工件在其他位置重新发布的问题
+- 修复了在报告 inode 为 0 的虚拟驱动器（例如挂载为 Windows 驱动器的加密保管库）上，无法加载除第一个之外的自定义 agent、斜杠命令和输出样式的问题
+- 修复了当主机配置目录超过 64 MiB 时，自托管 runner 会话静默丢失所有主机配置（设置、skills、插件、MCP 服务）的问题；新增 `--host-config-snapshot disk|memory`
+- 修复了退出登录后从 claude.ai 同步的 skill 无限期滞留在磁盘上的问题；未在 `cleanupPeriodDays` 内刷新的副本将在下次启动时移至可恢复的废纸篓
+- 修复了加载提示推荐了当前账户类型不可用或在当前会话中已被禁用的命令的问题
+- 修复了 `/add-dir` 路径输入问题：左/右方向键现在可以移动光标，且回车键仅添加输入的路径，而不会同时添加高亮显示的补全项
+- 修复了主输入框之外的文本框会将前置的 `!` 移至输入内容末尾的问题（`!foo` 变成了 `foo!`）
+- 修复了当 hook 匹配器以继承的对象属性（如 `__proto__` 或 `constructor`）命名时，交互式 `/hooks` 菜单崩溃的问题
+- 修复了全屏渲染中的显示问题：当外层边框失去背景色后，文字仍保留旧的背景色
+- 修复了在附加的后台会话中，st 下的 Delete 键以及 rxvt-unicode 下的 Alt+方向键失效的问题
+- 修复了当 Claude Code 退出、挂起或在启动后立即打开编辑器时，终端对功能查询的响应（`^[[?1;2c`）会出现在 shell 提示符或编辑器中的问题
+- 优化了终端渲染性能：大型 diff 和长对话记录渲染更快，卡顿帧更少
+- 略微提升了启动速度：每次启动时跳过对内置模型数据的重复校验
+- 优化了 hook 反馈：当 SessionStart、UserPromptSubmit、PreToolUse 或 SessionEnd hook 运行时，加载指示器会显示该状态及耗时，且按 Esc 可取消正在等待 SessionStart hook 的提示输入
+- 优化了长时间思考时的加载指示器状态：45 秒后会显示“deep in thought”，并在从输出 token 限制中恢复时显示“picking the thought back up”
+- 优化了动态工作流：在达到用量上限时会暂停，并在额度重置后自动继续，而不再丢弃受影响的 agent
+- 优化了 Remote Control：在网络不稳定导致配置失败时，减少在 claude.ai 上遗留空会话的情况
+- 优化了云端会话中浏览器无法访问时 Claude in Chrome 的提示信息：在建议安装之前，现在会提示计算机可能处于休眠状态
+- 优化了 `claude mcp serve`：正在运行的工具调用现在每 30 秒发送一次进度更新，以便客户端显示其仍在运行，防止空闲超时中断无输出的长时间运行命令
+- 优化了 Foundry 和 Claude Platform on AWS 会话：在对话中途连接完成的 `alwaysLoad` MCP 服务可在下一轮直接使用，无需额外的工具搜索往返请求
+- 优化了作为工件发布的 Markdown 文件：现在会渲染为带样式的文档页面（包含标题头、文档排版样式及代码语法高亮）
+- 优化了 Artifact 工具的发布报错：未包含文件的发布现在会提示先将页面写入文件，且不支持的文件类型会在缺少 favicon 之前优先报错
+- 优化了当页面声明了其契约版本所不支持的功能时 Artifact 工具的报错信息：现在会列出所有受支持的功能，并在更高契约版本支持该功能时予以提示
+- 优化了工件监听：单个会话现在最多可同时监听 10 个已发布的工件在其他位置的重新发布（之前为 5 个）
+- 优化了 PDF 的 @ 提及：当 pdfinfo 无法计算页数时，会显示“page count unknown”，而非根据文件大小猜测页数
+- 优化了 `/mobile`：现在会显示单个指向 claude.ai/mobile 的二维码，可直接打开适用于您手机的应用商店
+- 调整了自动模式：skill 或斜杠命令内联的 `!` shell 命令现在遵循默认模式的权限规则，而非分类器规则；无规则决定的命令将作为待审查的工具调用运行
+- 调整了自动模式：subagent 现在通过专用的交回（hand-back）调用向调用方报告结果并由安全分类器审查，而非事后审查其最后一条消息
+- 将 Monitor 监听调整为必须设置截止时间（最长 30 分钟；单提示词 `-p` 运行中为 10 分钟）并在到期时通知 Claude 重新启用，替代了无超时的 `persistent` 选项
+- 将提示输入框中的 IDE 选中内容指示器改为 `[⧉ …]` 胶囊样式，可随文本自动换行，避免挤压多行提示输入；按 Backspace 即可将其删除以排除选中内容
+- 将 Pro 计划中的默认动态工作流规模调整为小型，并将中型规模参考标准从 15 个 agent 下调至 10 个 agent
+- 调整了 Claude 应用网关、Bedrock、Vertex AI 和 Foundry 会话，使其不再刷新会话未使用的残留 claude.ai 登录态
+- 更新了内置的 `claude-api` skill，在流式自定义工具上启用 `eager_input_streaming`，并使用 `user.define_outcome` 启动具有明确交付物形式的 Managed Agents 任务
+- [VSCode] 新增 Attach Open File 设置：关闭后，打开的文件将不再自动附加到消息中；选中的文本仍会附加
+- [VSCode] 修复了 Hooks 和 Permission rules 对话框将已成功的保存报错为失败的问题，以及 Hooks 对话框在仅插件策略锁下变空白或在保存报错中显示颜色代码的问题
+- [VSCode] 修复了 Hooks 对话框的保存问题：替换时不会产生重复 hook、仅大小写变更的请求头名称仍会保留其密钥，以及 settings.local.json 在保存返回前已被加入 gitignore
+- [VSCode] 修复了工作区位于 Windows 映射网络驱动器或 SUBST 驱动器上时，会话历史仅显示当前会话的问题
+- [VSCode] 修复了在筛选菜单中同时勾选 Open 时，会话列表的 Active 筛选条件会隐藏已打开的空闲会话的问题
+- [VSCode] 修复了在会话列表刷新时，新会话会自动切回上一个会话的问题
+- [VSCode] 修复了在 `environmentVariables` 设置中更改 `CLAUDE_CONFIG_DIR` 后，已打开的标签页和侧边栏直到重新加载窗口才应用新配置目录的问题
+- [VSCode] 修复了在 Windows 上插件运行 git、ripgrep 和登录状态检查等后台命令时控制台窗口闪烁的问题
+- [VSCode] 修复了提示词缓存时钟的悬停文本延迟显示的问题，以及自动压缩图标在其弹出层旁显示浏览器原生提示框的问题
+- [VSCode] 优化了 Hooks 对话框：因设置文件本身原因导致保存被拒绝时，现在会弹窗提供“Open settings file”按钮并展示“Copy error”背后的具体原因
+- [VSCode] 将开关控件的开启状态颜色从 Claude 橙色更改为编辑器主题的按钮颜色
+- [Claude Code on the web] 修复了当进程退出而会话仍显示为活跃状态时，云端会话有时需要约十分钟才有响应的问题；发送消息现在会立即重启该进程
+- [Claude Code on the web] 将 claude.ai/code 上的 Routines 页面调整为全新布局，包含 Yours 和 Templates 标签页以及展示运行状态的双列 routine 卡片，并移除了日历视图
+- [Claude Code on the web] 在管理设置的 Cloud environments 编辑器中新增 Custom network access 选项，提供与 claude.ai/code 上的环境对话框相同的允许域名列表
+- [Claude Code on the web] 优化了 Cloud environments 管理页面：展示了 Claude Tag 和 Claude Code 的默认环境及修改链接，并标记了推荐创建的环境类型
+- [Claude Tag] 修复了在 Claude 保持活跃的频道中，当对话主要在 thread 中进行时其工作上下文大约每小时丢失一次的问题；thread 中的活跃现在可防止上下文被重置
+- [Claude Tag] 修复了要求 Claude 监听 PR 的 thread 在 Claude 重启后，不再接收 CI 失败、评论和审查通知的问题
+- [Claude Tag] 修复了删除 Claude 已回复 thread 的首条消息不会终止 Claude 在该处工作的问题；现在会像删除无回复的消息一样停止工作
+- [Claude Tag] 修复了 Claude 因较早前发给其他 bot 或助手的指令而暂扣发送消息的问题；现在仅针对 Claude 的指令才对其具有约束力，且不确定时会主动询问
+- [Claude Tag] 修复了 Claude 加入繁忙频道时发布的回复模式卡片在频道仅是闲聊较多或规模较大时提示“sees a lot of automated posts”的问题；卡片现在会说明真实原因
+- [Claude Tag] 优化了 Claude Tag 管理设置中的 Environment 选择器：选项标注为 Anthropic-hosted 或 self-hosted，并附带编辑或创建该环境的链接
+- [Code Review] 修复了在每个 PR 审查一次的仓库中，当审查正在排队等待开始时有新 commit 提交会导致该 PR 有时未得到审查的问题；现在会对请求的 commit 进行审查
+- [Code Review] 修复了在 GitHub 对实际已创建的审查返回错误时，Code Review 偶尔会重复发布相同审查结果两到三次的问题
+- [Code Review] 修复了当后续 push 移动了标记所在的行时，跟进审查会重复发布人工已解决的安全检查结果的问题
+- [Code Review] 修复了在 Claude 应用中重新打开已完成的 /ultrareview 云端会话会在未提示的情况下重新开始整个审查的问题
+- Windows：修复了当会话的临时输出路径达到 260 个字符时，PowerShell 命令失败并提示“Exit code 1”且无输出内容的问题
+
+## 2.1.270 (2026-09-12)
+
+- 修复了会话运行一段时间后，Bash 中的只读 git 命令意外请求权限的问题（2.1.269 中的回归问题）
+
+## 2.1.269 (2026-09-11)
+
+- 新增 `claude plugin eval`：针对 Claude Code 运行插件的评估套件，并获取带评分的可复现结果（JSON + HTML 报告）；详见 `claude plugin eval --help`
+- 新增 `/output-style [name]`，用于列出和切换输出样式，包括通过 Remote Control 以及在云端和其他无头会话中
+- 当 Bash 工具处理文件编辑时，在 Bash 工具结果中添加了被 Bash 命令修改的文件的 diff（配置项 `bashEditDiffEnabled`）
+- 新增 `OTEL_METRICS_INCLUDE_REPOSITORY`，用于为 OpenTelemetry 指标和事件标记 `vcs.*` 仓库属性；配置 `OTEL_LOG_TOOL_DETAILS` 时，commit 事件会附带 `vcs.ref.head.*`
+- 新增 `CLAUDE_CODE_GATEWAY_MODEL_DISCOVERY_TIMEOUT_MS`，用于延长 LLM 网关 `/v1/models` 发现超时时间（默认 3 秒）
+- 新增加载提示（spinner tip），建议使用 `/focus` 进入仅显示你的 prompt、单行工作摘要和回复的视图
+- 新增 `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`（1–256），用于提高 Workflow 工具每次运行的并发 agent 上限，以支持受推理限制的扇出场景
+- 修复了在回复因达到 output-token 限制被截断并自动恢复后的下一轮对话中，prompt cache 部分失效的问题
+- 修复了在 Claude 思考中途打断后恢复会话可能改变先前上下文重新发送方式、从而影响 prompt-cache 复用的问题
+- 修复了在 kitty-protocol 终端中 F1/F2/F4 失效、在 st 中 Delete 失效、在 rxvt-unicode 中 Alt+方向键被当作 Escape，以及在 WezTerm 中 Shift+标点符号输入未按 Shift 对应按键的问题（2.1.247 回归缺陷）
+- 修复了后台 agent 仍在运行时，远程和无头会话报告“等待你的输入”的问题（设置 `CLAUDE_CODE_BG_TASKS_REPORT_RUNNING=0` 可恢复旧行为）
+- 修复了某些终端在启动时将功能查询回复（`^[[?1;2c`）显示为残留杂乱文本的问题
+- 修复了调整终端大小后，全屏模式下转录记录顶部或底部的行变为空白的问题
+- 修复了以 `!` 开头的 deny 或 ask 权限规则超出其定义设置源生效范围的问题；此类规则现在仅在其自身设置源内生效，且纯 `!` 取反操作会被忽略
+- 修复了压缩（compaction）后告知 Claude 的 git status 问题：现在会告知当前状态，而不是会话开始时的状态
+- 修复了远程会话恢复时已同步的插件 MCP 服务器未连接的问题
+- 修复了在轮次中途切换模型或重试请求时，恢复的无头会话丢失该轮回复的问题
+- 修复了恢复工作时，后台任务磁盘记录中的终端转义码、换行符和超长文本会混入任务列表和任务通知的问题
+- 修复了 CMYK JPEG 图片附加失败并提示“cannot decode”的问题；现在它们会像其他 JPEG 一样进行转换和调整大小
+- 修复了当 gRPC 遥测端点未指定 scheme 时，托管设置批准对话框未指明收集器名称的问题
+- 修复了插件 `headersHelper` 授权提示中显示的 URL 路径可能被误读为不同主机的问题
+- 修复了文件夹名称以 `@` 开头的 Windows 相对路径在插件错误信息中被错误显示为 `[redacted URL]` 的问题
+- 修复了启用终端原生光标时，permission-rule、auto-mode-rule、add-directory、session-rename 和 feedback-review 文本输入框中光标缺失的问题
+- 修复了间隔小于一秒连续多次点击 `/fork` 回执时，在等待当前工具完成期间无法立即将会话转入后台的问题
+- 修复了拒绝 `shutdown` 参数的插件 LSP 服务器（例如 rust-analyzer）在会话结束时残留运行的问题；现在即使 `shutdown` 失败也会发送 `exit`
+- 修复了归属（attribution）提示覆盖 CLAUDE.md 或 memory 中禁止 commit 和 pull request 归属规则的问题；由托管设置配置的行依然生效
+- 修复了日语、中文、泰语等无词间空格语言的文本无法获得 prompt 建议的问题
+- 修复了在不支持同步输出的 GNOME Terminal 和 Konsole 版本中仅凭终端名称误判启用同步输出的问题
+- 修复了 `--output-format stream-json` 结果中的 `permission_denials` 遗漏被路径范围 deny 规则阻止的 Read、Edit 和 Write 调用的问题
+- 修复了通过 SDK 或桌面应用运行的会话在其他会话的 agent 列表中显示未知状态的问题
+- 修复了账户无法访问默认 Opus 模型的 Bedrock、Vertex、Foundry 和网关部署环境下 `/insights` 运行失败的问题，改为在这些环境下使用当前会话的模型
+- 修复了另一个 Claude Code 进程同时刷新登录状态时，导致当前会话未能加载组织策略限制的问题
+- 修复了使用 Bedrock、Vertex 或网关的 Claude Desktop 会话未收到上下文相关的“what Claude needs”轮次结束通知文本的问题
+- 修复了配置更新仅改变服务器 URL 查询参数顺序时导致 MCP 服务器重新连接的问题
+- 修复了当查看名称或描述包含换行符或宽度超过终端的后台 agent 时，prompt 输入框顶部边框分裂成多行的问题
+- 修复了当自动压缩没有可供总结的先前完整对话时（主要发生在使用超大 prompt 的 Agent SDK 会话中），会话永久卡在“Prompt is too long”的问题
+- 修复了在遇到 API 错误、网络中断或 token 限制后 `/goal` 运行静默停滞的问题：goal 现在会使用退避策略重试，或暂停并说明原因（包括等待使用量限制重置）
+- 修复了云端会话中的 prompt cache 未命中问题，方法是在发出第一个请求前短暂等待服务器配置
+- 修复了 `/btw` 回答包含虚构工具调用及输出的问题：现在附带问题被指示不要编写工具调用，且出现的任何此类调用都会被标记为未执行
+- 修复了 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN` 会重新运行 6 小时前（或超过所设置的 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN_MAX_AGE_MS`）因 API 错误失败的轮次的问题
+- 修复了通过托管设置启用的组织插件在无头会话和 Claude Desktop（在 Desktop 内置此 CLI 版本后）中无法加载的问题；它们将从下一次会话开始加载
+- 修复了为会话解压的插件归档文件可被其他本地用户读取、解压文件保留归档中的全局可写权限位，以及重新解压后残留过期文件的问题
+- 修复了 `Edit()` deny 规则和写入路径检查未应用于 Bash `tee` 命令写入的文件的问题；`Bash(tee:*)` allow 规则不再覆盖工作目录之外的目标路径
+- 修复了在慢速连接（ssh、浏览器终端）下启动时，类似于 `22c` 的残留字符或终端的颜色/版本回复被输入到 prompt 中的问题
+- 修复了在 rxvt-unicode 中离开或重新进入全屏后，终端块状光标显示在界面下方的问题
+- 修复了在 rxvt-unicode 全屏模式下从外部编辑器返回后，光标块依然可见的问题
+- 修复了在非全屏模式下从外部编辑器返回（Ctrl+G）后界面被重复绘制两次的问题
+- 修复了在 Konsole 中从外部编辑器返回后界面被重复绘制两次的问题
+- Windows：修复了转入后台的 PowerShell 工具命令在 Claude Code 退出时停止运行的问题
+- 优化了 `/diff` 面板，使其一步完成完全渲染并打开，而不再先显示加载状态
+- 优化了针对日文、中文和韩文文本的 prompt 建议过滤：保留混合文字和单字建议，并与英文一样丢弃元文本或评价性文本
+- 优化了 Skill 工具的“Unknown skill”错误提示，当无前缀名称精确匹配单个插件技能时，会显示该插件技能的完整名称
+- 改进了在 SSH 和未识别终端中的键盘支持：响应 kitty 键盘查询的终端（如 foot 和 Alacritty 0.16+）现已支持 Shift+Enter 和 Ctrl+Shift 快捷键
+- 提升了长会话中的响应速度：转录记录更新不再重新处理整个对话来构建折叠的工具使用摘要
+- 改进了禁用遥测的第一方会话：在对话中途完成连接的 `alwaysLoad` MCP 服务器可在下一轮直接使用，无需工具搜索往返
+- 变更了 `/ultrareview --post`，在审查结果生成后直接发布 PR 评论并打印评论链接，而不是启动第二个云端会话来发布
+- 变更了保存到会话暂存区（scratchpad）的 artifact 数据库读取操作，使其不再因等待工作文件夹批准而暂停
+- 将云端会话中从 claude.ai 同步的技能命名变更为 `anthropic-skills:<name>`，与 Claude Desktop 保持一致；当没有其他重名项使用时，无前缀名称依然有效
+- [VSCode] 新增 agent 地图：页脚的“N agents”胶囊按钮可打开会话的子 agent 地图，包含单个 agent 卡片、Stop agent 以及只读转录记录
+- [VSCode] 在命令菜单中新增 Hooks 对话框，用于查看 hooks，并在用户、项目及本地设置中添加、编辑或删除它们；托管、插件和会话 hooks 保持只读
+- [VSCode] 在 Focus 视图的工具调用分组下，为运行中的子 agent 添加了实时进度行
+- [VSCode] 新增 Permission rules 对话框，用于列出权限规则，并在用户、项目及本地设置中添加或删除规则；启动选项、仅限会话及托管规则保持只读
+- [VSCode] 在 Switch account 界面新增 Cancel 按钮，可按当前账户返回会话
+- [VSCode] 修复了 Focus 视图将由送达的纯文本 prompt（例如定时任务的 prompt）启动的轮次显示为上一轮一部分的问题
+- [VSCode] 修复了面板过窄时页脚的 prompt cache 时钟隐藏分钟数的问题
+- [VSCode] 修复了在配置文件或 `environmentVariables` 设置中指定 `CLAUDE_CONFIG_DIR` 时，会话列表仍保留来自默认文件夹的会话的问题
+- [VSCode] 修复了延迟加载完成的计划预览有时会隐藏其评论框或显示旧计划的问题
+- [VSCode] 修复了在相应的 Claude 标签页关闭后，计划预览仍接受无处提交的评论的问题
+- [VSCode] 修复了在最后一次回复后被压缩并关闭的会话的 prompt cache 时钟和重新打开通知问题，现在重新打开时会正确显示为冷缓存
+- [VSCode] 修复了在开启 Remote Control 时在扩展中重命名的会话在 claude.ai/code 上仍保留旧名称的问题
+- [VSCode] 修复了从终端将设置重置为默认值后，“Enable Remote Control for all sessions”开关仍保持原先位置的问题
+- [VSCode] 修复了窗口重新加载后，恢复的 Claude 标签页在点击之前未在会话列表中计为打开状态，且点击对应行会打开第二个标签页的问题
+- [VSCode] 修复了使用相同账户重新登录时，Switch account 会导致标签页遗忘已忽略的使用量限制警告的问题
+- [VSCode] 修复了在耗时较长的轮次期间重命名会话后，窗口重新加载会导致重命名的会话被生成的名称替换的问题
+- [VSCode] 修复了在账户不再具有按模型每周限额后，侧边栏用量指示器仍保留过期的单模型每周限额行的问题
+- [VSCode] 修复了在新建聊天视图仍在启动时通过快捷键发送的 @-mention 可能会在按键很久之后才插入输入框的罕见问题
+- [VSCode] 修复了打开 Claude 侧边栏片刻后出现 Account & usage 标题导致会话列表向下跳动的问题
+- [VSCode] 优化了为用户以外人员编写的文档和消息：Claude 现在会面向目标受众撰写，并在回复顶部注明受众
+- [VSCode] 改进了斜杠命令菜单、@-mention 菜单、output-style 选择器、Send/Stop 按钮、权限与问题卡片以及引导核对清单中的屏幕阅读器和键盘无障碍支持
+- [VSCode] 变更了消息框中的当前文件标签：现在通过 X 进行移除，取代了原先的 Hide 切换按钮
+- [VSCode] 移除了会话标签页右键菜单以及编辑器标题栏“...”菜单中的 Claude Code 项；这些项无法作用于打开菜单时所在的标签页
+- [Claude Code on the web] 新增在 Claude 读取前撤回云端会话中排队消息的功能：从队列中移除，或按 Esc 或 Up 键，文本即可返回到消息框中
+- [Claude Code on the web] 修复了在限制 Claude Code 可用模型的组织中，在云端会话中使用 `/model default` 会导致后续所有消息均发送失败的问题
+- [Claude Code on the web] 修复了一次性定时常规任务在遇到瞬态服务器错误后偶尔会再次运行的问题
+- [Claude Code on the web] 修复了使用子 agent 的常规任务运行有时被过早视为已完成的问题，这可能导致在真正失败后跳过重试或启动重复运行
+- [Claude Code on the web] 修复了当 Claude 在仓库子文件夹中工作时，云端会话转录记录中的文件链接在 GitHub 上打开为 404 的问题
+- [Claude Code on the web] 变更了 Cloud environments 管理页面，列出所有环境，而不是将每个表格限制为五行并收起在可能无法访问的 Show more 控件后
+- [Claude Code on the web] 为 Free 计划用户调整了 claude.ai/code，使其打开包含升级路径的计划页面，而不是无路可走的“Disabled by org admin”页面
+- [Claude Tag] 在管理设置中的 GitHub 安装上执行 Connect all 或 Disconnect 之前新增了确认对话框，以防止意外进行整个组织范围的更改
+- [Claude Tag] 修复了在轮次失败后，由于 Slack 短暂限流导致失败通知被丢弃、使得线程偶尔陷入无响应状态的问题；现在会对通知进行重试
+- [Claude Tag] 修复了 Claude 接受切换到组织未启用的模型后悄悄使用回退模型回答的问题；现在会拒绝切换并提示管理员可以启用该模型
+- [Claude Tag] 修复了当 Claude 在同一消息中附加文件时表格被作为原始竖线文本发布的问题；现在表格会作为正常回复发布，文件则附带纯文本说明跟随其后
+- [Claude Tag] 修复了在 Claude 未激活的频道顶层执行 `@Claude !restart` 会启动无关对话的问题；现在会通过私密消息告知没有可重启的内容
+- [Claude Tag] 修复了 Slack 访问设置中的插件行显示未标记的原始 ID 且无法关闭插件的问题；现在会显示插件名称并链接到管理它的 bundle
+- [Claude Tag] 修复了从 Slack 启动的会话上的共享会话横幅和 Share 对话框声称整个组织均可打开该链接的问题；现在会指明该 Slack 频道的受众范围
+- [Claude Tag] 优化了管理设置页面及其 Slack 频道选择器的加载时间，对于拥有大量频道或多个已连接工作区的组织尤为明显
+- [Claude Tag] 改进了 Slack 频道中的定时常规任务：常规任务运行现在可以在现有线程中回复，而不是总发布新的顶层频道消息
+- [Claude Tag] 改进了 Claude 实时进度核对清单上的时间戳，显示每位读者的本地时间及更新距今的时间，而不是固定的 UTC 时间
+
+## 2.1.268 (2026-09-10)
+
+- 新增至 Claude apps gateway：在 `gateway.yaml` 中配置 `pricing:` 后，已登录的 Claude Code 客户端将通过托管设置获取相同的费率，使 `/cost` 和遥测数据与消费计量表保持一致
+- 新增网关启动警告（当 `access_control.allow_cidrs` 为空时），并在首次收到来自公网地址的请求时发出单次警告
+- 新增 `gatewayInternalNetworks` 托管设置，允许管理员为其组织自身的公网 IPv4 地址块放行访问 Claude apps gateway 的 `/login`
+- 新增 `claude self-hosted-runner --remove-session-state`（默认关闭）：在会话结束时删除 `<base-dir>/_sessions/` 下各会话的专用目录
+- 在 `claude auth status --json` 的输出中新增 `configDirectory`
+- 为 `claude plugin install`、`uninstall`、`update`、`enable` 和 `disable` 新增 `--json` 选项，并在 `claude plugin list --json` 的每一行中新增 `errorDetails`/`noteDetails`
+- 为已发布的 artifact 新增浏览器标签页图标，由 Claude 挑选以匹配各个页面
+- 修复自 2.1.265 以来在第三方兼容 Anthropic 的端点（`ANTHROPIC_BASE_URL`）上每轮对话均报 HTTP 400 失败的问题：原因为 Artifact 工具的输入模式中存在这些端点拒绝的正则表达式
+- 修复当服务器持续保持响应打开而不结束时 WebFetch 无限卡住的问题；请求现在会在 300 秒后失败。可设置 `CLAUDE_CODE_WEBFETCH_DEADLINE_MS` 覆盖此超时时间（设为 0 可关闭）
+- 修复重新生成的进程内队友（in-process teammate）会从未受信任文件夹下的同名 agent 文件中获取工具或系统提示词的问题
+- 修复持续高 CPU 占用的问题：长期空闲会话中的忙等待循环不再占满单个 CPU 核心，会话回顾期间频繁的终端焦点报告也不再导致 CPU 居高不下
+- 修复在调用 MCP 工具后 Claude 有时会回复 "your message came through empty" 的问题
+- 修复当按真实路径提供路径时，符号链接目录（macOS 上的 `/etc`、`/tmp`、`/var`；Linux 上的 `/bin`）上的 deny 和 ask 权限规则不生效的问题，以及 Bash 命令忽略按符号链接路径写法编写的 deny 规则的问题
+- 修复当同一行包含 `env -C`、`eval` 或权限检查器无法分析的类似命令时，Read 或 Edit 的 deny 规则未生效的问题
+- 修复插件和市场错误信息会暴露来自 git 源 URL 中的 token 或密码的问题
+- 修复 `/mcp` 和 `/plugin` 服务器详情、`claude mcp list`/`get` 以及 MCP 登录错误会暴露从 MCP 配置中 `${VAR}` 占位符解析出的机密信息的问题
+- 修复使用 `excludeDynamicSections` 的 SDK 会话在中途 prompt caching 和 extended thinking 失效的问题：首条消息不再在每次请求时重新渲染
+- 修复拥有权限的用户在重启后或在 Desktop Code 标签页中，因过期的模型访问拒绝缓存而被告知模型受限的问题
+- 修复当另一个 Claude Code 进程刷新过期的模型访问条目时，运行中的会话被静默切换为组织默认模型的问题
+- 修复在 Pro 和 Team 计划下，Fable 模型的长上下文 429 错误显示 usage-credits 同意提示而不是 1M 上下文消息的问题
+- 修复通过 profile 进行工作负载身份联合（如 claude-code-action 所配置）时，共享该 profile 的进程可能在运行中途因 `401 … jti reused` 失败的问题
+- 修复当本地回调端口范围无法绑定时，MCP 服务器 OAuth 登录失败并提示 "No available ports for OAuth redirect" 的问题
+- 修复由 `/compact` 和自动压缩生成的会话摘要会损坏包含 `$` 序列的文本的问题
+- 修复恢复以 `/compact` 结束的会话时的问题：其恢复的文件注释现在在每次恢复时都按相同顺序加载
+- 修复 SDK 提示词建议、副问题（side questions）和 `/rename` 会发送压缩前的会话内容的问题
+- 修复使用上箭头键调出先前提示词并编辑后，`@` 文件和 `/` 命令建议不显示的问题
+- 修复 `claude agents` 中以自然节奏再次按下 ← 返回 agent 列表时会被忽略（此前需停顿超过一秒）的问题
+- 修复 `claude agents` 在 worktree 无法移除时会话删除卡住的问题：提示信息现在会指出原因和后续步骤，且对于 git worktree 再次按 ctrl+x 仍会强制删除该目录
+- 修复 agents 面板中的后台 agent 和工作流行在其文本包含换行符时展开为多行的问题
+- 修复当组织托管设置配置了 MCP 允许名单时，Claude in Slack 会话丢失其 Slack 工具的问题
+- 修复当导航 URL 包含 scheme 但 host 无法解析时，Claude in Chrome 会请求允许主机 "https" 的问题
+- 修复当前任务标签较长时加载指示器（spinner）折行为多行的问题；标签与 "Next:" 任务行现在会保持在单个终端行内
+- 修复在启用终端原生光标时，`/bug` 和 `/feedback` 的描述字段不显示光标的问题
+- 修复由 `claude remote-control` 提供的 Remote Control 会话在 `ListAgents` 中显示生成的名称而非其会话标题的问题
+- 修复 `claude plugin validate` 拒绝目录名以两个点开头的插件路径的问题（插件加载器实际上允许此路径）
+- 修复插件静默跳过无法检查的默认 monitors 文件或根目录 SKILL.md 的问题
+- 修复 WebFetch 针对 localhost 及其他不含点的 hostname 的报错信息，以解释 URL 为何被拒绝并建议使用 curl
+- 修复 PermissionRequest 钩子在 `--print` 模式下不触发的问题
+- 修复 policy-helper 警告在无头（`-p`）运行模式下未打印的问题
+- 修复 `/resume` 将 `/fork` 后台会话列在其父会话名称下，而非其自身的 `⑂` fork 名称下的问题
+- 修复未登录时 `/remote-control` 及其他依赖 claude.ai 的命令显示 Claude for Enterprise 迁移消息而非建议使用 `/login` 的问题
+- 修复 `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` 未延长未设置单个钩子 `timeout` 的 SessionEnd 钩子超时时间（此前仍会在 1.5 秒后被取消）的问题
+- 修复在未连接 GitHub 账号时，`/autofix-pr` 及其他云端会话命令提示重试或安装 Claude GitHub App 的问题；现在会指向 `/web-setup` 或网页连接页面
+- 修复组织策略关闭 `/teleport` 和 `/remote-env` 等云端会话命令时，命令回复 "Unknown command" 而非解释被策略禁用的问题
+- 修复 Bash 沙箱说明过度声明限制范围的问题：文件系统隔离关闭时不再列出未强制执行的路径列表，严格模式也不再声称命令绝无法在沙箱外运行
+- 改进全屏模式：添加或删除提示词行（Shift+Enter）现在的重绘速度与键入字符一样快，而无需重新渲染可见的对话记录
+- 改进 `--continue` / `--resume`：会话会立即显示而无需等待 SessionStart 钩子，且首条消息不再重新读取整个对话记录
+- 改进高频调用工具轮次中的响应速度：不再针对隐藏的每批次工具提示重新绘制对话记录
+- 改进包含 `.claude/workflows/` 脚本的项目的启动时间：列出这些脚本时不再逐一解析每个脚本
+- 改进 auto 模式下的拒绝处理：Claude 收到的消息现在会指出阻止该操作的规则名称，并提示 Claude 尝试更安全的方法并在停下来询问你之前完成无关的工作
+- 改进 Claude in Chrome：长页面读取现在保持内联，而无需保存到文件再重新读回
+- 改进 MEMORY.md 截断警告，明确指出截断了多少行以及截断从何处开始
+- 改进 artifact 的终端权限提示：现在会优先显示提问内容
+- 改进提示词页脚：编辑器或 `/diff` 选区现在显示在提示词输入框内，全屏模式在页眉而非页脚显示 Remote Control 状态
+- 改进 "Usage credits required for 1M context" 提示信息，说明在会话中途启用的 usage credits 会在重启 Claude Code 后生效
+- 改进 `/plugin`：安装、启用或禁用插件现在会在关闭菜单时生效，此后不再需要执行 `/reload-plugins`
+- 变更 Bedrock、Vertex 和 Foundry 上的系统提示词，将环境、模型和设置详情以附件形式传递，与第一方会话保持一致
+- 变更 Bedrock、Vertex 和 Foundry 会话，使其在整个会话中保持工具列表的字节级稳定性（延迟连接的工具采用推迟加载而非重写列表），与第一方会话保持一致
+- 变更任务追踪工具（TaskCreate/Get/Update/List、TodoWrite），仅在 Claude 3.x、Opus 4.0–4.7、Sonnet 4.0–4.6、Haiku 4.5 上提供；其他模型可通过设置 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` 启用
+- 变更终端中的 artifact 数据编辑权限提示为卡片形式，显示文档数量以及谁可以打开该 artifact
+- 变更设置为跳过所有批准的本地 Cowork 会话：Artifact 工具现在会拒绝会话文件夹外部或位于符号链接之后的文件，而不是未经询问直接读取
+- 变更普通的 `WebFetch` deny 和 ask 规则，使其不再适用于 Artifact 工具的读取和更新；请使用 `Artifact` 规则（或 `WebFetch(domain:claude.ai)`）来阻止或管控它们
+- 变更 "N MCP servers need authentication" 启动通知，针对每个服务器仅提醒一次，而非每次启动时都提醒
+- [VSCode] 修复在设置文件或 `environmentVariables` 设置中配置了 `CLAUDE_CONFIG_DIR` 时会话列表、设置切换开关和聊天标签页的问题
+- [VSCode] 修复登录、登出或切换账号后，打开的标签页中的模型药丸标签、模型选择器和命令菜单变空白数秒的问题
+- [VSCode] 修复当项目或本地设置覆盖了 `~/.claude/settings.json` 中指定的模型时，新标签页或刚重新加载的会话中模式选择器里的 Auto 消失的问题
+- [VSCode] 修复配置了 SessionStart 钩子时，窗口重新加载后会话名称恢复为最后一条提示词的问题
+- [VSCode] 修复当窗口中另一个标签页已启动时，页脚的模型药丸标签和 Remote Control 药丸标签仍等待新标签页的 Claude 进程启动的问题
+- [VSCode] 修复当会话标签页的启动在其配置读取超过半秒后到达时，第二个 Claude 进程会执行完整启动流程的问题
+- [VSCode] 修复从会话列表恢复会话时忽略 `claudeCode.preferredLocation: "sidebar"`（总是打开面板）以及通过程序打开会将该设置重置为 "panel" 的问题
+- [VSCode] 修复 Windows 相关问题：未安装 WSL 的机器上不再弹出 WSL 安装提示，且安装 WSL 后 Windows 文件的 IDE 诊断信息现在能正确返回
+- [VSCode] 修复通过设置配置 `CLAUDE_CONFIG_DIR` 时，自定义样式构建器将 User 级别样式保存到 CLI 不会读取的文件夹中的问题
+- [VSCode] 为键盘和屏幕阅读器用户新增通过左、右箭头键更改 always-allow 权限规则保存位置的功能
+- [VSCode] 为键盘和屏幕阅读器用户新增 "Claude Code: Focus last message" 命令，用于将键盘焦点移至会话中的最新消息
+- [VSCode] 变更 Manage plugins 对话框，使安装、启用、禁用和卸载操作直接应用于当前已打开的会话，无需重启
+- [VSCode] 变更部分 artifact 权限提示，去除了 "don't ask again" 选项，与终端保持一致
+- [Claude Code on the web] 修复运行超过约 6 小时的云端会话会静默丢失保存到持久化会话文件夹中的文件的问题；保存的内容现在最长可保留一天
+- [Claude Code on the web] 修复在管理员对模型 effort 设置上限的组织中，routine 恢复会话或会话在未设置 effort 的情况下启动时出现 "Invalid effort level" 错误的问题
+- [Claude Code on the web] 改进从会话创建 routine 的体验：当新 routine 没有 connector 时，Claude 现在会进行说明并指导如何添加，而不仅是确认创建
+- [Claude Tag] 修复管理员设置页面在短暂加载失败后卡在骨架屏或变空白的问题；加载失败的区域现在会显示 Retry 按钮
+- [Claude Tag] 在 Slack 频道的配置页面中新增返回组织 Claude in Slack 管理员设置的链接
+- [Claude Tag] 修复在 Slack 管理员将 Slack Enterprise Grid 频道移动到另一个工作区后，该频道丢失其 Claude 设置（代码仓库、环境、访问权限）的问题
+- [Claude Tag] 改进 Claude 对受阻操作的解释方式：现在会说明是权限检查、其自身决定先行确认还是缺少访问权限阻止了该操作
+- [Claude Tag] 改进回复速度：Claude 现在会并行执行多个只读查询（搜索 Slack、读取帖子、查找人员），而非依次逐个执行
+- [Claude Tag] 改进对比内容的格式排版：句子长度的对比现在以列表形式呈现，而非需要横向滚动的宽表格，且较长的表格单元格会自动换行
+- [Claude Tag] 修复在拥有独立会话的帖子中执行 `@Claude !restart` 时，有时还会错误发布矛盾的 "this thread is handled by the channel session" 通知的问题
+- [Claude Tag] 改进当你的 Claude 账号与 Slack 工作区属于不同组织时显示的消息：现在会说明如何将该工作区连接到你的组织
+- [Claude Tag] 修复 URL 被尖括号包裹的 Markdown 链接在 Slack 中显示为字面尖括号文本而非可点击链接的问题
+- [Claude Tag] 修复在允许访客使用 Claude 的频道中，工作区访客的顶层 @提及 有时会收到 "your Slack account isn't connected" 回复而非解答的问题
+- [Claude Tag] 修复频道的长时间运行会话在对话中途被新会话替换的问题；计划的刷新现在会等待频道及其帖子处于静止状态时才执行
+- [Claude Tag] 修复多次点击频道设置卡片时，在更改已生效后仍向发起会话提示更改被拒绝的问题；处理结果现在仅发送一次
+- [Claude Tag] 变更公开频道中的记忆机制：每个频道现在保留各自的笔记，Claude 不再调用其在其他公开频道中保存的笔记；工作区级别的笔记仍保持共享
+- [Code Review] 在后续审查中仍未解决的发现列表中下方新增提示：解决该发现对应的讨论串而不仅是回复它，可防止后续审查将其计为未解决
+- [Code Review] 修复当验证发现的某个 agent 中途失败时，审查有时会以未完成状态结束的问题；审查现在会替换该 agent 并得出最终判定
+- [Code Review] 修复排在运行中审查之后的推送触发式审查，在 pull request 已转换为草稿后仍会发布审查结果的问题
+- [Code Review] 修复当 PR 修改了仅与 CLAUDE.md 所列文件同名的根目录文件（例如 README.md）时，审查会忽略该目录的 CLAUDE.md 规范的问题
+
+## 2.1.267 (2026-09-09)
+
+- 新增 `maxEffortLevel` 设置（可在顶层配置或在 `modelSettings` 下按模型配置）：限制所有提供商（包括 Bedrock、Vertex 和 Foundry）的 effort 级别上限；用户仍可选择更低的级别
+- 新增 `--system-prompt-snapshot off`：在每次请求时重新渲染系统提示词，而不是复用会话中记录的提示词（用于迭代提示词文本）
+- 修复云端 Cowork 定时任务对于受管设置要求沙箱环境的组织在启动时失败的问题
+- 修复 `/context` 及其他本地命令的输出在移动端渲染为空白的问题
+- 修复在 agent 视图中重新连接到 tmux 或 ssh 会话后 shift+enter 和 option+backspace 失效的问题
+- 修复在全屏模式下向上滚动时，顶部不显示暗色上一条提示词标题的问题
+- 修复输出 schema 较大的 Workflow `agent()` 调用在自动模式下被拒绝，而未能由安全分类器进行检查的问题
+- 修复在 macOS 和 Linux 上，包含反斜杠的插件市场条目路径可能绕过已拉取市场的隔离检查的问题
+- 修复在 Claude Desktop 等宿主应用下，过期的 AWS 或 Google Cloud 凭据在显示重新认证错误之前会重试十次并报通用“request failed”的问题
+- 修复通过 `-p --resume` 运行 `/compact` 或其他斜杠命令后恢复会话时，不再插入多余的“Continue from where you left off.”轮次
+- 修复恢复大型会话（transcript 超过 5 MB）时，重新加载的会话不再丢失并行工具调用及其 hook 输出的问题
+- 修复托管的 `allowedHttpHookUrls`、`httpHookAllowedEnvVars` 和 `allowedChannelPlugins` 在无法读取时应拒绝所有内容而非允许所有内容的问题
+- 修复在受管设置要求 Claude apps 网关登录的机器上运行 `/login` 时，按 Esc 键直接关闭对话框而不是无响应的问题
+- 修复因上传过程中断开连接导致制品发布中断的问题：当 Claude Code 检测到上传从未完成时，现在会重试一次，而不是报告未知结果
+- 修复自定义命令、skills 和 subagents 上的 `effort:` frontmatter 在默认 effort 仍被固定的模型（Opus 4.7、Opus 4.8、Fable 5）上被忽略的问题
+- 修复当页面文件不是有效 UTF-8 或包含替换字符（U+FFFD）时制品发布失败且报错信息不明确的问题；现在的错误信息会指出需要修复的行号和列号
+- 修复 `claude agents` 的 `@` 目录菜单未列出会话启动后新创建的仓库的问题
+- 修复加入 Claude Desktop 或 VS Code 会话的 Remote Control 客户端在权限模式再次更改前一直显示过时权限模式的问题
+- 修复 `claude remote-control` 在服务端凭据过期（启动后约 30 天）时退出并断开所有连接会话的问题；宿主现在会重新注册并继续运行
+- 修复当不同模型或模式的请求报告不同的配额窗口时，用量限制警告在会话期间忽隐忽现闪烁的问题
+- 修复当 MCP 服务器重新发送或内置工具重新渲染模型已加载的工具时，较早的推理过程被丢弃的问题
+- 修复会话进行中因断开连接的 MCP 服务器或升级导致工具消失时，重写工具列表并丢弃较早思考过程的问题
+- 修复从会话分叉出的后台 worker 在会话中途向会话工具块添加 EnterWorktree，从而破坏 prompt-cache 复用的问题
+- 修复在没有 ToolSearch 的会话中，会话中途将 MCP 和插件工具添加到工具列表从而破坏 prompt-cache 复用的问题；受支持的模型现在将其作为延迟定义接收
+- 修复使用 /model 切换模型时重新发送所有工具定义（导致 prompt-cache 未命中）的问题；commit 和 PR 归属文本现在作为会话备注传入，并在模型更改时更新
+- 修复当 MCP 连接器在与之前不同的时机重新连接时，恢复的会话会重写内联工具集的问题
+- 修复恢复的会话在第一轮运行了工具时，会重新渲染工具描述而不是重放已记录描述的问题
+- 修复当 claude.ai 连接器的工具在会话及其恢复之间发生更改时，导致 prompt-cache 未命中并丢弃扩展思考的问题
+- 修复恢复的会话在其连接器重新连接之前重写早期 MCP 工具声明（并丢弃扩展思考）的问题
+- 修复以交互方式恢复打印模式（`-p`）会话时 prompt-cache 失效的问题：系统提示词前缀不再发生改变
+- 改进 `/diff` 面板：在稳定显示之前不再闪烁“0 files changed”和加载图标，且空状态在面板中居中显示
+- 改进 Bash 工具的描述引导，使 Claude 用通俗语言描述命令的作用，而不是直接复述命令
+- 改进沙箱引导，使 Claude 在沙箱内 `pbcopy` 等剪贴板命令失败时建议使用 `/copy`
+- 改进包含大量 Bash 工具调用的会话在使用 `--resume` 时的首次渲染时间
+- 提升提示词输入响应速度：按键输入不再偶尔因加载图标或流式重绘而延迟一帧
+- 提升 prompt-cache 稳定性：使用 `--system-prompt` 或 `--append-system-prompt` 启动的 subagents 和会话现在只记录一次系统提示词和工具定义，而不是重复渲染它们
+- 改进 Artifact 工具的发布错误信息：当发布被拒绝时，提示信息现在会说明原因及应对措施
+- 自托管 Runner：修改 `--use-anthropic-git-proxy` 使其在注册时上报给服务器，并对仍通过旧版 git 代理克隆的每个会话打印警告
+- Gateway：将 `forward_user_identity` 上游修改为针对被转发邮箱的开发者原样返回 429，而不是故障转移到下一个上游，以确保代理的单用户限制生效
+- [VSCode] 修复在保存的 transcript 包含循环父链接的会话中进行分支、编辑较早消息或回退时，插件宿主进程卡在 100% CPU 的问题
+- [VSCode] 修复在 WSL2/WSLg 上粘贴截图会将原始图像字节插入聊天输入框的问题；现在当剪贴板提供图像时会作为附件添加，否则忽略粘贴操作
+- [VSCode] 修复聊天 diff 块始终使用深色编辑器主题渲染的问题；现在遵循当前激活的 VS Code 颜色主题，包括高对比度主题
+- [VSCode] 修复在消息输入框中输入时，从右到左文字与英文混排文本渲染顺序错误的问题
+- [VSCode] 修复在带有 Windows（CRLF）换行符的文件上接受 diff 视图编辑时失败并报错“String not found in file”的问题
+- [VSCode] 修复 @-mentions 会遗漏路径包含空格的文件的问题
+- [VSCode] 修复当工作区文件夹仅存在于远程主机上时，通过 Remote-SSH 连接的窗口中会话列表视图加载失败的问题
+- [VSCode] 修复在大型或包含大量符号链接的工作区中查看文件时 ripgrep 进程失控的问题
+- [Claude Code on the web] 修复 GitHub Enterprise Server 会话在 token 过期后显示 GitHub 账号已断开连接的问题；PR 和 issue 操作现在会自动刷新该状态
+- [Claude Code on the web] 修复未安装 Claude GitHub App 的组织中 `gh` 和 GitHub API 调用失败的问题；现在会使用已连接的 GitHub 账号，并在未连接任何账号时进行提示
+- [Claude Tag] 在 Claude Tag 管理设置的预设连接表单中新增“Use a custom connector”链接，以便直接切换到自定义连接而无需重新开始
+- [Claude Tag] 修复当组织用量额度耗尽时 Claude 回复“The API rejected the request as invalid”的问题；现在的回复会明确说明额度耗尽并指导如何充值
+- [Claude Tag] 修复在回复线程中请求编辑或删除 Claude 在频道顶层发布的消息时，返回纠正信息而不是送达发布该消息的会话的问题
+- [Claude Tag] 修复管理员设置 > 审核请求下的工具访问请求中的 **Connect** 按钮失败并报错“Authorization failed”，或显示请求的访问包已删除的问题
+
+## 2.1.266 (2026-09-08)
+
+- 修复了影响 LLM-gateway 和代理配置的 2.1.265 回归问题：未记录的 `CLAUDE_CODE_USE_GATEWAY` 环境变量此前在未同时设置 `ANTHROPIC_BASE_URL` 和 `ANTHROPIC_AUTH_TOKEN` 时会被忽略，但在 2.1.265 中开始单独强制要求 Cloud-gateway 登录，导致将其与 API key、`apiKeyHelper` 或自定义认证请求头一同设置的配置在每次请求时均报错 "Not signed in to the Cloud gateway" 并失败。目前单独设置该变量会再次被忽略；无需更改配置
+
+## 2.1.265 (2026-09-08)
+
+- 在 Claude Desktop 和 Cowork 通过 Claude apps gateway 发送的遥测数据中添加了 `user.email` 和 `user.groups`，与终端会话保持一致
+- 新增支持将 `--plugin-dir` 指向一个插件目录：会加载每个包含 manifest 的子目录，并在运行时自动检测添加或移除的子目录
+- 为保存到磁盘的工具结果增加了 1 GB 的上限；保存的文件发生截断时，对话内预览会进行提示
+- 修复了恢复前台生成的 subagent 时会更改其工具列表和系统提示词前缀，导致该 agent 的 prompt-cache 复用失效的问题
+- 修复了 agent 团队成员以及恢复的 subagent 会在后续轮次中将 SubagentStart hook 上下文和预加载 skills 移出提示词前缀，导致 prompt-cache 复用失效的问题
+- 修复了在上一个进程在运行工具期间意外退出后的恢复问题：不再重写最后一个提示词，并保留中断的工具调用并标记为已中断
+- 修复了 `/model opusplan[1m]` 被拒绝并提示 "Model not found" 的问题
+- 修复了权限提示和消息中带有语法高亮的代码在 Ruby `?`、Erlang `$` 或 Perl `$` 符号后有时会遗漏一个字符的问题
+- 修复了每当斜杠命令或 @-file 建议列表打开或关闭时，全屏 transcript 会跳动一行的问题
+- 修复了包含反斜杠的插件路径在 macOS 和 Linux 上可以绕过符号链接包含性检查的问题
+- 修复了名称以两个点开头的插件目录被错误拒绝并提示位于插件根目录之外的问题
+- 修复了在刷新 token 期间关闭会话可能导致 VS Code 和 SDK 会话偶尔需要重新登录的问题
+- 修复了 Remote Control 会话在回复的最后一条消息之前发送轮次结束信号，导致在最后一部分内容到达之前 Claude 应用中就显示回复已完成的问题
+- 修复了后台（`--bg`）会话在消息刚好在空闲超时前到达时偶尔会在轮次中途被注销的问题
+- 修复了 Claude Code 自身的 git status 和 diff 探测会运行工作树内嵌套仓库配置的 clean filter 的问题
+- 修复了 advisor 工具及其指令会根据请求的模型按请求重新决定的问题；现在只决定一次，并在发生变化时在对话中通知
+- 修复了 artifact 发布接受 connector 未公开的 connector 工具名的问题；当声明的工具均不存在时现在会拒绝发布，只有部分不存在时会发出警告
+- 修复了当托管设置仅将 skills 锁定到插件时，`/add-dir <subdirectory>` 拒绝加载子目录中的 agents，以及在仅锁定 agents 时却承诺提供 agents 的问题
+- 修复了在 tmux 等环境下第二个按键在超过 1 秒后到达时，双键键盘快捷键会静默取消的问题；现在会等待 3 秒并在超时后显示通知
+- 修复了分叉 skills（`context: fork`）不会以 stream-json 中的进度事件流式传输其启动提示词，以及在使用 `--forward-subagent-text` 时不会流式传输其文本轮次的问题
+- 修复了操作系统无法检查的插件默认组件目录（如符号链接循环）会被静默跳过的问题；现在会在 `/plugin` 中报告错误代码
+- 修复了 Claude apps gateway 的 OTLP 遥测中继在因格式错误或过大拒绝了若干载荷后，会暂停向 collector 转发所有数据 30 秒的问题
+- 修复了元数据仅存在于 `plugin.json` 中的 marketplace 插件在 `/plugin` Discover/Browse 和 `claude plugin list --json --available` 中不显示描述或显示名称的问题
+- 修复了在通过托管设置配置了 Claude apps gateway 登录的会话中重新运行 `/login` 时显示 "no gateway URL is configured" 的问题
+- 修复了当设置文件无法写入时，`/model` 仍声称模型已 "saved as your default" 的问题；现在会提示保存失败及原因
+- 修复了来自 Remote Control 的 `/clear` 在完成前需要等待 SessionStart hooks 以及已打开的终端对话框的问题
+- 修复了在标签页之间切换时 `/config` 对话框高度发生变化的问题
+- 修复了在容器重启后恢复工作流运行的问题；运行日志缺失的恢复现在会直接报错并显示明确错误信息，而不是重新运行每个 agent
+- 修复了 `claude-api` skill 的错误代码参考文档：模型访问失败返回 404，不可用的 beta headers 返回 400（而非 403）
+- 修复了非交互式会话（配合 stream-json 输入的 `-p`、Agent SDK、云端会话）在每个新用户消息时都会重置 shell 工作目录的问题；现在 `cd` 会跨轮次保持有效
+- 修复了配置为 `http` 且仅支持旧版 HTTP+SSE 传输的 MCP 服务器始终无法连接的问题；Claude Code 现在会按照 MCP 规范回退到 SSE
+- 修复了云端会话中部分 claude.ai connectors 尽管已在 claude.ai 中连接，但仍显示需要身份验证的问题（针对以 HTTP 401 回复不支持请求的服务器）
+- 修复了远程会话在等待 connector 审批或登录链接时保持其沙盒容器处于活动状态的问题
+- 修复了恢复的会话在 "background task didn't finish" 通知中向模型显示冗长的恢复说明而非简短状态行的问题
+- Windows：修复了在 AppContainer 或受限 token 沙盒中运行时，Read、Write 和 Edit 会拒绝所有文件（"symlink resolution changed after permission was checked"）的问题
+- 优化了在大型仓库中的 `--worktree` 启动性能：现在会并行检出新的 worktree（git 2.32+）
+- 优化了 `/workflows` agent 详情：工具调用会标记为运行中、失败或完成，subagent 拥有任务列表时会予以显示，按下 Enter 可展开列出的调用及其输入和结果
+- 优化了提示词中途输入的斜杠命令：匹配项现在以列表形式显示（Tab 键可在非全屏模式下打开）而非单个建议，且插件 skill 现在可通过其裸名称查找到
+- 优化了需要登录的远程 MCP 服务器：在实际进行身份验证之前，Claude Code 不再向它们注册 OAuth 客户端
+- 优化了读取大量文件的长会话的恢复耗时
+- 优化了超出大小限制的图像无法解码时显示的错误信息：现在会指出具体原因及解决方法，而不仅是提及限制
+- 优化了 Artifact 工具读取他人编写的 artifact 的逻辑：摘要现在将该页面视为不可信内容并标记嵌入的指令，而不是直接转发它们
+- 更新了 `.claude` 文件夹权限选项的文案，以说明其真实的允许行为：在会话期间编辑项目 `.claude` 文件夹（或 `~/.claude`）中的文件
+- 更改了在托管设置中配置有 `forceLoginGatewayUrl` 的机器，使其从启动起就作为 Claude apps gateway 会话（类似 `forceLoginMethod: "gateway"`）；残留的 claude.ai 登录或 API key 将不再使用
+- 更改了图像处理方式，改用运行时的内置图像支持；CLI 不再向临时目录解压原生图像模块
+- 更改了插件显示元数据的优先级，在 Installed 标签页和 `claude plugin details` 中优先采用 marketplace 条目而非 `plugin.json`，缺失信息由 `plugin.json` 补齐
+- 更改了 Claude apps gateway 会话的导出逻辑：直接将 OpenTelemetry 导出到网关托管设置中 `OTEL_EXPORTER_OTLP_ENDPOINT` 指定的 collector，而不是通过网关的中继；未指定 collector 的会话仍使用中继
+- [VSCode] 新增对处于非活动状态达到设定时长的会话进行自动归档（新增 "Archive inactive sessions" 设置，默认 14 天）
+- [VSCode] 修复了对话打开超过 10 分钟后，执行 Reload Window 或重启后侧边栏聊天显示为空白的问题
+- [VSCode] 修复了 "Remote Control is active" 消息中时间线圆点显示在文本下方的问题
+
+## 2.1.263 (2026-09-06)
+
+- Bug 修复与稳定性提升
+
+## 2.1.261 (2026-09-04)
+
+- 在 `/status` 和 `claude doctor` 中新增了“Organization policy”行，用于说明无法加载组织策略的原因，例如代理未放行端点
+- 新增了 `bashOutputMaxChars` 和 `taskOutputMaxChars` 设置，以提高 Claude 在将命令与后台任务输出保存到文件前以内联方式接收的字符上限，最高可达 128K 字符
+- 新增了 `--append-subagent-system-prompt-file` 参数，用于从文件中读取 subagent 系统提示词，适用于因内容过长而无法通过命令行传入的提示词
+- 新增了 `/skill-doctor` 命令，用于显示已加载但未使用的 skills 及其在上下文中占用的开销，方便对其进行清理
+- 修复了在快速输入或按键重复时，键入或粘贴的字符偶尔会出现乱序或丢失的问题
+- 修复了当工作目录位于 `/net` 自动挂载点时，`/add-dir <subdirectory>` 会错误输出“couldn't be resolved”报错的问题
+- 修复了当 AWS 或 AWS 凭据辅助程序未响应时 Bedrock 设置向导会挂起的问题（现已改为超时并显示明确的错误信息），以及在启用了 TLS 检查的代理后模型检查会失败的问题
+- 修复了当托管设置在 `enabledPlugins` 中强制启用某插件时，云端会话会丢弃从 claude.ai 同步的该插件，进而回退到可能失败的插件市场克隆版本的问题
+- 修复了在提示词输入框中无法删除内联 `[Image #N]` 标签前紧邻字符的问题
+- 修复了恢复会话时会丢失 hook 输出以及并行工具调用周边的其他上下文，从而导致恢复后的请求发生改变的问题
+- 修复了当手机、浏览器或 claude.ai 应用接入终端会话时，或在终端中更改模式后，Remote Control 会显示过期的权限模式的问题
+- 修复了从连接的手机或浏览器停止当前轮次，或执行本地斜杠命令（如 `/clear`）后，Remote Control 会话仍显示为正在工作（卡在加载动画和 Stop 按钮）的问题
+- 修复了 SDK 和云端会话在首个提示词发出后、轮次尚未开始前发送 Stop 或中断信号会被忽略的问题；现在轮次会停止而不是一直运行直至完成
+- 修复了 Remote Control 会将通过 `/teleport` 拉取的会话上传到已连接的会话中，导致在手机和网页端看似追加在原始会话之后的问题
+- 修复了在原生 Windows 上处于进行 TLS 检查的企业代理后，Remote Control 的入站事件流会失败的问题
+- 修复了当努力程度（effort level）由设置指定时，Remote Control 会话在 claude.ai 上仍显示为默认努力程度的问题
+- 修复了当 Google 凭据检查缓慢时，即使凭据仍然有效，`gcpAuthRefresh` 也会在启动时打开浏览器的问题
+- 修复了当启动时连接器拉取超时会导致整个会话期间 claude.ai 连接器均不可用的问题——CLI 现在会在后台重试
+- 修复了当后台 agent 无法恢复且在紧凑循环中重试唤醒时，会导致持续高 CPU 占用的问题
+- 修复了限定新版本的特性开关偶尔会应用到同一台机器上运行的旧版本 Claude Code 的问题
+- 修复了在用量端点遭遇限流或在启动后立即打开时，`/usage` 和 VS Code 用量面板会丢失特定模型的每周限额行的问题
+- 修复了 `claude -p --resume <file>` 会继承记录在转录历史中的格式错误会话 ID 的问题；现在会改用全新的会话 ID 恢复
+- 修复了在后台工作流或 agent 仍在运行时，终端进度指示器（iTerm2、Ghostty、ConEmu）就会显示会话已结束的问题
+- 修复了当容器在行方向和列方向之间切换后，盒子组件可能会以错误高度渲染的罕见布局异常问题
+- 修复了当受信任的代理在 `X-Forwarded-For` 后追加端口时，Claude apps gateway 解析客户端 IP 的问题；在设置了访问控制列表时，无法解析的条目现在会收到 403 错误
+- 修复了 Claude apps gateway 在终端 CLI 使用 protobuf 时仍指示 Claude Desktop 将 OpenTelemetry 导出为 JSON，导致仅支持 protobuf 的采集器拒绝 Desktop 数据的问题
+- 修复了 Desktop 和网页端在会话仅监听工件更新时仍将其显示为忙碌状态的问题
+- 修复了在通过 Claude Desktop 应用运行的本地 Cowork 会话中，Claude in Chrome 的 `file_upload` 会因“paths: expected array, received undefined”而失败的问题
+- 修复了向另一台机器上离线的 Remote Control 会话执行 `SendMessage` 时显示为已送达的问题；现在结果会提示消息已排队等待该机器重新连接后再投递
+- 修复了在后台 Bash 命令中运行 CLI 时产生的插件安装提示问题：现已能够检测到这些提示，且原始的 `<claude-code-hint>` 标签不再泄漏到对话中
+- 修复了进程内 agent-team 队员在第二轮重新发送其首轮工具和 skill 声明，导致请求前缀发生改变并破坏提示词缓存的问题
+- 改进了 `/model` 选择器和 VS Code 模型标签，当 Claude Code 识别该模型时，会显示模型名称而不是原始的 Bedrock、Vertex AI 或 LLM 网关 ID
+- 改进了在设置了 `GOOGLE_APPLICATION_CREDENTIALS` 时 Google Vertex AI 上的启动表现：创建 API 客户端时不再重新执行 Google Cloud 项目发现或产生多余的 `gcloud` 进程
+- 改进了流式传输性能：每次更新时布局引擎不再对已渲染的区块进行重复检查
+- 改进了针对危险 `rm` 命令的安全提示，使其同时能捕获位置参数上以及双引号包含的 `sh -c` 脚本内的 `rm -rf`
+- 改进了当 API 未返回任何响应头时的处理机制：重试现在最多等待 `API_TIMEOUT_MS`（默认为 10 分钟）而不是再等 3 分钟，并且提示信息会说明需要修改的内容
+- 修改了 Claude apps gateway 在加载托管设置时（启动时或执行 `/login` 后）返回 403 的提示信息，改为说明 Claude Code 可能未针对该组织启用，而不是建议重新登录
+- 修改了托管设置中固定为 `forceLoginMethod: "gateway"` 的机器的行为：忽略遗留的 API 密钥或 claude.ai 登录状态并要求执行 `/login`；Bedrock、Vertex AI 和 Foundry 会话不受影响
+- 修改了 auto mode 的处理规则：将把内容打包到公共图表渲染器 URL 中的链接视为向该网站上传内容，除非用户明确要求，否则不再自动批准
+- 修改了提示词的单词编辑快捷键以与 Bash 保持一致：Ctrl+W 向后删除至空白字符，Alt+F 和 Alt+D 停在词尾，标点符号作为单词分隔符；`keybindingFlavor` 不再起作用
+- 修改了 `/context` 的 Token 计数机制：在 Token 计数 API 不可用时使用本地估算，而不再发起额外的小模型请求
+- [VSCode] 在输出样式菜单中新增了“Build a custom style”分步指引，可写入自定义输出样式文件并立即列出
+- [VSCode] 在 MCP 服务器对话框中新增了 Add server 表单和 Remove 操作，无需离开 IDE 即可添加和删除 MCP 服务器
+- [VSCode] 在会话列表中为已在终端、另一个 VS Code 窗口或 Claude Desktop 中打开的会话增加了空心圆环标识，不再显示为已关闭状态
+- [VSCode] 在权限和提问提示框中新增了折叠按钮，无需关闭提示框即可查看其背后的对话内容；提示框旁边的空白区域现在支持滚动对话
+- [VSCode] 在会话列表的右键菜单中新增了“Archive session”，并为 Unarchive 赋予了专属图标
+- [VSCode] 修复了从网页端 Claude Code 迁移（teleport）的会话会将云端会话关闭时中断的提问误判为拒绝的问题
+- [VSCode] 修复了随窗口一同恢复的会话标签页在打开 Rename 输入框时为空的问题；现在会默认填充当前名称
+- [VSCode] 修复了每次加载会话列表面板时，折叠的分组都会短暂显示为展开状态的问题
+- [VSCode] 修复了在 Claude 已进入下一环节（例如等待您回答提问）后，Focus 视图仍显示工具调用正在运行的问题
+- [VSCode] 修复了当未获得焦点的 Claude 标签页的会话 ID 修正后，会话列表中的当前选中行高亮未及时更新的问题
+- [VSCode] 修复了当 Claude 标签页处于焦点状态时，通过 Cmd/Ctrl+Shift+T 重新打开以及通过深度链接打开会将 Claude 标签页放置在 Claude 编辑器分组之外的问题
+- [VSCode] 修复了会话标签页的“Add to group”会将从网页端 Claude Code 打开的会话放入两个分组的问题；现在会直接移动会话列表中显示的对应条目
+- [VSCode] 修复了模型选择器会持续显示组织已禁用的模型，直到窗口被重新加载两次才恢复正常的问题
+- [VSCode] 修复了在 VS Code 重新加载标签页视图后，从会话列表打开的标签页会跳回该会话，以及从 Web 会话打开的标签页会重启 teleport 过程或保持空白的问题
+- [VSCode] 修复了在窗口重载后立即提问或配置文件存在错误时，先前会话的 `/btw` 补充提问历史会被覆盖的问题
+- [VSCode] 修复了使用 Claude.ai 或 Console 账号登录时，Claude 面板重新加载后待处理的提问卡片不再重新出现的问题
+- [VSCode] 修复了当某个面板从配置文件加载了第三方提供商后，窗口内的其他 Claude 面板上 claude.ai 专属功能仍保持可见的问题
+- [VSCode] 修复了当 Claude Code 报告未登录或请求因未登录而失败时，尽管启用了 Disable Login Prompt 设置但仍会弹出登录界面的问题
+- [VSCode] 修复了下一个排队的权限提示会保留上一个提示输入的文本并接受立即发起的第二次点击的问题
+- [VSCode] 修复了在仅显示过会话列表的窗口中，点击插件安装链接只会打开 Claude 侧边栏而不弹出安装对话框的问题
+- [VSCode] 修复了在新窗口中打开 Account & usage 对话框之前侧边栏用量指示器一直保持为空，以及用量上限为 0% 时未包含在指示器中的问题
+- [VSCode] 修复了在 New conversation 后“Start new session in this group”会丢失分组，以及在侧边栏未读列表加载完成前就已结束的会话未显示未读红点的问题
+- [VSCode] 修复了在轮次运行期间编辑器标签页角标会显示为未读、从会话列表打开的标签页丢失角标，以及对已归档会话执行“Add Session Tab to Group”无效的问题
+- [VSCode] 修复了“Enable Remote Control for all sessions”，使其在切换状态时也能立即应用到其他 VS Code 窗口中打开的会话
+- [VSCode] 修复了从 claude.ai 延续且标签页仍记录在 Web 会话下的会话在会话列表中的 Open 筛选器行为，并为筛选菜单的各个分组添加了屏幕阅读器标签
+- [VSCode] 将模型选择器调整为包含所有模型的单级扁平列表，保留旧版模型拼写的行被放置在最后
+
+## 2.1.260 (2026-09-03)
+
+- 新增了在全屏模式下于对话旁打开的 diff 面板，可在 Claude 编辑时显示未提交的更改；使用 `/diff` 切换显示
+- 在 `/cost` 和状态行的 `prompt_cache` 字段中增加了 prompt-cache 未命中的可能原因（例如工具定义或系统提示词发生变更、闲置超过 TTL）
+- 在 headless 会话中新增了 `/reload-plugins`，使其显示在 Claude Code Desktop 和 SDK 的命令列表中
+- 为桌面应用、Remote Control 以及其他 headless（`-p`/Agent SDK）会话新增了文本形式的 `/advisor`（`/advisor`、`/advisor <model>`、`/advisor off`）
+- 在 Claude apps gateway 中新增了 `oidc.scope_on_refresh`，适用于仅在再次请求 `openid` 时才在刷新时返回 id_token 的 IdP
+- Claude apps gateway 增加了对 `desktop` 策略块中较新 Claude Desktop 键的支持，包括 `userPluginMarketplacesEnabled` 和 `userPluginUploadsEnabled`
+- 修复了路径中包含括号的 `Edit`/`Write`/`Read` 权限规则被视为无效丢弃或被 Bash 沙箱忽略，导致“只读”文件夹可写的问题
+- 修复了包含无法编译模式（例如未闭合的 `[`）的文件权限规则导致所有文件编辑均因 `Invalid regular expression` 失败的问题；此类拒绝规则现在会保护其拼写的字面路径
+- 修复了 Bash 权限检查会自动批准在 REPORTTIME、REPORTMEMORY 或 DIRSTACKSIZE 赋值中隐藏命令替换的 zsh 命令的问题；现在会提示请求批准
+- 修复了当企业根 CA 仅存在于操作系统证书存储区时，Bedrock 模型发现、Token 计数和 AWS SSO/STS 凭据调用因 "unable to get local issuer certificate" 失败的问题
+- 修复了 macOS 上 `permissions.blockReadsOutsideWorkingDirectories` 向沙箱化 git 隐藏用户的 git 配置，并隐藏 worktree 隔离的 sub-agent 自身 checkout 的问题
+- 修复了对于残留有早期 `/login` 的 API key 的 claude.ai Enterprise/Team 用户，托管设置无法加载的问题
+- 修复了 `/status` 将已登录的 claude.ai 账号和已配置的 API key 同时列出如同二者均生效的问题；现在会标记未使用的凭据
+- 修复了以内置 skill 别名（例如 `/doctor` 的 `checkup`）为键的托管 `skillOverrides` 项未生效，以及 `Skill(name)` 拒绝规则未覆盖以 `<dir>:name` 列出的嵌套 skill 的问题
+- 修复了 `model: fable` agent 忽略 `ANTHROPIC_DEFAULT_FABLE_MODEL` 钉选上的 `[1m]` 标签并静默使用 200K 上下文窗口运行的问题
+- 修复了对于可以使用 Fable 5.1 的组织，`/model` 选择器未显示该模型（此前仅在键入 `/model claude-fable-5-1` 时才被接受）的问题
+- 修复了 Claude Fable 5.1 上的 prompt caching 未覆盖工具结果之后附加的上下文，导致其在每个工具调用轮次中作为未缓存输入重新发送的问题
+- 修复了插件 hook 加载失败后，会话剩余时间内模型切换持续受阻的问题；现在每次切换都会重新检查，并在拒绝时指明原因
+- 修复了当组织托管插件的 marketplace 无法加载时，整个会话中的模型切换均被阻止的问题
+- 修复了 SDK 提供的 MCP 服务器（例如 Desktop 连接器）有时在首轮对话中缺失、直到下一轮才出现的问题
+- 修复了在云端托管的 claude.ai 会话中添加或移除连接器时，Claude in Chrome 工具在任务中途报错 "Not connected" 失败的问题
+- 修复了国旗旗帜、连字 emoji 以及带变音符号字母在换行时被拆分，以及当旗帜或连字 emoji 落在终端最后两列时残留文本停留在屏幕上的问题（现在显示为 `…`）
+- 修复了 Remote Control 接受非有效模型名称的模型选择的问题；现在会报错拒绝，而不是在下一条消息时失败
+- 修复了当检查点备份文件缺失且实际未恢复任何内容时，`/rewind` 和 `--rewind-files` 仍报告成功的问题
+- 修复了 `/rewind` 残留已回滚轮次的过时文件读取跟踪，导致出现 "File unchanged since last read" 桩代码以及外部编辑后全文件重新注入的问题
+- 修复了一旦会话的 worktree 目录丢失其 git 元数据，`-p --resume`/`--continue`（桌面应用所使用）在每次重试时均失败的问题；现在仅失败一次，随后在不使用 worktree 的情况下恢复
+- 修复了通过 SendMessage 恢复另一个 agent 的 subagent 永远不会被该 agent 的完成所唤醒的问题（通知被发送到了主对话中）
+- 修复了 agent teams 相关问题：在长时间 API 重试等待期间（例如在 `CLAUDE_CODE_RETRY_WATCHDOG` 下），由于重试通知挤占了真实消息，导致进程内 teammate 的转录丢失消息或变空白
+- 修复了移至后台的会话在 ListAgents 中出现两次（一次作为同名的虚假 "interactive" 副本），并在查看器中接收 SendMessage 投递的问题
+- 修复了多个会话共享一个项目目录时偶现的 "task output swap refused" 错误
+- 修复了全屏模式下按 Ctrl+Z 会将 shell 留在备用屏幕上并绘制在已暂停界面之上的问题
+- 修复了在较长的上下文压缩仍在进行时，Workflow 工具 subagent 因被误判为停滞而被重启的问题
+- 修复了当宿主应用（例如 Claude Desktop）将插件存储为目录时，来自 URL marketplace 的插件安装失败并提示 "marketplace entry path does not stay inside the marketplace directory" 的问题
+- 修复了在通过 claude.ai、桌面应用或移动端（Remote Control）操作的会话中发布 artifact 时会额外打开一个浏览器标签页的问题
+- 修复了在某些 Cowork 会话中 Artifact 工具的首次调用因 "Invalid tool parameters" 校验错误而失败的问题
+- 修复了运行 skill 或斜杠命令时 IDE 行选区被丢弃的问题（现在 "N lines selected" 上下文能够传给 Claude）
+- 修复了嵌套子组中的 GitLab 项目（例如 `gitlab.com/group/subgroup/project`）的代码仓库检测问题
+- 修复了在 GitLab 仓库中工作时，渲染输出中的 `owner/repo#123` issue 引用链接到 github.com 的问题；现在会链接到 gitlab.com 的 issue
+- Glob/Grep：修复了在权限检查之前就对磁盘上的搜索路径进行探测的问题；不存在的路径现在与 Read 一样，在确定权限后才会报告
+- 回滚了 2.1.259 中将 `Read()` 拒绝规则应用于 Bash 参数的更改；该更改曾导致在任何模式下 `Read(./**/build/**)` 规则都会拒绝 `npm run build`，并在 auto 模式下依然会弹窗提示 `cd … && grep`
+- 改进了结构化输出：Workflow `agent({schema})` 会预先拒绝永远无法满足的 JSON Schema，且达到重试上限的错误现在会包含最后一次校验失败信息
+- 改进了删除其 worktree 包含未推送 commit 的后台会话时的体验：提示消息现在会指明分支名称和 commit 数量，再次删除将丢弃该 worktree
+- 改进了 Claude apps gateway 的刷新失败日志，能够指明失败的步骤
+- 优化了非交互式（`-p` / SDK）会话的空闲 CPU 占用
+- 改进了 Amazon Bedrock 上的 Claude apps gateway：中止请求的输入 token 现在改用 AWS 免费的 CountTokens API（需授予 `bedrock:CountTokens` 权限）进行统计，而不是通过单 token 请求
+- 改进了针对诸如 `Edit(C:\dir\(name)\**)` 等规则的设置错误提示（其中 `\(` 会被解析为转义括号而非路径分隔符），现在会给出无歧义的拼写建议
+- 改进了 1M 上下文模型的 auto-compact：Opus 和 Fable 会话现在会在接近 1M-token 上限前不久执行压缩，且超大上下文上的恢复压缩不再在 10 分钟时超时
+- 改进了 `/ultrareview` 和 `claude ultrareview`，针对长时间运行的云端审查等待时间最长可达 45 分钟（此前为 30 分钟）
+- 改进了 Claude Fable 5.1 上的 `/effort`，在会话中途更改 effort 不再使 prompt cache 失效
+- 更新了内置的 `claude-api` skill，使其 Go、Java 和 C# 示例使用当前一代的模型 ID，并明确更低成本的 worker 或 sub-agent 模型也应使用当前一代
+- 将全屏模式下的 `ctrl+l` / `cmd+k` 改为类似于终端 `clear` 一样清除转录视图；向上滚动可查看更早的消息
+- 将闭合括号后带有文本的权限规则（例如 `Bash(ls) x`，此前从不匹配任何内容）改为报告为无效设置，而不是静默忽略
+- 更改了服务端托管设置，受托管的 CLAUDE.md（`claudeMd`）不再触发安全批准对话框；hook、shell-command、沙箱和不安全的 `env` 设置仍需批准
+- 将 Claude in Chrome 改为遵循您组织的 Claude in Chrome 管理员设置；当管理员将其关闭时，`--chrome`、`/chrome` 以及浏览器工具将不可用
+- 将 Claude apps gateway 改为发送 Claude Desktop 1.15200.0 及更高版本所读取的列表形式的 `orgPluginSettings`；较旧版本的桌面端将忽略它
+- 将 Claude apps gateway 改为在 `desktop` 策略拼错 `managedMcpServers` 或 `orgPluginSettings` 项的嵌套对象中的字段时，也会拒绝启动并指明该字段
+- 将在 `!` bash 模式提示符下键入的命令改为在沙箱外部运行（即使启用了严格沙箱模式 `sandbox.allowUnsandboxedCommands: false`），就像在自己的终端中键入一样
+- 将 self-hosted runner 的 `--kill-session-after-min` 改为释放仅在等待用户的会话（处于暂停状态，可在下一条消息时恢复），而不是将其终止并报告失败
+- 移除了 subagent 启动的后台命令的一小时时间限制；现在它们将一直运行直至退出或被停止，与主会话保持一致
+- [VSCode] 在页脚模型胶囊中增加了选定的 effort 级别，修复了切换模型后 effort 级别未更新的问题，并将页脚胶囊恢复为早期的紧凑尺寸
+- [VSCode] 在会话列表的状态筛选菜单中新增了 Open 和 Closed
+- [VSCode] 修复了当 Remote Control 自动开启时，新会话中欢迎屏幕消失的问题
+- [VSCode] 修复了当会话已在另一个标签页中打开时，会话历史选择器仍会二次加载该会话的问题；现在会直接切换至该标签页
+- [VSCode] 修复了在标签页视图重新加载期间，会话标签页的 Rename 命令静默无操作的问题；现在始终会生效
+- [VSCode] 修复了 Claude Code 重试丢弃的响应后，半截消息、空工具卡片或多余的 "Thought for" 行残留在屏幕上的问题
+- [VSCode] 修复了在开关切换时仍在启动中的会话标签页未应用 "Enable Remote Control for all sessions" 的问题
+
+## 2.1.259 (2026-09-02)
+
+- 新增 `managedMcpServers` 托管设置：组织可向所有用户分发 HTTP/SSE MCP 服务器（配置格式与 `.mcp.json` 相同）；指定了待运行命令的条目将被跳过
+- 为无人值守的无头主机新增 `--permission-prompts none`：任何会触发提示的操作都将自动被拒绝，同时当前生效的权限模式（包括 auto 模式）继续做出判定
+- 新增对 `glab mr create/merge/close/reopen/note/update` 的识别，使 GitLab 合并请求在折叠的工具摘要中显示为 `MR !N`，并刷新底栏的 MR 徽章
+- 为 `claude plugin validate` 新增 `--json` 选项，以输出机器可读的验证报告
+- 修复了并发会话静默互相覆盖 `~/.claude.json` 变更的问题 —— 同时运行多个会话时，工作区信任不再被重置，MCP/项目状态也不会丢失
+- 修复了思考内容被拒绝一次的会话在后续每一轮交互中都会再次被拒绝的问题
+- 修复了 Bash `Read()` 拒绝规则未覆盖作为选项值传入的文件（`--ignore-revs-file=.env`、`-f.env`、`@file`）、`git diff`/`git grep` 文件操作数或 `cd DIR && cat FILE` 复合命令的问题；现在对包含被拒绝文件的目录执行 `grep -r`/`cp -r` 时会进行确认询问
+- 修复了在禁用遥测的会话中，OAuth 令牌刷新时提示词缓存失效的问题
+- 修复了在包含数百次工具调用的长轮次交互后，全屏模式下显示空白会话的问题
+- 修复了当命令或 skill 的 frontmatter 中 `model:` 指定了不支持的模型时，auto 模式会在该模型上运行一轮的问题；现在该轮次将保持会话原本的模型
+- 修复了对于 Claude Code 无法识别的模型版本且带有 Vertex 风格模型 ID（`@YYYYMMDD` 后缀）时，`CLAUDE_CODE_MAX_CONTEXT_TOKENS` 被忽略的问题
+- 修复了正在运行的 Shell 命令实时输出预览在前一行折行时会隐藏最新行的问题
+- 修复了 claude.ai 用户每次启动时都会在后台运行 GitHub 连接检查的问题；检查结果现在会在各次启动间保留
+- 修复了当保存的会话中包含没有载荷的附件条目时，`--resume` 失败（且 `--continue` 打开空会话）的问题
+- 修复了交互式会话中自定义命令和 skill 的 frontmatter `model:` 被忽略的问题
+- 修复了从旧版本继续的对话中，发布 Artifact 时偶发因“unexpected parameter `note`”错误而失败的问题
+- 修复了由 MDM 或托管配置文件配置的策略辅助工具已运行时，启动时托管的 `forceRemoteSettingsRefresh` 被忽略的问题
+- 修复了在 `git rev-parse` 失败提示非 "not a git repository" 的机器上，工作树隔离会拒绝 hook 创建的工作树的问题
+- 修复了云端会话的 OpenTelemetry 指标与事件中缺失 `user.email`、`organization.id` 和 `user.account_uuid` 属性的问题
+- 修复了启动时在列举工具期间断开连接的 MCP 服务器显示为已连接但无工具而非报错的问题
+- 修复了文件编辑权限对话框中有时更改行被截断且无任何提示的问题
+- 修复了在瞬态 git 探测失败后，仓库检测会丢失已知仓库身份标识的问题
+- 修复了当托管设置文件、drop-in、MDM plist 或 HKLM 注册表值无法解析时，托管设置会被静默忽略而不生效的问题：Claude Code 现在将拒绝启动并指出具体来源
+- 修复了在远程控制会话中 Stop 未能真正停止后台 agent 和 workflow 的问题：被终止的任务现将保持可见且可再次停止，直至其进程退出
+- 修复了当 workflow 前一次停止的运行仍在退出时恢复运行可能导致其 agent 运行重复副本的问题
+- 修复了 github.com 上带有末尾斜杠或多余 `?`/`#` 的插件市场仓库 URL 会生成无法使用的 `.git` 克隆 URL 的问题
+- 修复了阻塞式 Stop hook 导致被阻断后的下一轮丢失该轮中模型的推理内容，并在某些模型上未能命中提示词缓存的问题
+- 修复了在基于浏览器托管的 MCP 服务器页面关闭后，远程（claude.ai）会话需要 60 秒才能启动下一轮的问题
+- 修复了工作树隔离会话会拒绝无法访问主检出目录的常见 Bash 循环、xargs 管道以及通过启动器包装的命令的问题
+- 通过复用文本测量数据，优化了长回复在终端调整大小和首次渲染时的性能
+- 改进了 `/workflows` 的 agent 详情展示：JSON 输出结果现采用语法高亮和真实换行进行美化排版，长输出结果会自动折叠至展开按钮后
+- 改进了 headless/SDK 会话启动速度：MCP 服务器完成连接后，首轮启动时间最多可缩短 50 ms
+- 改进了 `/install-github-app`：在 GitLab 仓库内运行时，会说明其仅支持 GitHub 并指引至 GitLab CI/CD 文档
+- 改进了嵌套后台 subagent 的结果保存机制：结果将保存至父级 subagent 的 transcript 中，以便恢复的 subagent 能保留它们，并且共享 transcript 也能展示传递过程
+- 修改了 `allowedMcpServers` 规则，使其仅管理用户添加的服务器：以往被允许列表过滤掉的字面量 `managed-mcp.json` 服务器在升级后将正常加载；如需禁用请使用 `deniedMcpServers`
+- [VSCode] 在会话列表侧边栏中新增了 Active 快捷过滤器以及状态筛选菜单（Needs input、Working、Completed）
+- 修复了当会话处于暂停状态时，connector-tool 权限提示获批后远程与计划会话无响应的问题
+
+## 2.1.258 (2026-09-01)
+
+- 修复了 Claude Code 在 macOS 12 (Monterey) 上无法启动的问题，该回归问题引入自 2.1.255
+- 修复了在重新发送的权限审批无法应用后，远程和计划会话因 "user messages must have non-empty content" 而失败的问题
+
+## 2.1.257 (2026-09-01)
+
+- 新增 Claude Fable 5.1（`claude-fable-5-1`），现已作为默认的 Fable 模型 —— 1M 上下文，$10/$50 每 Mtok，缓存读取 $0.25/Mtok
+- 新增“Time format”（`timeFormat`）与 `timeZone` 设置：支持 12 小时制、24 小时制、24 小时 UTC，或用于轮次结束时钟和转录视图时间戳的 strftime 模式
+- 在 auto 模式中新增 Containment Escape 规则，因此云元数据凭据获取、出站逃逸和跨租户访问将不再自动批准，除非你的环境将其标记为预期行为
+- 新增 `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`，将 `CLAUDE_CODE_SUBAGENT_MODEL`（或主模型）应用于所有 subagent，忽略单次派生和 agent 定义的模型覆盖
+- 在 `/effort` 中新增 `s` 选项以仅更改当前会话的 effort，与 `/model` 保持一致
+- 在 `/doctor` 中新增对已终止会话遗留的陈旧沙盒掩码文件的警告
+- 在 auto 模式中首次读取工作目录以外的文件前新增一次性提示，并提供阻止此类读取的选项（`permissions.blockReadsOutsideWorkingDirectories`）
+- 为发现的 `/model` 选择器条目新增对网关提供的 `description` 的支持（`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY`）；没有描述的条目仍显示“From gateway”
+- 修复启动后创建的 `.claude/` 目录中的设置直到重启才生效的问题
+- 修复从通过 `←` 打开的 agent 视图派发的会话始终以原始会话的权限模式启动，从而覆盖目标目录的 `defaultMode` 和 agent 的 `permissionMode` 的问题
+- 修复 `keybindings.json` 中对 Ctrl+G 的重新绑定在 `claude agents` 中被忽略的问题；其 Ctrl+S / Ctrl+T 现在可通过新的 `Agents` 上下文重新绑定
+- 修复 macOS 上通过 npm 安装时在自动更新期间后台会话启动失败，以及 Windows 上陈旧的守护进程锁文件指向复用的进程 ID 时后台会话启动失败的问题
+- 修复在斜杠命令面板背后流式传输响应时工作加载图标停止旋转的问题
+- 修复后台会话的 `state.json` 中 `detail` 在计划唤醒后重复自身派发提示词的问题
+- 修复 `claude agents` 中重新提示的后台会话在再次结束后仍被埋在 Completed 中未更新排序的问题；Completed 现在按最新完成时间排序
+- 修复在刚被删除的目录中运行 `claude --bg` 仍报告“backgrounded”并遗留崩溃会话行的问题；现在会打印原因并以状态码 1 退出
+- 修复会话中途连接 Remote Control 时重新发送 Bash 工具定义，导致 prompt-cache 未命中的问题
+- 修复重复列出的自定义 `Authorization` 标头覆盖 Bedrock、Mantle、Vertex 和 WIF 上配置的凭据，以及 Vertex 设置向导拾取来自 `~/.config/anthropic` 的残留 Anthropic 配置的问题
+- 修复 Claude apps 网关向 Foundry、Vertex 和 Bedrock 发送多余的主机 `Authorization` 或 profile 标头，以及设置了 `ANTHROPIC_FOUNDRY_API_KEY` 时 Foundry Entra ID 上游无法启动的问题
+- 修复在 API 密钥模式下残留的 Anthropic API key 或认证令牌与 Foundry 订阅密钥一同发送的问题
+- 修复保存时未包含消息角色的 `/schedule` 例程在运行时无事可做的问题
+- 修复 `claude agents` 未提示后台会话正在等待你批准来自其他会话的消息或未提示发送者是谁的问题
+- 修复在打开的后台会话中通过 Ctrl+S 暂存的提示词在会话进入空闲或停止后重新打开时丢失的问题
+- 修复通过服务器托管设置下发的遥测（OTEL）设置在热启动时被忽略的问题（包括桌面应用中的 Code 会话）
+- 修复当组长的邮箱写入发生短暂锁定时 teammate 权限请求被响应两次的问题
+- 修复当命令的自动继续响应处于流式传输时，正在进行的轮次下方渲染出多余重复斜杠命令行的问题
+- 修复 `policyHelper` 的 `timeoutMs` 和 `refreshIntervalMs` 值超出定时器最大值（2147483647）时导致失败或每毫秒重新运行的问题；现已对其进行截断限制
+- 修复切换到其他 subagent 的转录后 token 计数器卡死或极其缓慢的问题，并使后台 subagent 和 teammate 的计数器在响应流式传输时实时更新
+- 修复带有末尾点的沙盒网络主机名（`example.com.`）问题：`deniedDomains` 条目未能阻止沙盒内的该主机，且对此类主机的“不再询问”仍会不断弹出提示
+- 修复关闭 Remote Control 同意提示（Esc，或在 `claude remote-control` 中输入 `n`）被误计为同意，导致下一次请求未提示即连接的问题
+- 修复 `/mcp` reconnect 和 enable 仍连接本应被启动后加载的托管 MCP 允许/拒绝列表或 `strictPluginOnlyCustomization` 阻止的配置文件中的 MCP 服务器的问题
+- 修复当 `strictPluginOnlyCustomization` 将 MCP 锁定为仅限插件服务器时，`claude mcp remove` 遗留远程服务器已存储的 OAuth 凭据的问题
+- 修复从 Claude 应用启动的 Remote Control（`claude remote-control`）会话忽略所选模型并转而在机器默认模型上运行的问题
+- 修复启用 `allowManagedPermissionRulesOnly` 时，`--disallowedTools` 和会话拒绝规则在首次重新加载设置后丢失的问题
+- 修复 `--resume` 重复列出后台对话且 `--continue` 重新打开停滞在转入后台前的副本的问题；`--continue` 现在也会打开已完成的后台会话
+- 修复全屏模式下无法点击 `!` shell 命令输出以展开的问题
+- 修复在自动更新期间运行旧版本 Claude Code 二进制文件的后台会话不断堆积而未退出的问题
+- 修复 `claude agents --json` 短暂将终端切换到 raw 模式并在退出时还原了其他程序的终端设置的问题
+- 修复 Proactive 输出风格的会话在所启动的后台命令或 Monitor 仍在运行时，未处于空闲状态而是陷入填充消息和重复日志读取的忙等待循环的问题
+- 修复因电脑休眠、连接中断或服务器错误导致响应在中途截断时 subagent 停止运行的问题；现在会自动继续而非以不完整的响应结束
+- 修复在 `claude agents` 会话中的 `/btw` 面板中按 `←` 无响应的问题：现在会返回到 agents 列表（即使正在生成回答），并在重新打开会话时恢复该面板
+- 修复配置了 advisor 模型的会话在后台请求（压缩、`/recap`、提示词建议）时未命中 prompt cache 并每次重新发送未缓存的完整对话的问题
+- 修复在模型启动的 Monitor 仍在运行时，`claude -p` 在最终结果输出后约 5 秒即退出的问题；现在会等待监控触发或超时
+- 修复当匹配的命令在复合命令或子 shell 中运行时，auto 模式会跳过 `permissions.ask` 规则并在未出现确认提示的情况下直接运行的问题
+- 修复插件能够通过声明的命令、agent、skill、hooks 或其他组件路径（为符号链接）读取自身目录外部文件的问题；此类路径现在会被拒绝并报错
+- 修复 `/add-dir` 拒绝当前工作目录下的子目录的问题；现在会像启动时的 `--add-dir` 一样加载该目录的 skills、commands 和 agents
+- 修复从转录视图中恢复之前停止的 subagent 时未通知主 agent 的问题
+- 修复向 `/feedback` 等对话框中粘贴带有 ANSI 颜色代码的文本（如 CI 日志）时发生崩溃的问题
+- 修复当项目的 `.mcp.json` 是 FIFO 管道或设备文件符号链接时，`claude mcp add/remove` 挂起或耗尽内存的问题；现在会快速失败并提供明确的操作指引
+- 修复将非 JSONL 数据通过管道传入 `claude -p --input-format stream-json` 时内存无限增长的问题；现在会快速失败并显示清晰的错误信息
+- 修复在 subagent 或其他工具运行时将轮次转入后台（`←` 或 Ctrl+B）偶发导致后台会话将该工具视为被拒绝而非重新运行的问题
+- 修复 Bash `Read()`/`Edit()` 拒绝规则不适用于 `< file` 重定向以及像 `tac` 和 `egrep` 这样的读取命令的问题；现在针对任何参数或重定向目标的拒绝规则都会拒绝执行该命令
+- 修复恢复或向转录大小超过 5 MB 的 subagent 发送消息（例如读取多张图片后）时报错“No transcript found”的问题
+- 修复工作区隔离会话将从未涉及 git 的 Bash 循环、`$VAR` 读取、`"$(…)"` 和 heredoc 判定为“too complex to verify that it stays inside the worktree”并拒绝执行的问题
+- 修复将对话回退至初始空白状态后 `/model` 和 `/effort` 显示 prompt-cache 警告的问题
+- 修复在包含大量长截图的会话中，一旦图片超出单次请求大小上限，就会导致每轮对话都出现 prompt-cache 未命中的问题
+- 修复 Edit 权限提示的 diff 视图在渲染 emoji 和多码点字符时宽度不正确的问题
+- 修复 WebSocket MCP 服务器连接失败时被记录为“[object ErrorEvent]”而非底层具体错误的问题
+- 修复当另一个 Claude Code 进程正在下载 npm 更新时，后台会话启动失败并提示“Couldn't start the background service”的问题；启动现会等待更新完成
+- 修复脱离其 shell 的后台命令（例如在 `timeout` 或 `setsid` 下）在任务停止或 Claude Code 退出后仍然存活的问题
+- 修复从 tasks 面板或已连接的客户端停止后台命令时未通知 Claude 的问题
+- 修复停止后台 subagent 时其 monitor 仍保持运行的问题
+- 修复在关联工作区中，沙盒内的 git 命令在 `cd` 进入子目录后失去对仓库通用 `.git` 目录写权限的问题
+- 修复 Opus 4.7 及更高版本在长时间隐藏思考阶段导致 Bedrock 和 Bedrock Mantle 请求无响应、进而因空闲超时被切断连接的问题；数据流现在会携带进度事件
+- 修复在 Claude apps 网关过期或吊销会话后启动 Claude Code 的问题：现在会提示会话已结束并提供 `/login`，而非报告网络错误
+- 修复云端会话因启动时网络代理启动失败而在剩余会话期间丢失 git/GitHub 凭据的问题；现在会在后台重试并恢复
+- 修复后台守护进程启动中断后在系统临时目录中遗留 `cc-daemon-*` 文件夹的问题；`cleanupPeriodDays` 保留期清理现在会将其删除
+- 修复 Bash 权限检查自动批准 zsh 解析方式与 bash 不同的某些 `[[ ]]` 条件语句的问题；此类命令现在会提示请求批准
+- 修复当托管设置同时关闭详细跟踪或原始 API 正文日志记录，或者开启跟踪导出时，托管设置批准提示显示通用警告而非遥测相关文案的问题
+- 修复 tmux/iTerm2 窗格中的 agent-team teammate 在确认关闭请求后有时仍保持打开状态的问题
+- 修复免密钥 Console 登录（“Sign in with your Console account”）未应用组织的服务器托管设置，以及 `/status` 未显示该登录方式对应 Organization 的问题
+- 提升渲染性能：长对话中每轮重新渲染的工作量减少，流式传输不再随回复变长而变慢，且后台 agent 的更新不再重新渲染整个屏幕
+- 通过减少每次按键的渲染计算开销，提升提示词输入的响应速度
+- 改进策略辅助工具诊断 —— 刷新失败现在会显示在 `/status` 中，拒绝托管设置对话框会打印 Claude Code 退出的原因，辅助工具超时会被报告为超时
+- 改进 `/code-review --comment`，使其通过 `glab mr note` 将审查结果发布到 GitLab merge request 上，而非报告目标不受支持
+- 改进通知机制：在其他对话框后排队的 MCP 引导或权限请求，现在以与可见请求相同的延迟发送空闲桌面通知
+- 改进详细/转录输出：同时到达的异步 hook 完成通知现在合并显示在同一行中，而非每个 hook 占一行
+- 改进 `claude self-hosted-runner --configure-git`，同时启用 git push 协商，从而使从陈旧克隆中首次推送新分支时仅上传新提交而非整个树
+- 改进在响应由网关保活连接维持时向 SDK 宿主的存活状态报告，从而避免调大 `CLAUDE_STREAM_IDLE_TIMEOUT_MS` 后的长时间等待被误判为会话挂起
+- 改进 MCP 连接和 OAuth 调试/错误日志，对服务器 URL 或请求标头中携带的凭据进行脱敏
+- 改进 `/fork`，在新的后台会话中保留原始对话的 prompt cache：其工作区简报现在作为消息到达，而非作为 system-prompt 的变更
+- 改进 emoji 自动补全，支持其余 GitHub/Slack 简码别名（`:satisfied:`、`:telephone:`、`:collision:` 等）
+- 更改 `--effort`，仅在当前会话中解除新模型的默认 effort 保持，而非永久解除；在 claude.ai 上为 Remote Control 会话选择的 effort 现在会在保持期间生效
+- 更改启动时被缓存的服务器托管设置遮蔽的 MDM 或 `managed-settings.json` 中的 `policyHelper`：在拉取结果报告其已被移除时立即运行（或退出），而无需等待下次启动
+- 更改 `managedSourcesBehavior: "merge"`，使其从设置了 `sandbox.credentials.awsPairs` 和 `sandbox.ripgrep` 的最高优先级托管源中完整获取，而非合并各源的值
+- 更改网关模型发现功能（`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`），使其在设置了 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 时仍可运行，因为它仅查询你的网关
+- 更改 `claude --resume <session-id> --bg`，在没有进程运行该会话时使用其自身 ID 继续该会话，而非静默启动副本；若启动副本现在会有提示
+- 更改 `/btw` 历史浏览快捷键，从 `←`/`→` 改为 `Shift+←`/`Shift+→`（或 `[`/`]`），可在最近的侧边问题之间切换并返回实时回答
+- 更改 `.claude/settings.json` 或 `.claude/settings.local.json` 中的 `defaultMode: "bypassPermissions"` 为直接忽略（与 `"auto"` 相同）；请在用户设置或托管设置中配置，或传入 `--permission-mode`
+- 更改 Claude apps 网关会话中的 `fable` 和 `best`，使其目前仍解析为 Fable 5，因为尚未配置 Fable 5.1 的网关会拒绝该请求；在 `/model` 中选择 Fable 5.1 即可使用
+- 更改 `--add-dir`、`/add-dir` 和 `additionalDirectories`，在访问网络路径（UNC 共享、`/net/<host>` 自动挂载）前直接拒绝并输出提示消息；在 Windows 上请使用映射的网络驱动器盘符
+- 更改 Claude apps 网关登录和令牌刷新请求，以验证网关固定的 TLS 证书，与托管设置拉取时的处理一致
+- 更改 Cowork 和 claude.ai 云端会话：读取不属于你的构件现在始终会先询问确认，即使在 auto 模式下也是如此
+- 移除 Bash 和 PowerShell 权限提示中的 Ctrl+E 命令解释功能
+- [VSCode] 在会话列表面板中新增可折叠的 ACCOUNT & USAGE 和 SESSION MANAGER 分区标题，包含账户邮箱、用量计量器以及打开用量详情对话框的 View details 链接
+- [VSCode] 在输入框底部新增显示当前模型并可打开模型选择器的模型胶囊按钮，包含 Effort 行和“More models”页面
+- [VSCode] 在会话列表的 Ungrouped 分区中新增折叠开关
+- [VSCode] 在命令菜单中新增输出风格选择，包括自定义风格
+- [VSCode] 修复第三方提供商部署（Bedrock、Vertex 等）仍显示仅限 claude.ai 的功能（远程会话、听写、用量）并使用残留登录信息调用 claude.ai 的问题
+- [VSCode] 修复会话列表面板加载后用量计量器保持空白的问题；现在会立即显示最后已知的用量
+- [VSCode] 修复“Enable Remote Control for all sessions”开关，使开启或关闭操作对已打开的会话生效，而不仅针对新会话
+- [VSCode] 修复屏幕朗读器读报问题：代码块或标题前的控制字符不再导致朗读遗漏可见行，跨越标题的粗体标记也不再出现配对错误
+- [VSCode] 更改操作菜单，在支持过滤的“Slash commands”对话框中列出斜杠命令而非内联显示；选择即可运行；MCP servers 对话框也增加了相同的过滤输入框
+- [VSCode] 将“Delete session”更改为“Archive session”：归档的会话将移动到列表底部可折叠的“Archived sessions”分组中，并提供 Unarchive 操作
+
+## 2.1.252 (2026-08-31)
+
+- 修复了在部分 Mac 上 Bash 命令报错“task output swap refused (tasks dir moved or linked)”而失败的问题
+- 修复了在尚无 .claude/settings.local.json 的项目中“always allow”无法保存的问题
+- 修复了当与 claude.ai 的连接质量下降时，由 Claude Desktop 或 VS Code 托管的 Remote Control 会话在工具执行完成后卡顿数分钟的问题
+- 修复了包含大量失败输出（例如磁盘已满时的 git 错误）的后台任务通知导致对话超出 API 请求大小限制的问题
+
+## 2.1.251 (2026-08-28)
+
+- 新增 `PreModelSwitch` 与 `PostModelSwitch` 钩子事件（用于阻止、确认或标注模型切换）；`SessionStart` 恢复钩子现在会接收到会话陈旧度以及预估的重新缓存成本
+- 为 Remote Control 客户端新增前台子代理工具调用及结果的实时流式传输（后台子代理作为默认设置，仍仅显示状态）
+- 为处于具有消费上限的 Claude apps 网关背后的开发者在 `/usage` 中新增消费上限进度条，并在状态行中新增 `rate_limits.spend_limit` 字段
+- 在 `/cost` 中新增每会话 prompt-cache 统计行（命中率、未命中、重新缓存的 token 数、热/冷缓存），并为状态行脚本新增对应的 `prompt_cache` 对象
+- 在 `claude --help` 中新增 `attach`、`logs`、`stop`、`respawn` 和 `rm`；针对运行中后台会话的 `--resume` 提示信息现在会指明具体的 `claude attach <id>` 命令
+- 修复了文件工具（Read、Write、Edit）在权限检查后跟随工作目录内被替换的符号链接，从而可能读取或写入已批准位置之外文件的问题
+- 修复了市场条目中声明的插件命令可以指向插件目录之外的问题；此类路径现在会被拒绝并抛出路径遍历错误
+- 修复了项目设置能够启用详细 Beta 跟踪或原始 API 请求体日志记录，以及较低作用域的 Beta 跟踪端点能够绕过受管设置或宿主应用所固定的 OTLP 收集器的问题
+- 修复了 Workflow 工具在权限检查执行前读取（并在错误中引用）超出当前会话读取权限的 `scriptPath` 的问题
+- 修复了 Grep 和 Glob 未对通过符号链接搜索路径访问到的文件应用 `Read(...)` 拒绝规则的问题
+- 修复了在模型仅生成思考内容的轮次之后，对话卡在“text content blocks must be non-empty”错误的问题
+- 修复了对于启动默认模式为 auto 模式的账户，全新安装后的首次启动却以 default 模式而非 auto 模式启动的问题
+- 修复了当思考程度为 xhigh/max 且思考功能关闭时，Opus 5 请求失败并提示“effort … is not supported when thinking is disabled”的问题；在此情况下思考程度现在会以 `high` 发送
+- 修复了回复 Claude Desktop 从其他会话传递的消息时的问题：发送至该会话 ID 的 `SendMessage` 现在会通过 Claude Desktop 传递，而不会报错“not reachable”
+- 修复了存在大量并行子代理时 TUI 卡顿的问题：每秒进度信号现在会替换前一个信号，而不会在记录中不断堆积
+- 修复了代理团队的问题：团队成员的最终回复无法送达队长——现在它会在空闲通知中送达，而不是显示毫无内容的“available”提示
+- 修复了后台子代理无法回复来自未命名同级代理或父级代理消息的问题（之前 `from` 为代理类型，而非常规地址）
+- 修复了会话中途接收到受管设置 `disableAutoMode` 时，未能将已在运行的 auto 模式会话切回 default 模式的问题
+- 修复了即使当前 Opus 模型已具备 1M 上下文窗口，仍会显示“switch to Opus 1M for 5x more context”提示的问题
+- 修复了 Claude apps 网关会话将已存储的 Anthropic 配置文件（例如 Console 登录凭据）视为处于激活状态的问题：不仅在 `/status` 中列出，还会在网关返回 401 时尝试以此重试，尽管请求从未实际使用过它
+- 修复了当宿主仅在设置会话的初始模型时，云端会话却向 Claude 提示模型已变更的问题
+- 修复了当组织策略禁用 Remote Control 时其报错的问题；现在只会显示一条静默提示
+- 修复了当某个服务器在另一会话中被禁用时，Remote Control 上的 `/mcp reconnect` 会显示通用的隐藏详情错误而非实际解决方案的问题
+- 修复了 `--input-format stream-json` 的问题：客户端注入且未携带消息 ID 的助手工具调用会被合并到第一个调用中并丢失结果，包括恢复旧会话时也是如此
+- 修复了当目录变更将某个会话重定向到已存在的同名 ID 记录时，会话记录会被静默覆盖的问题
+- 修复了后台会话及其子代理无法编辑通过 `git worktree add` 创建的 Git 工作树内文件的问题
+- 修复了当另一个 Claude Code 进程同时在刷新插件市场时，后台会话偶尔会在没有任何插件技能的情况下启动（且一直保持该状态）的问题
+- 修复了通过 SSH 在 tmux 内打开后台会话时选中文本的问题：现在会像前台会话一样复制到 tmux 缓冲区，而不会降级为 OSC 52
+- 修复了当 SDK MCP 服务器的握手确认丢失时，SDK 和云端会话会无限期挂起的问题；等待现在会在 70 秒后超时，并仅将该服务器标记为失败
+- 修复了自托管 Runner 在强制停止会话后，仍残留处于卡死状态会话的 Bash 工具进程未退出的问题
+- 修复了针对管理员将组织用量额度上限设为 $0 的 Team 和 Enterprise 成员的 `/usage-credits` 问题：现在会提示联系管理员，而不是提示已达到额度上限
+- 修复了在 gitlab.com 源上使用带有合并请求编号的 `--worktree --tmux` 时，会先尝试注定失败的 GitHub 风格 fetch，而未能直接拉取 GitLab 引用的问题
+- 修复了在后台会话中针对打开 `/dev/tty` 的编辑器（例如 `emacs -nw` 和 `micro`）按下 Ctrl+G 时报错“Emacs quit unexpectedly”的问题
+- 修复了当来自 SDK 宿主、IDE 或钩子的 `additionalDirectories` 条目包含空字符时会导致启动崩溃，或破坏 `/add-dir` 及后续设置更新的问题；现在此类条目会被跳过
+- 修复了 MCP 服务器菜单复制快捷键的问题：现在会说明登录 URL 的复制方式，而不再总是声明成功
+- 修复了在 GNU screen 以及使用 `screen` 终端类型的 tmux 会话中，斜体文本（如会话摘要行）会被渲染为高亮色块的问题
+- 修复了 `claude mcp add --header` 和 `claude mcp add-json` 帮助文本指出错误传输方式的问题
+- 修复了云端会话启动失败时，`claude ultrareview` 和 `/ultrareview` 仍会等待完整的 30 分钟的问题；现在会提前终止并报告原因
+- 修复了 Bash 权限检查会自动批准将算术表达式赋值给整数 Shell 变量的命令（例如 `OPTIND=1/0`、`RANDOM=2+2`）的问题；此类命令现在会提示审批
+- 修复了切入后台的会话（`←`、`/background`、`--bg`）会丢失在 Shell 中导出的 Vertex/Bedrock 网关配置（`ANTHROPIC_*_BASE_URL` + `CLAUDE_CODE_SKIP_*_AUTH`），从而导致所有请求失败的问题
+- 修复了当同一账户上的交互式会话仍有 Fable 配额时，Max 计划上的 `claude --bg --model fable` 仍会中断以索取用量额度的问题
+- 修复了“将 auto 模式设为默认模式”的单次提示出现在无人值守会话（例如代理团队成员窗格）中的问题，避免了因误触按键而在未阅读的情况下接受
+- 修复了在设置未发生变化的情况下重新登录同一 Claude apps 网关后，受管设置审批提示会再次出现的问题
+- 修复了禁用 `/bug` 和 `/share` 时会报错提示 `/feedback` 已被禁用的问题；当组织策略或环境变量关闭该功能时，提示信息、`/help` 以及拒绝提示均不再推荐使用 `/feedback`
+- 修复了在 GitHub 出现偶发连接故障后，创建云端会话会提示配置 GitHub 的问题——现在的提示信息变更为建议重试
+- 通过减少冗余的 UI 重新渲染，优化了交互式会话轮次期间的 CPU 使用率
+- 优化了安装体积：原生二进制文件缩小了约 5 MB
+- 优化了云端会话：当会话的网络代理在 Bash 命令执行期间断开连接时，工具结果现在会指明主机和原因，而不再仅提示“connection reset”
+- 优化了 `/schedule`：现在会明确说明在 Claude Code 中配置的 MCP 服务器无法挂载到云端例行程序中，而不再仅显示生硬的“No MCP connectors”提示
+- 优化了来自自身子代理消息的上下文表述：告知 Claude 发送方是本会话内部的工作代理，而非无关的 Claude 会话
+- 优化了提示词占位符：从子代理面板或 `/tasks` 打开查看后台子代理或分支记录时，占位符会显示为“Message @name…”
+- 优化了错误信息、菜单和命令结果中 MCP 服务器名称的转义与清理
+- 优化了在 `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST`（例如 Claude Desktop）下的 Amazon Bedrock 会话启动：指定了 Bedrock 模型 ID 或 ARN 的会话不再需要等待推理配置文件发现
+- 优化了受管设置审批对话框，使其仅列出自上次批准以来发生变更的设置
+- 优化了模型工具调用格式错误时的重试机制：格式错误的输出现在会从重试上下文中剔除，包括在 Bedrock、Vertex 和 Foundry 上的调用
+- 将 `/radio` 改为在 Bedrock、Vertex AI、Foundry、AWS 上的 Claude Platform 以及禁用遥测时均可使用
+- 调整了 Claude in Chrome：浏览器操作现在始终经过 Claude Code 的权限检查，包括在禁用遥测的会话中，此前此类会话使用的是 Chrome 扩展自身的提示
+- 将 `CLAUDE_CODE_SUBAGENT_MODEL` 调整为设置默认子代理模型，而非覆盖所有设置：代理定义的 `model:` 以及每次生成时明确指定的模型现在具有更高优先级
+- 当当前激活的模型不是已识别的 Claude 模型时（例如自定义 `ANTHROPIC_BASE_URL` 背后的第三方模型），默认提交信息结尾调整为 `Co-Authored-By: Claude Code`
+- 将基于席位的 Enterprise 订阅的默认模型调整为 Opus 5，与其他高级套餐保持一致
+- 将 `/effort` 调整为按模型保存默认思考程度，以便切换模型时各自保留对应的设置
+- 调整了分析功能：不再仅仅因为受管设置强制网关登录（或无法读取设置）就在登录前关闭分析；登录网关后或通过 `DISABLE_TELEMETRY` 才会保持关闭
+- 将 Bedrock、Vertex、Foundry 以及关闭遥测时底部的 PR 徽标调整为直接调用 GitHub API（通过 `gh auth token`、`GH_TOKEN` 或 `GITHUB_TOKEN`），而非调用 `gh pr view`
+- 调整了命令在沙箱中运行时 Bash 命令输出文件的创建与读取方式，以防止沙箱内的命令重定向或替换这些文件
+- 调整了插件/LSP 安装建议及设为 auto 模式默认选项的提示时机：现在会等待输入内容发送或清空后才显示，避免按 Enter 发送提示词时误确认这些选项
+- 调整了终止沙箱 TLS、通过自建代理路由沙箱流量、注入凭据或削弱沙箱隔离的服务器托管设置，现在必须经过批准后方可生效
+- 调整了来自受管或项目设置的 `ANTHROPIC_CUSTOM_HEADERS`：当其设置了凭据、组织/租户、路由或 API 行为相关的请求头（例如 `Authorization`、`Host`）时，需要经过批准方可生效
+- 调整了项目级 `.claude/settings.json` 的 `env` 配置，不再允许设置 `CLAUDE_CONFIG_DIR`、`CLAUDE_CODE_TMPDIR` 或 `TMPDIR`/`TMP`/`TEMP`；请改在 Shell、用户或受管设置中进行配置
+- 移除了 6 种极少使用语言（1c、gml、isbl、mathematica、maxima、sqf）的语法高亮；二进制文件体积减小了 2.5 MB
+- [VSCode] 修复了登录界面的“Bedrock, Foundry, or Vertex”按钮打开文档页面顶部而非第三方提供商配置章节的问题
+- [VSCode] 将 Remote Control 横幅更改为页脚胶囊样式（在 Remote Control 开启或失败时显示），点击可在 claude.ai/code 上打开该会话；可通过 `/remote-control` 开启或关闭
+
+## 2.1.250 (2026-08-27)
+
+- Bug 修复与稳定性提升
+
+## 2.1.248 (2026-08-27)
+
+- 新增 `--restricted`（或 `CLAUDE_CODE_RESTRICTED=1`）：移除用于运行命令或代码的内置工具以及 `WebFetch`（除非在 `--tools` 中列出），将文件工具限制在工作目录内，拒绝 `bypassPermissions`，并忽略用户、项目及本地设置文件
+- 在 agent frontmatter 中新增 `experimental.cacheTtl`（`"5m"` 或 `"1h"`）：未配置 subagent TTL 设置时使用的每个 agent 的 prompt 缓存 TTL
+- 新增 `claude self-hosted-runner --client-label <label>`（或 `SELF_HOSTED_RUNNER_CLIENT_LABEL`），用于覆盖 runner 注册时使用的标签（默认：hostname）
+- 新增服务端托管设置诊断功能：设置加载失败时发出启动警告，并在 `/doctor` 和 `/status` 中显示一行以说明加载失败或未获取的原因（Bedrock/Vertex/第三方提供商、自定义 `ANTHROPIC_BASE_URL`）
+- 在 `/web-setup` 中新增警告，当 GitHub CLI token 缺少 `workflow` scope 时触发，因为缺少该权限可能导致向超大仓库推送时被拒绝
+- 为通过 AWS Marketplace 结算的 Enterprise 组织、自助服务 Enterprise 及 Enterprise 试用版新增 `/usage-credits`，方便成员向其管理员申请更高的用量额度
+- 在 Bedrock、Vertex 和 Foundry 上以及禁用遥测时，新增同一台机器上不同会话之间的跨会话消息传递（`SendMessage` / `ListAgents`）
+- 修复了在长时间会话中大约每小时发生一次 prompt 缓存未命中（并丢失 extended-thinking 上下文）的问题，该问题由 OAuth token 刷新后重新渲染工具定义引起
+- 修复了当账户进入用量超额时，会话与其 `--resume` 之间的 `ScheduleWakeup` 工具定义发生变化，导致恢复会话的首轮出现完整 prompt 缓存未命中问题
+- 修复了 Claude Desktop 和 Cowork 会话在 30 天后消失的问题：transcript 清理现在会在桌面端写入的会话保留在应用中时继续保留它们（除非组织策略管理了保留期限）；新增的 `desktopSessionCleanupPeriodDays` 设置为该豁免设定了上限
+- 修复了当会话 token 已过期且另一个 Claude Code 进程持有 token 刷新锁时会被重定向到登录界面的问题；请求现在会失败并返回可重试的错误
+- Windows：修复了从会话分离后，或在停留在 win32-input-mode 的终端标签页中启动时，`claude agents` 列表对键盘无响应的问题
+- 修复了在无法使用 Console 登录的机器上（例如设置了 `ANTHROPIC_API_KEY` 或 API key helper 时），`/login` 中推荐的 Console 登录在显示登录 URL 前就失败并提示 OAuth 错误的问题；现在会回退到 API key 登录
+- 修复了 `/model` 和 fast-mode 切换通知中的模型名称未渲染为代码的问题，避免类似 `[1m]` 的后缀被显示为链接而非字面文本
+- 修复了设置 `CI` 环境变量时 `claude agents` 会跳过工作区信任提示的问题
+- 修复了当 PR 状态缓存中存在格式错误的条目时，`claude agents` 在启动时崩溃的问题
+- 修复了关机后 agent view 会复活数周前的后台会话的问题：此类会话现在会在其真正的结束点显示为已停止，并且打开它时会在恢复保存的对话前进行确认
+- 修复了在启动新会话时，agent view 有时会打开较旧的对话并丢失已键入的 prompt 的问题
+- 修复了 `claude agents`：打开已在另一个终端中恢复的已停止会话时，不再针对该对话启动第二个进程；该行现在会显示其已在终端中打开
+- 修复了当 worktree 分支已合并到当前检出的默认分支（例如本地 `main`）但尚未推送时，`claude agents` 和 `claude rm` 拒绝删除会话（提示“has commits that are not pushed anywhere”）的问题
+- 修复了当 `PermissionRequest` 或 `PreToolUse` hook 输出无效响应时后台会话无提示等待的问题：`claude agents` 行现在会指明该 hook 及 schema 错误
+- 修复了 hooks 静默将非有效 JSON 的标准输出 `{…}` 对象视为纯文本的问题；现在会将其报告为 hook 错误并附带解析信息
+- 修复了 `/mcp` 将声明了 claude.ai 连接器类型的项目 `.mcp.json` 条目列在受信任的“claude.ai”标题下的问题；现在它会显示在其真实作用域下
+- 修复了由 `headersHelper` 提供 `Authorization` 头的 MCP 服务器在收到 401 时进入 OAuth discovery，而不是按文档说明重新运行 helper 并重试调用的问题
+- 修复了登录到 Claude apps gateway 时，若需要托管设置安全审批对话框会导致 `/login` 卡住的问题
+- 修复了当 `apiKeyHelper` 是唯一凭据时网关模型发现（`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY`）从不运行的问题
+- 修复了 `claude logs` 在其运行的终端中未关闭鼠标跟踪、括号粘贴（bracketed paste）和备用屏幕（alternate screen）的问题
+- 修复了信任对话框中的仓库权限规则列表在 emoji 中间截断长规则时显示乱码字符的问题
+- 修复了在按下 ctrl+c 后紧接着按 shift+tab 时，权限模式指示器一直被“Press Ctrl-C again to exit”提示遮挡的问题
+- 修复了 `/ultrareview` 和本地初始化的云端会话会上传 `prod.env` 格式和 `*.tfvars` 文件中未提交的修改，或上传凭据文件的编辑器交换文件、临时文件及备份副本（例如 `key.pem.tmp`、`id_rsa.swo`）的问题；这些文件现在会保留在本地机器上
+- 修复了 CLI 静默重连后，Remote Control 会话偶现不会在连接的设备上显示权限提示或最新消息的问题
+- 修复了当容器的会话凭据尚不可读时，云端会话偶现启动失败的问题
+- 修复了当全局标志或 wrapper 注入的选项位于子命令之前时，`claude remote-control` 会拒绝自身标志（例如 `--spawn`、`--name`）的问题
+- 修复了启动警告（例如“N MCP servers need authentication”）渲染位置比 transcript 其余部分偏右一列的问题
+- 修复了转入后台的 worktree 会话丢失检出的问题：后台会话现在会在运行时持有该 worktree 的锁，从而避免被清理操作和 `git worktree remove` 影响
+- 修复了对其他会话的 @ 提及无法匹配使用非拉丁字符输入的名称（例如通过输入法输入的韩语）的问题
+- 修复了无效的 `crossSessionInbound` 值被静默忽略的问题：现在会发出警告并暂存跨会话消息（用户设置），或拒绝接收消息（托管设置），直至修复
+- 修复了当组织不可用 `/usage-credits` 命令时（例如通过 `DISABLE_EXTRA_USAGE_COMMAND` 隐藏），速率限制、用量和 fast-mode 提示信息仍建议运行该命令的问题
+- [VSCode] 修复了当聊天标签页的会话从未保存时卡在“No conversation found”的问题；现在会改为启动新对话
+- 优化了 Workflow 工具的 prompt 占用大小：其描述从 5.7k tokens 减少到约 1k tokens，脚本编写参考已移至内置的 `workflow-authoring` skill 中
+- 优化了 prompt 底部 PR 徽标：在 Pull Request 未发生变化时减少检查 GitHub 的频率；执行推送或 `gh pr` 命令仍会立即刷新
+- 优化了托管设置：客户端超时、MCP startup-mode 以及 stream-watchdog 环境变量不再触发设置审批提示
+- 优化了 `/ultrareview <PR#>`：在启动前检查与 Claude 账户绑定的 GitHub 账户是否可以访问该仓库并说明修复方法，而不是在云端会话启动后才报错失败
+- 优化了跨会话消息传递：当默认目录无法使用时，回退到用户专用的私有 `/tmp` 目录，并在提示信息和 `/status` 中指明需要修复的目录
+- 变更：agent view 派发输入框中的 shift+enter 现改为插入换行（与 prompt 输入保持一致）；ctrl+enter 现用于派发并关联（dispatch and attach）
+- 变更 `/loop`：自主步调的动态模式以及无 prompt 的自主默认模式现已始终可用，包括在 Bedrock/Vertex/Foundry 上
+- 变更：Anthropic 遥测导出失败现在以 debug 级别记录为 `[Anthropic telemetry]`，而不是 `[3P telemetry] OTEL diag error`，避免被误认为是用户的 OTel collector 故障
+- 变更 Linux 用户命名空间中的跨会话消息传递：针对未映射所有者的 root 等效信任限制在规范系统目录内
+- 变更从 subagent 发送到另一会话的 `SendMessage`：执行结果现在会注明任何回复都将投递给父会话的对话，而非 subagent
+
+## 2.1.247 (2026-08-26)
+
+- 新增 `SendFeedback` 工具：当会话中出现问题时，Claude 可以起草一份反馈报告供你审查，并可通过 `/feedback` 发送（可通过 `feedbackDrafts` 设置关闭）
+- 在 `spinnerTipsOverride` 中新增了 `{id, text, cooldownSessions, priority}` 条目、`tipsFile` 以及 `label`，以便组织在内置提示之外轮播自定义提示
+- 在 Bash 权限提示中新增了指向 auto 模式的提示，并提供一键式“Yes, and switch to auto mode”选项
+- 新增 `/claude-api cost-optimize`，用于分析现有项目的 Claude API 支出，并逐项评估和应用成本优化杠杆（caching、token hygiene、batch、effort、model choice）
+- 更新了 `/claude-api` skill，增加对 Admin API 的支持（组织成员、邀请、工作区、API 密钥、速率限制报告、workload identity federation、CMEK）
+- 修复了在历史记录搜索、`/config`、`/mcp`、`/skills`、后台任务和 `/model` 中，快速按方向键后按 Enter 会作用于所选行上一行的问题
+- 修复了 sub-agents 在首次调用模型遇到 404 时崩溃的问题：现在它们会使用会话的备用模型链，且返回给父级的错误信息包含错误类型、状态码、request id 和模型
+- 修复了 hook 或后台 agent 输出数兆字节错误信息时会导致对话溢出、使会话卡死在“Prompt is too long”的问题
+- 修复了在 kitty-protocol 终端中非拉丁（如西里尔文）键盘布局下 Ctrl 快捷键无法触发的问题
+- 修复了当鼠标上报数据在转义前缀后被分片读取时，类似 `<35;150;7M` 的文本会被插入到输入提示中的问题
+- 修复了 Bash 沙箱的命令后清理操作在符号链接被重新指向沙箱可写区域之外时，会删除通过 dotfile 管理工具（nix/home-manager、stow）管理的 `~/.claude/settings.json` 符号链接的问题
+- 修复了 `/terminal-setup` 会覆盖整个 Zed `keymap.json` 而不是合并其快捷键绑定的问题
+- 修复了当无法更新会话注册表时 `/rename` 静默确认的问题；现在会提示其他会话可能仍显示旧名称
+- 修复了在以 `--agent` 启动的会话中，`/compact` 和“Summarize from here”会使用默认系统提示词而非对话本身的提示词进行总结的问题
+- 修复了终端宿主进程退出后后台会话在 `claude agents` 中一直显示“opening…”的问题；现在该行会在数秒内显示失败原因，按 Enter 即可重启
+- 修复了当 hook 或后台任务的输出文件无法写入时内存无限制增长的问题；现在文件中会标注输出丢失的位置
+- 修复了通过 SSH 运行 `/install-github-app` 的问题：复制快捷键现在会说明登录 URL 是如何复制的，而不是始终提示成功；且在无法打开浏览器时会立即显示 URL
+- 修复了从前台转入的 shell 命令在后台会话中完成时记录内部错误或显示误导性的 `[exited with code -1]` 的问题
+- 修复了在第二个作用域安装无版本号的 marketplace 插件时，其活跃缓存目录会被删除并重新创建，从而可能干扰正在使用该插件的运行中会话的问题
+- 修复了通过 `/remote-control` 启动的 Remote Control 会话不向已连接客户端上报工作区 diff 的问题
+- 修复了自托管 runner 会话在 Claude Code 启动前就报告 `running`，导致 Claude 桌面应用过早触发“Claude is waiting for your input”通知的问题
+- 修复了当托管设置配置了 Claude apps 网关登录且 Anthropic 端点不可达时，首次运行设置会以“Unable to connect to Anthropic services”退出的问题
+- 修复了云端会话（Web 端、桌面端和移动端应用中的 Claude Code）在发送消息后立即切换模式时有时仍显示上一个权限模式的问题
+- 修复了在后台 agent、shell 或 monitor 仍在运行时，会话容器在轮次之间重启导致云端会话失去响应的问题——恢复后的会话现在会报告丢失的工作
+- 增强了插件市场的安全性：拒绝包含控制字符或不可见字符的名称，并且 `/plugin` 和 `claude plugin` 输出中由市场提供的文本已做转义安全处理
+- 改进了 Bedrock、Vertex 和 Foundry 会话（以及任何禁用了遥测的会话）：当已配置的 MCP 服务器连接失败时现在会通知 Claude，而不会误判为其工具不存在
+- 将 Sonnet 5 的默认 auto-compact 窗口调整为其完整的 1M 上下文，因此采用 1M 窗口的会话现在约在 967K tokens 时自动压缩，而不是约 934K
+- 将跨会话 peer 消息改为默认折叠为单行的 `Message from @<sender>: <first line>` 预览；按 Ctrl+O 可展开完整正文
+- 更改了渲染 Markdown 中的终端超链接：指向网络或自动挂载路径、包含控制字符或以不可见字符开头的链接目标现在会渲染为纯文本
+- 更改了提示行底部的 PR 徽标：当距上次检查不到一分钟且终端重新获得焦点时，跳过 GitHub 重新检查
+- 更改了分析数据收集行为：当托管设置强制使用网关登录或配置了自定义 OAuth 部署时，从启动时即保持关闭状态，而不仅是在登录后
+- 更改了 Claude apps 网关登录请求以识别 Claude Code（使用 `surface=claude_code` 设备授权参数及 `claude-code/<version>` 的 User-Agent）
+- 更改了组织强制登录策略：当无法读取管理员的托管设置时在启动时退出，即使存在宿主提供或用户级的 Windows 注册表设置也是如此
+
+## 2.1.246 (2026-08-25)
+
+- 为在子命令前包含通配符的 Bash 允许规则（例如 `Bash(git * main)`）添加了启动警告，因为此类规则也会匹配子命令前插入的选项
+- 在 `/permissions` 中新增了 Auto 模式标签页，用于查看和编辑自动模式分类器规则
+- 在轮次结束耗时行中添加了轮次完成时间，例如 `✻ Sautéed for 23s · done 6:05 PM`
+- 修复了全屏模式在调整终端大小并跳转到底部后显示空白记录，直到下一次按键才恢复的问题
+- 修复了 diff 包含超长单行（例如 base64 字符串）时导致记录严重卡顿的问题；此类行现在会截断并带有标记显示
+- 修复了停留在较早消息时全屏滚动异常的问题，包括跳转到底部卡在记录中间的情况
+- 修复了当 Claude Code 的启动目录被删除、机器进入睡眠或主机启动进程缓慢时，后台会话在 45 秒后打开失败的问题
+- 修复了另一个 Claude Code 进程正在重新安装 npm 包时，后台会话因 "Couldn't start the background service … EACCES" 而打开失败的问题
+- 修复了当消息前 500 个字符不含 markdown 时整条消息禁用 markdown 渲染的问题，以及 `+`/`N)` 列表和 setext 标题渲染失效的问题
+- 修复了在无头/远程会话中因接收到新消息而被中断的 MCP 工具调用被向模型报告为 "completed with no output" 而非明确的中断错误的问题
+- 修复了当参数 schema 为空（`{}`）时，MCP 工具参数被作为 JSON 字符串而非其真实类型发送的问题
+- 修复了在运行中途被中断的命令显示为 "Ran 1 shell command" 且没有任何被截断迹象的问题
+- 修复了在动态工作流中按 ← 或运行 `/background` 会重启已完成的子代理的问题；现在会先进行确认并提示将重启多少个子代理
+- 修复了在 `claude agents` 中打开刚启动且 worker 仍在引导的会话（在 Windows 上常见）时，因 "was stopped while the respawn was in flight" 而停止的问题
+- 修复了 `claude agents` 将后台运行的命名会话列出两次的问题；再次将同一会话置于后台现在会给新行编号（例如 `my-session (2)`）
+- 修复了当旧后台会话记录指向 `.claude/worktrees/` 下由你自行创建的 git worktree 时，后台保留清理任务会将其删除的问题
+- 修复了在极大尺寸的会话中自动模式工具调用因超时被拒绝为 "temporarily unavailable" 的问题，现在安全检查超时时间会随 prompt 大小进行缩放
+- 修复了插件缓存为同一个插件创建重复 SHA 命名目录的问题
+- 修复了 frontmatter 中 `name` 已包含 `<plugin>:` 前缀的插件 skill 在斜杠菜单中重复显示前缀（例如 `/plugin:plugin:skill`）的问题
+- 修复了使用简短名称对已安装插件执行 `claude plugin update` 会失败的问题（之前仅支持完全限定名称）
+- 修复了当 `plugin.json` 保存时带有 UTF-8 字节顺序标记（BOM）导致插件安装失败的问题
+- 修复了 `/reload-plugins` 对在 `skills/*/SKILL.md` 下定义 skill 的插件报告 0 个 skill 的问题
+- 修复了 hook 错误信息中显示字面量 `${CLAUDE_PLUGIN_ROOT}` 而非解析后的插件路径的问题
+- 修复了 `/rename` 会将主题的提示边框颜色（包括自定义主题的 `promptBorder`）替换为默认青色的问题；除非使用 `/color` 选择颜色，否则边框现在会保留主题的颜色
+- 修复了自定义主题的 diff 颜色（`diffAdded`/`diffRemoved` 及其暗色变体）在 diff 和 `/theme` 预览中被忽略的问题
+- 修复了 `keybindings.json` 中包含未知操作名称的按键绑定导致该键静默失效的问题；现在会跳过该绑定以使默认绑定继续生效，并在 `--debug` 下记录警告
+- 修复了在 UTC 以东的时区中，`/stats` 活动热力图显示的每日活动偏移了一个单元格（周日的计数显示在周一下方）的问题
+- 修复了从已分叉或置于后台的会话中执行 `/fork` 会以空对话启动新会话的问题
+- 修复了以 `/--` 开头的 prompt（例如 Lean 文档注释）被拒绝为未知斜杠命令而非发送给 Claude 的问题
+- 修复了输入的文本不再匹配实际路径后，`@` 文件选择器仍保持打开状态的问题
+- 修复了在导航到 agents 视图并返回后，状态栏的花费和耗时重置为零的问题
+- 修复了全屏模式下点击终端窗口仅为重新聚焦时，键盘焦点会移动到指针下方控件的问题
+- 修复了补全 token 或工作目录包含空字节时路径补全失败的问题
+- Windows/macOS：修复了无头会话未清理非正常退出的会话在 `~/.claude/sessions` 中留下的陈旧条目的问题
+- 修复了当第三方 Anthropic 兼容端点（`ANTHROPIC_BASE_URL`）流式传输不带 `id` 的 `tool_use` 块时，UI 在第一次工具调用时因渲染错误而中止的问题
+- 修复了 Write 工具在覆盖超大现有文件后报告 "Out of memory" 或长时间卡死的问题（即使文件已成功写入）
+- 修复了当 `~/.claude/plugins/known_marketplaces.json` 为空或损坏时，`claude plugin install <name>` 静默退出（或在终端中挂起）而非报错的问题
+- 修复了当保存的历史记录包含 Anthropic API 不接受的工具块（通常由第三方 API 代理写入）时，恢复的会话在每一轮都会报 400 错误的问题
+- 修复了部分使用服务器托管设置的 Team/Enterprise 用户在运行 `curl -fsSL https://claude.ai/install.sh | bash` 时报错 "Raw mode is not supported" 的问题
+- 修复了以 plan 模式结束的会话在 VS Code 扩展以及带有权限提示工具且未设置权限模式的 `claude -p --continue`/`--resume` 中恢复时退出 plan 模式的问题
+- 修复了沙箱处于 "Network request outside of sandbox" 权限提示等待状态时，`Notification` hook 不触发的问题
+- 修复了 Bash 权限检查，对带有悬空 `&&` 或 `||` 操作符的格式错误命令始终要求审批
+- 修复了 `--strict-mcp-config` 会话提示审批其永不加载的 `.mcp.json` 服务端，导致后台会话在启动时挂起等待的问题
+- 修复了向 Anthropic 发送的遥测和指标请求携带了为第三方网关（`ANTHROPIC_BASE_URL`）配置的 API key 的问题；凭据现在仅会发送给其对应的主机
+- 修复了当 `apiKeyHelper` 返回短期 JWT 时，空闲后的第一个 prompt 会出现可见 API 错误的问题：现在会在发送前刷新过期的缓存 token，并且 401/403 认证错误会静默重试
+- 修复了全屏和 Ctrl+O 记录视图中内存随会话长度增长的问题：渲染的每个消息行不再保留整条记录工具查找表的完整副本
+- 修复了从同一个仓库（例如多个 worktree）同时启动的 `/ultrareview` 运行和云端会话有时会带有另一次启动未提交更改的问题
+- 修复了诸如 `/autofix-pr` 等后台云端会话显示的任务进度计数（例如 `3/5`）偶尔会遗漏任务的问题
+- 修复了 Remote Control 会话在 claude.ai 和 Claude 应用中一直保持占位符名称直至第二个 prompt 的问题；现在自动生成的标题会在第一个 prompt 后显示
+- 修复了标记为 `requiresUserInteraction` 的 MCP 工具在权限提示中仍提供 "Yes, and don't ask again" 选项的问题；该选项会写入允许规则，但该工具随后会忽略该规则
+- 修复了自托管 runner 在任务轮询响应格式错误（例如拦截代理的 HTML 页面）时结束活动会话或退出的问题；现在会重试轮询
+- 改进了 `/cd`：新目录的项目设置、hook、`.mcp.json` 服务端（仍需常规审批提示）、skill 和 agent 现在在切换后立即生效，而不是等到 `--resume`
+- 通过重放快照函数时不再为每个函数使用 base64 子 shell，改进了 bash shell 上的 Bash 工具延迟
+- 改进了子代理结果：达到 `maxTurns` 上限而停止的子代理现在会返回标记为部分完成的输出，并提示通过 `SendMessage` 继续，而不是直接显示为已完成
+- 改进了非交互式会话（`-p`、SDK、云端会话），在响应因服务器错误、连接中断或停滞而在流式传输中途中断时自动继续，而不是以错误结束
+- 改进了工作负载身份联合会话、启动时 `apiKeyHelper` 运行期间发送的事件以及空闲时登录 token 过期后使用遥测归属于组织的准确性
+- 更改了 `/code-review`，使 Claude 也可以在 Bedrock、Vertex AI 和 Foundry 上、通过 Claude 应用网关、以及在遥测或非必要流量被禁用时自行启动该功能
+- `/goal`：更改为空闲会话针对每个 goal 的长时间后台任务最多发起三次签入；你的下一条消息将允许再进行三次
+- 更改了 `claude install` 和 `claude update`，将待处理的托管设置同意提示推迟到下一次交互式会话，而不是在命令执行中途提示
+- 更改了从 claude.ai 同步的插件的 OpenTelemetry 插件事件：`plugin_id_hash` 现在反映插件的真实市场，且管理员安装的插件的 `enabled_via` 为 `admin-install`
+- 修复了命令沙箱的文件系统配置未遵循 `--setting-sources` 的问题
+
+## 2.1.245 (2026-08-25)
+
+- 修复了在搭载 glibc 2.44 的 Linux 发行版（例如 Arch Linux、CachyOS 和 Fedora Rawhide）上启动时崩溃的问题
+
+## 2.1.243 (2026-08-24)
+
+- 在 `/usage` 中新增了 Loops 明细：展示单循环运行次数、总 token 消耗、单次运行 token 消耗以及最后一次运行时间，方便排查失控或过于冗长的 `/loop` 任务
+- 新增 `modelPicker` 配置项：可通过带有标签的有序模型列表（支持任意 id 格式，包括 Vertex/Bedrock id）自定义 `/model` 选择器，可追加至内置阵容或完全替换内置阵容
+- 新增 `promptCacheTtl` 与 `subagentPromptCacheTtl` 配置项，方便 API-key 与云厂商用户在主会话中保持 1 小时的 prompt 缓存，同时子 agent 保持 5 分钟
+- 新增 `modelPricing` 托管配置项，使得 `/cost`、状态栏和遥测成本数据均使用组织约定的各模型单价和折扣系数，而非官方标价
+- 在 `/login` → Anthropic Console 下新增无密钥登录方式：在创建 API key 的同时提供“使用您的 Console 账号登录”（推荐），方便不允许使用 API key 的组织进行登录
+- 在 `/status` 中新增 `Skipped sources` 行，列出已存在但因存在更高优先级的托管源生效而未应用的托管配置源（例如 `managed-settings.json`）
+- 在 `/mcp` 和 `/plugins` 中，为认证由组织托管的 claude.ai 连接器新增 `managed` 标记
+- 为尚未在网页版 Claude Code 中连接 GitHub 的 claude.ai 用户新增指向 `/web-setup` 的提示
+- 在 `/status` 中新增一行，显示网页版 Claude Code (Pro/Max) 是否已连接 GitHub；若未连接则引导至 `/web-setup`
+- 在 `/tasks` 及 agent 详情弹窗中新增各子 agent 运行时使用的模型（以及 effort 等级）
+- 修复了非交互式（`-p`）和 SDK 会话中远程 MCP 服务器在断开连接后无法恢复的问题；现在它们会自动重连或报告失败
+- 修复了在支持客户端 ID 元数据文档的服务器（例如 Linear）上，从桌面应用发起的 MCP 服务器登录因“Invalid redirect URI”而失败的问题
+- 修复了当服务端临时禁用的状态被缓存且后续获取 feature flag 失败时，auto mode 在启动时一直不可用的问题
+- 修复了在 API 短暂过载并要求客户端重试时，auto mode 的工具调用在等待约 1 分钟后被判定为“temporarily unavailable”而遭拒绝的问题
+- 修复了 `/model` 选择器静默忽略选择 Ultracode 的问题；现在选择 Ultracode 会正确应用到当前会话
+- 修复了 `/resume` 仅列出最近 50 个会话的问题；现在滚动时选择器会加载更多会话
+- 修复了在 turn 中途重启后恢复云端会话时，待处理的 hook 或后台任务通知会被当作 prompt 重新发送、而非作为正常延续消息发送的问题
+- 修复了在 2.1.232 进行 socket 目录安全加固后，在用户命名空间和 rootless 容器内跨会话消息传递被静默禁用的问题
+- 修复了超出容器边界的文本（例如 `/login` 中的登录 URL）在屏幕其他部分重绘时会丢失前面几列内容的问题
+- 修复了紧跟在 emoji 后面输入的拼写错误单词不会被 `spellcheck` 标红下划线的问题
+- 修复了后台子 agent 在其最后一个后台 Bash 任务完成时未被唤醒的问题
+- 修复了在 Anthropic API 长时间未开始响应时会话静默无响应超过 10 分钟的问题：现在请求会在约 3 分钟后超时并重试一次，随后显示 `API Error: No response from API`
+- 修复了认证、模型可用性及其他客户端生成的错误消息被渲染成模型输出而非错误行的问题
+- 修复了 CI 中的工作负载身份凭证联盟（WIF）问题：同一 job 内的进程现在共享交换后的 token，而不是重新交换一次性 token；被拒绝的交换会随服务端返回的消息立即报错失败
+- 修复了以登录开始的会话（例如 `/logout` 后的首次启动）在启动时不会显示服务端托管的 `companyAnnouncements` 的问题
+- 修复了当命令包含 `$()` 或反引号命令替换且后接更多参数时，形如 `Bash(cat *)` 的 hook `if` 条件会误触无关 Bash 命令的问题
+- 修复了通过 `--plugin-dir` 同时加载声明了 `marketplace` 字段的两个插件时，插件依赖项永远无法解析的问题
+- 修复了在禁用最后一个 LSP 插件后 `/reload-plugins` 仍保留 LSP 工具的问题；现在它还会在可能重新读取会话的 LSP 插件变更前发出警告
+- 修复了 `--agents` 静默忽略无效 JSON 或无效 agent 定义的问题；现在它会像 `--mcp-config` 一样退出并显示明确错误
+- 修复了当 `~/.claude.json` 包含无效 MCP 服务器条目时，`/status` 显示没有文件名的“Found invalid entries in: .”的问题
+- 修复了即便新会话保留了 `/rename` 的会话名称，`/clear` 仍会从 prompt 输入栏中移除该名称的问题
+- 修复了当 `~/.claude/history.jsonl` 包含格式错误的条目时，Ctrl+R 历史搜索和方向键向上浏览历史失效的问题
+- 修复了在编码修饰键的终端（modifyOtherKeys / kitty 协议）中 Ctrl+[ 无法退出 vim INSERT 模式的问题
+- 修复了当 `localhost` 仅存在于 `NO_PROXY` 而非小写 `no_proxy` 中时，本地 IDE 连接会走 `HTTPS_PROXY`（且有时会失败）的问题；现在两种大小写格式均获支持
+- 修复了当被拦截的命令退出码仍为 0 时（例如 `curl` 输出代理服务器的 403 页面），Bash 工具返回结果中会丢失沙箱网络违规详情的问题
+- 修复了在会话空闲期间速率限制窗口重置后，状态栏 `rate_limits` 字段和 `/usage` 仍显示重置前的窗口使用百分比的问题
+- 修复了 `claude --teleport <session>` 在检测到未提交更改时直接退出，而不是像会话选择器那样提供暂存更改并继续选项的问题
+- 修复了当较旧版本的 GitHub CLI（不含 `gh auth token`）已完成认证时，`/web-setup` 反复提示登录的问题
+- 修复了 Chrome 中的 Claude 在自动更新清理掉其所绑定的安装版本后与 Claude Code 断开连接的问题；现在 native host 会通过稳定的 `claude` 启动器启动
+- [VSCode] 修复了在首次获取 feature flag 之前启动的会话（例如刚安装后）以默认权限模式打开，而非 auto mode 或用户配置的默认模式的问题
+- [VSCode] 修复了子 agent 运行工具期间，用户手动展开的 Focus 视图区域会自动折叠的问题
+- 优化启动耗时：沙箱和 MCP 启动不再阻塞首帧渲染，无参数裸启动跳过子命令注册，工作流发现、配置解析和信任库加载开销更低
+- 优化原生安装包与自动更新的下载体积：二进制文件现已采用 zstd 压缩（Linux x64 上约为 75 MB，此前为 340 MB）
+- 优化使用 `ANTHROPIC_AUTH_TOKEN` 直接向 Anthropic API 认证的会话对组织的使用遥测归属，确保其数据处理设置能够正确生效
+- 优化原生二进制体积：通过更紧凑地存储内置 skill 和 prompt 文本，体积减小约 2 MB
+- 优化原生构建的内存占用：代码改为按需加载，无需将整个 bundle 常驻内存（每会话内存减少约 40–70 MB）
+- 优化长时间运行会话的峰值内存占用（随着堆内存增长，运行时现在会更早进行垃圾回收）
+- 优化 SSH 环境下的 `/login` 体验：登录 URL 立即显示，按 `c` 键会报告 URL 的复制状态而非始终提示成功，并新增全屏模式下如何选中文字的提示
+- 优化在思维链关闭时使用 effort `xhigh`/`max` 的报错信息：现在会明确指出具体等级、导致思维链被禁用的配置项，并将 `/effort high` 作为修复建议
+- 优化 `/loop`：当 Claude 无事可做时，连续的唤醒操作会在终端中折叠为单行显示，不再逐行打印
+- 调整了沙箱化 Bash 工具的 prompt，不再列出允许访问的网络主机，以便 Claude 尝试发起请求（且您可以批准新主机），避免其直接假定未列出的主机均被拦截
+- 更新了 `/model` 选择器和内置的 `claude-api` skill，将 Sonnet 5 每 Mtok $2/$10 的定价显示为标准标价，而非限时优惠价
+- 调整了 macOS 上的 computer use：现在点击桌面、Dock 或 Finder 窗口时，需要像其他应用一样通过权限对话框为 Finder 授予访问权限
+- 调整了 `/model`、`/fast` 和 `/effort`，在 Bedrock、Vertex、Foundry 以及禁用遥测的环境下也会立即生效，而不再排队等待当前 turn 结束
+- 修复了当服务端在会话中途断开其环境时，`claude remote-control` 直接退出并导致所关联的 Remote Control 会话悬挂的问题；现在能够自动恢复
+- 修复了对于非 admin 或 owner 角色的 Team 及 Enterprise 成员，由 `claude remote-control` 提供服务的 Remote Control 会话在停止并重启后偶尔卡住的问题
+- 调整了跨会话消息收件箱 socket，在 30 秒内未发送完整行的连接将被自动关闭；向其发送数据的脚本应在数据就绪后再建立连接
+- 优化了恢复 Remote Control 控制权被其他终端占用的会话时的提示：明确说明其他机器上的会话无法从本机查看，也无法访问本机
+- [VSCode] 优化长会话中的历史修剪逻辑：优先剔除较旧的工具活动记录，确保用户消息与 Claude 的回复始终可见
+- [VSCode] 优化登录 Claude 账号时插件自身使用遥测对组织的归属，确保其数据处理设置能够正确生效
+
+## 2.1.241 (2026-08-22)
+
+- Bug 修复与可靠性提升
+
+## 2.1.240 (2026-08-22)
+
+- Bug 修复与可靠性改进
+
+## 2.1.239 (2026-08-21)
+
+- 成本估算（`/cost`、状态行、`--max-budget-usd`）现已包含针对数据驻留工作区的 1.1 倍仅限美国推理附加费
+- 在 Bedrock、Vertex、Foundry 以及其他先前排除的环境中添加了一次性全屏渲染器提示；在这些环境中的新安装现已默认以全屏模式启动
+- 新增 `/claude-api upgrade` 用于将 Python 项目从 `anthropic` 0.x 迁移到 1.x，并更新了技能的 Python 参考以适配 1.x（超时使用 `anthropic.Timeout`，而非 `httpx.Timeout`）
+- 云端会话：从 claude.ai 同步的插件现在显示为 `name@synced`，支持 `claude plugin enable/disable <name>@synced`，且绝不会覆盖你安装的同名插件
+- Alpine/musl 构建版本：原生图片粘贴、剪贴板和音频捕获插件现已支持加载（使用基于 musl 构建的二进制文件，替代被运行时拒绝的 glibc 文件）
+- 当月度支出额度用尽时显示的使用限制消息，现在还会说明会话或每周限制的重置时间
+- 修复了在去除响应 Content-Type 头的代理后面使用 Bedrock 流式传输的问题；此前该问题会导致静默重新以非流式运行每轮对话，使计费的 API 调用翻倍
+- 修复了在使用包含 SSO 配置文件的 Bedrock 并启用 `awsAuthRefresh` 时，Claude Code 在 HTTPS 代理后启动卡死的问题——凭据预检查现已支持 `HTTPS_PROXY`
+- 修复了从已不存在的目录启动 Claude Code 时出现原始崩溃转储的问题；现在会打印一条清晰的提示信息
+- 修复了连接 Claude Code 插件时，在 JetBrains IDE 终端中 Edit 和 Write 调用会暂停约 5 秒的问题
+- 修复了当提示词在排队时按下 Esc 可能导致下一轮提前结束的竞态问题，该问题会导致会话在 Claude 仍在工作时闲置，并使后续重新提交时重复执行操作
+- 修复了 WebFetch 在内存中将过期的页面内容保留整个会话周期，而非预期的 15 分钟的问题
+- 修复了云端会话（Claude Code 网页端、桌面端和移动端应用）在空闲 Worker 重启后退出计划模式恢复的问题
+- 修复了全屏模式下高于终端的 MCP 引导表单被截断的问题：表单现在会适应窗口大小，隐藏字段可通过滚动查看，且 Accept/Decline 始终可见
+- 修复了在云端会话中或通过 SDK `setMcpServers()` 会话中重连时遭遇偶发 5xx 错误后，远程 MCP 服务器一直保持失败状态的问题
+- 修复了重命名后如果写入超过约 64 KB 的对话内容，自定义会话标题会从 `/resume` 中消失的问题
+- 修复了 `claude -c`/resume 错误匹配来自不同目录的会话的问题（当路径仅相差 `_`、`-` 或 `.` 等字符时）
+- 修复了仅 touch 会话文件或仅重新打开会话时，`/resume` 和 agents 视图就会将该会话显示为最近更改（并对其重新排序）的问题
+- 修复了全项目模式下的 `/resume` 提示你 `cd` 到已删除目录（例如已移除的 worktree）的问题；此类会话现在会在当前目录中恢复
+- 修复了 `dark-ansi` 主题在全屏模式下渲染展开的工具结果时，文本颜色与背景颜色相同的问题
+- 修复了全屏渲染器提示在无法被应答的情况下每次启动都会再次出现的问题；现在连续显示 3 次启动后将不再出现
+- 修复了当目标位于被 gitignore 的目录中时，以 `**/` 开头的 `.worktreeinclude` 模式静默不匹配任何内容的问题
+- 修复了以 UTF-8 BOM 开头的 `.md` 文件的 agent、skill 和命令被静默忽略的问题
+- 修复了某些模型在 `/insights` 响应中回显字面量 `<message>` 标签的问题
+- 修复了市场 `metadata.pluginRoot` 无效的问题：简短的插件源名称现在会按文档说明在其路径下解析
+- 修复了在基于浏览器的终端中移动鼠标时，若鼠标报告被分次写入，会向提示符中插入类似 `"35;150;7M"` 文本的问题
+- 修复了 effort/ultracode 状态徽章颜色的自定义主题覆盖被忽略的问题
+- 修复了 OpenTelemetry trace 碎片化问题：被 `PreToolUse` 钩子推迟的工具执行现在会在原始轮次的 trace 中继续，而不是开启新的 trace
+- 修复了 agent 视图中的 vim 模式：按下 Escape 现在会切换到 NORMAL 模式并保留文本，而不是清空提示词
+- 修复了 `selection:copy` 快捷键会静默丢弃使用 Shift+方向键扩展的文本选区的问题
+- 修复了通过 `voice.enabled` 设置启用语音听写后，`/voice` 启动提示仍然出现的问题
+- 修复了 shell 模式（`!`）的 Tab 补全会从 `./script` 路径中丢失 `./`，导致 shell 无法运行该命令的问题
+- 修复了全屏模式下点击终端窗口仅为了重新获得焦点时，可能会确认权限提示或按下按钮的问题
+- 修复了全屏模式下斜杠命令面板（例如 `/config`、`/model`）遮挡最新消息的问题；对话内容现在固定在面板上方
+- 修复了在 Claude 仍在回复时打开 `/workflows` 详情对话框会导致终端溢出并在屏幕外丢失标题的问题
+- 修复了 Linux 沙箱使不存在的 `.git/config.worktree` 变为不可读，导致设置了 `extensions.worktreeConfig` 的仓库中所有沙箱化 git 命令失败的问题
+- 修复了会话工作目录被删除后钩子因 "posix_spawn ENOENT" 失败的问题；钩子现在会改从项目根目录或主目录运行
+- 修复了当模式指定规则目录或符号链接而非其目标时，`claudeMdExcludes` 未能排除符号链接的 `.claude/rules` 文件的问题
+- 修复了当两个 Claude Code 进程共享一个后台作业状态时，会话标题失控同步到 Remote Control 的问题（2.1.232 回归缺陷）；标题更新现已进行去重和速率限制
+- 修复了标题以 `/` 开头的会话无法通过 `SendMessage` 寻址且在 `ListAgents` 中显示为 "(untitled)" 的问题
+- 修复了光标位于占位符内部时，使用 Ctrl+W、Ctrl+U、Ctrl+K、Option+Backspace、Option+D 和 vim `df`/`dt` 会留下损坏的 `[Pasted text #N]` 占位符的问题
+- 修复了掩码（密码样式）输入（例如登录验证码字段）的内容可能会被 Ctrl+Y 粘贴到其他地方，或在通过双击 Esc 清除时被保存到提示历史记录中的问题
+- 修复了在搜索框中按下 Ctrl+Backspace 只删除一个字符而不是一个词的问题
+- 修复了被组织策略检查拒绝的请求在显示拒绝提示前会被重新发送的问题
+- 改进了压缩后显示的提醒，避免技能的原始参数作为新请求重新执行
+- 工具使用行上的长文件路径现在采用中间截断以保持在单行显示
+- 远程会话在长时间运行 `SessionStart` 或 `Setup` 钩子期间会持续发送保活信号，从而避免容器在钩子执行途中因空闲被回收
+- `/goal`：针对长时间运行的后台任务的重复签入现采用退避策略（30 分钟、1 小时，之后每 2 小时），而不是每 30 分钟重复一次
+- `/goal`：从 `claude --resume` 选择器中恢复会话现在会恢复其活动的 goal
+- `ListAgents` 现在会告知会话其自身的名称（对等节点用来向其发送消息的名称），向自身名称发送 `SendMessage` 时会据此提示，而不是显示 "no agent named …"
+- `ListAgents` 和 `/list-agents` 现在会列出活跃的团队成员（此前仅显示 subagent 和其他会话，导致可连接的团队成员看似不存在）
+- `keybindingFlavor: "readline"` 在单词快捷键上也与 Bash 保持一致：Alt+F 和 Ctrl/Option+→ 停在单词末尾，Alt+D 删除至词尾（Ctrl+Y 可粘贴恢复），且标点符号作为单词分隔符
+- 持久重试模式（`CLAUDE_CODE_RETRY_WATCHDOG`）在遇到组织支出额度限制和余额耗尽错误时现在会立即失败，而不是无限期等待重置
+- Claude in Chrome：`/clear` 现在会关闭当前会话的 Chrome 标签页组，空的标签页组在 `/resume` 以及 Claude Code 退出时会被关闭
+- 远程会话：从移动端上传的图片现在包含其保存的文件路径，因此 Claude 可以将其复制到创建的文件中
+- Claude Code 网页版：Bash 及其他工具对非 API 的 anthropic.com 主机（例如 www、docs）发起的请求现在会通过会话的网络代理，从而使你环境中的允许域名规则生效
+- Remote Control：当你的账户未启用 Remote Control 时，提供更清晰的提示信息以及 `claude doctor` 说明文案
+- Windows：现已支持跨会话消息传递，因此你机器上的多个 Claude Code 会话可以像在 macOS 和 Linux 上一样，使用 `SendMessage` 互发消息并使用 `ListAgents` 互相发现
+- [VSCode] 使用限制横幅中的 "View usage" 现在与警告文本内联显示，而不是悬浮在横幅中间
+
+## 2.1.238 (2026-08-20)
+
+- 新增 `keybindingFlavor` 配置项：设置为 `"readline"` 可使提示符中的 Ctrl+W 像在 Bash 中一样向前删除到上一个空格；默认值（`"classic"`）保持不变
+- 插件市场：url 市场或目录项上的 `headersHelper` 可运行命令以生成 HTTP 请求头（如短期 token），用于获取目录及同源归档文件
+- 目录项的 `headersHelper` 仅在安装或更新该插件时运行，且会在显示其命令后执行；`claude plugin install/update` 会提示 `[y/N]`（或传入 `-y`）
+- 新增 `claude self-hosted-runner --defer-shutdown-max-min <minutes>`：收到 SIGTERM 时继续为已附加的会话提供服务，在指定分钟后暂停剩余会话并退出
+- 为每次连接都需要最新颁发的 `Proxy-Authorization` 头的出口代理新增了 `claude self-hosted-runner --proxy-authorization-command` / `--proxy-authorization-file`
+- 修复了长时间交互会话中内存无限增长的问题：子代理的工具结果在离开近期显示窗口后会被释放
+- 修复了自定义、项目以及插件的输出风格在会话中途偏离并恢复为默认口吻的问题
+- 修复了当账户接近但未超过用量上限时，`CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=true` 未能保持提示建议开启的问题
+- 修复了 worktree 隔离下的 Bash 拒绝执行时提示移除重定向，而命令本身并未包含重定向的问题
+- 修复了自托管 runner 在单次轮询请求变慢或丢失后偶尔会被服务端移除，导致将其正常的会话移交给另一个 runner 的问题
+- 修复了 MCP 引导对话框对超过 4,096 个字符的 URL 显示为空，以及当项目路径超出终端宽度时权限提示丢失“不再询问”选项的问题
+- 修复了当 Bash 命令被终止、超时或中断时残留 `/tmp/claude-*-cwd` 文件的问题
+- 修复了在按键突发大量到达（慢速 SSH/mosh 链路）时，发送 Ctrl+H 作为 Backspace 的终端上长按 Backspace 会被忽略的问题
+- 修复了权限提示 diff 中的文本换行问题：包含宽字符、多码点字符（如 emoji）或制表符的行不再被截断
+- 修复了终止已挂起（Ctrl+Z）的会话时，有时会导致终端残留处于括号粘贴模式且光标隐藏的问题
+- 修复了 stdio MCP 服务在 `initialize` 之前收到 `server/discover` 请求，导致延迟初始化的服务在每次打开会话时被迫启动其后端的问题
+- 修复了代理拒绝连接时被报告为常规网络错误，而未能指明具体代理的问题
+- 修复了在 prompt 缓存已过期时仍显示 `/model` 和 `/effort` 缓存未命中警告的问题
+- 修复了在 CLI 托管的会话中，从 Remote Control 任务面板单独停止任务无效的问题
+- 修复了当客户端发送没有有效角色的用户消息时远程会话退出的问题
+- 修复了由 `claude remote-control` 启动的 Remote Control 会话从启动它的 shell 中继承会话级环境变量的问题
+- 修复了进程崩溃的 Remote Control 会话在重启 `claude remote-control` 之前一直不可用的问题；现在下次向其发送消息时即可复用
+- 修复了在 Claude 处于轮次中间时从 Web 或 Desktop 发送的 Remote Control 消息在轮次结束后从记录中消失的问题
+- 修复了在手机端或 Web 端选择 Remote Control 模型后，终端中显示的模型未更新的问题
+- 修复了短暂网络波动延迟刷新登录状态时，Remote Control 因“登录已过期”而断开连接的问题；现在会进行重试并保持连接
+- 修复了退出登录时 Remote Control 报告重连失败的问题；现在退出登录会终止会话并显示明确的提示信息
+- 修复了在由 `claude remote-control`（服务端模式）或 Desktop/IDE 宿主运行的会话中，`ListAgents`/`SendMessage` 报告“Remote Control 未连接”的问题；现在可以列出并访问 Remote Control 对等节点
+- 修复了 `ListAgents` 和 `SendMessage` 暴露 agent 视图为下一个后台会话预热的空闲 worker 的问题；现在仅在有任务认领后才会显示
+- 跨会话消息：向本机器上拒绝入站消息的会话（例如 `crossSessionInbound: "refuse"`）发送消息时，现在会向发送方报告“已拒绝”，而不是静默显示成功
+- 跨会话消息：当某个会话的收件箱丢弃你的消息时（因速率限制或队列已满），现在会通知你的会话，而不是让消息静默消失
+- 优化启动速度：在 macOS 上直接运行 `claude` 启动更快
+- 改进了针对 shell 条件判断中 zsh 专属语法的 Bash 工具权限检查
+- 提升 Remote Control 连接弹性：现在网络边缘、VPN 或代理引起的短暂 HTTP 403 拒绝最多可容忍 3 分钟；若持续受阻，则会指明拒绝方
+- 提升启动响应速度：自动更新检查现在会在启动后约 10 秒运行，避免与启动过程竞争 CPU
+- 为 Managed Agents 8 月 19 日版本更新了内置的 `claude-api` skill：包含自托管沙箱上的 web search/fetch 域名设置与 memory stores
+- 更改全屏模式下的 Ctrl+L 和 Cmd+K 为始终仅重绘界面——移除了双击 `/clear` 快捷键，且单行 nvim 终端不再触发自动 `/clear` 循环
+- 更改 `claude mcp list` 和 `claude mcp get`，将禁用的服务显示为 `⊘ Disabled`，而不再连接它们进行健康检查
+- 项目 `.mcp.json` 中的 MCP `headersHelper`，以及项目或 `--add-dir` agent 文件中的内联 MCP 服务，现在要求已接受该文件夹的信任对话框（在 `claude -p` 下同样适用）
+- 来自项目 `.mcp.json`、插件或 agent 文件的 MCP `headersHelper` 在运行时不会继承凭据环境变量；user、managed 和 claude.ai 作用域的 helper 现在从 Claude 配置目录运行
+
+## 2.1.237 (2026-08-19)
+
+- 修复了使用 LLM 网关或自定义 base URL 的会话中 prompt caching 的问题
+- 新增内置“Concise”输出风格：Claude 优先呈现结果并略过前言与叙述，同时保持同样严谨的工作完成度。可在 `/config` 的 Output style 下进行选择。
+
+## 2.1.236 (2026-08-19)
+
+- 新增 `ANTHROPIC_DEFAULT_MODEL` 环境变量：用于设置新会话启动时使用的模型；而通过 `/model` 选择的模型仍会覆盖该设置并在重启后继续生效（与 `ANTHROPIC_MODEL` 不同）
+- 在跨会话 `SendMessage` 中新增 `notify_when_idle`：请求本台机器上的另一个 Claude Code 会话在下次进入空闲状态时发送一次通知 —— 需主动启用、一次性触发、无需轮询（macOS 和 Linux）
+- 沙箱：在 macOS 上，通配符读取拒绝规则（例如 `**/.env`）现在在允许读取的区域内具有更高优先级，覆盖匹配目录的内容，且无法通过重命名被拒绝的文件来绕过
+- 修复了会话切换到的目录被删除后，导致剪贴板复制、后台清理、后台会话以及本地 MCP 日志崩溃的问题（自 2.1.229 起）
+- 修复了全屏渲染器在单次启动失败后永久失效的问题：现在会回退到经典渲染器，而不是在随后的每次启动时直接退出
+- 修复了 `/model` 选择器渲染高度超出终端的问题：现在仅显示窗口容纳得下的模型数量，其余模型可通过滚动查看
+- 修复了当闭合标签格式错误导致消息文本残留在摘要字段中时，`SendMessage` 调用被拒绝的问题
+- 修复了子进程启动失败时未处理的 Promise rejection，例如在禁用 Windows 互操作的 WSL 上启动 `powershell.exe`（2.1.234 中的回归问题）
+- 修复了在全屏模式下，调整终端大小后新发送的消息有时直到下一次更新才会显示的问题
+- 修复了在全屏模式下，清空多行 prompt 后上方可能残留空白条，以及将终端大小调离后又恢复时面板不会重新绘制的问题
+- 修复了启动时有时不显示托管设置审批提示，却仍将第一次按键记录为同意的问题
+- 修复了 tmux（iTerm tmux 集成）中终端标签页标题跳动的问题：现在仅在文本发生变化时写入标题，而不是每 960 毫秒刷新一次动画
+- 修复了云环境列表返回为空或格式错误时报错信息不明确的问题
+- 修复了使用 Remote Control 时，Fable 5 首次使用额度提示在 60 秒无应答后自动选择回退模型的问题
+- 修复了当 `~/.claude.json` 中缓存的访客通行证奖励格式错误时，加载动画提示永不显示并伴有反复出现的后台错误的问题
+- 修复了在 SDK/VS Code 会话中，当会话工作目录被删除后，每次技能变更时 skills 热重载都会报错的问题（2.1.229+）
+- 修复了因空闲、注销或启动超时而释放的自托管 runner 会话，在 post-session hook 完成之前偶尔会在另一个 runner 上恢复的问题
+- 修复了在某些字体大小下，iTerm2 中 Clawd 吉祥物的眼睛和脚部渲染不均匀的问题
+- 修复了会话摘要偶尔失控的问题：摘要文本（自动生成和 `/recap`）现在上限为 400 个字符，并在词边界处截断
+- 提升了启动性能：会话计数器现在在后台异步写入
+- 改进了 auto mode：在 auto mode 激活期间，`Monitor` 允许规则现在会被搁置，因此 Monitor 命令会像 Bash 命令一样接受审查
+- 改进了 Bedrock、Vertex AI、Foundry 以及禁用遥测时的 auto mode：分类器现在使用与 Claude API 相同的默认配置，包括带严重程度评分的分类
+- 改进了 auto mode：git 状态检查不再会被仓库的 `status.showUntrackedFiles=no` 设置误导而报告工作区干净
+- 修改了 `/model` 选择器，使其仅高亮最新模型的名称，从而突出新发布的模型，而非列表中的任意子集
+- `/goal`：处于空闲状态且目标被长时间运行的后台任务阻塞的会话，现在会在 30 分钟后自动进行状态回传（随后为 1 小时、2 小时），而无需等待用户返回
+- `/usage` 现在为 Team 和 Enterprise 用户显示用量额度消耗行，并在产生任何消耗前显示上限为 0% 的行
+- print/SDK 模式下的 SIGTERM 在退出前不再记录中断的轮次或合成的工具拒绝；正在运行的命令仍会被终止，进程仍以退出代码 143 退出
+- 输入错误的斜杠命令或在当前会话中不可用的命令并按 Enter 时，现在会直接报告错误，而不是执行最接近的模糊匹配；前缀和别名仍可正常执行
+- Remote Control 现在会在 CLI 退出或其终端关闭后数秒内将该会话标记为离线
+- `SendMessage` 现在当短时间突发消息将超出该会话收件箱容量时，会预先拒绝后续消息，而不是在消息已被丢弃的情况下仍报告已发送
+- 将 prompt 边框上的会话标题标记与页脚右边缘对齐
+- 页脚右对齐项（目标指示器、会话状态、后台 agent 状态）以及截断通知现在与 prompt 区域的其余部分共享一致的右边距
+- [VSCode] 为 transcript 增加了屏幕阅读器支持：提供回复、权限请求、错误和状态变更的实时语音播报，并支持按轮次进行标题导航
+
+## 2.1.235 (2026-08-18)
+
+- 新增了可选的 `spellcheck` 设置，可在您输入 Prompt 时利用已安装的 `aspell`、`hunspell` 或 `ispell` 为拼写错误的单词添加下划线
+- 修复了在会话过程中语言服务器断开连接或重新连接时导致整个 Prompt 缓存失效的问题
+- 修复了终端 UI 中嵌套 Markdown 列表项在深度达到 3 层以上时对齐错乱的问题，并为折行的列表项添加了悬挂缩进
+- 修复了在部分多行 Prompt 中，输入高亮（Slash 命令、关键字、提及）出现一到多个字符偏移的问题
+- 修复了在权限提示的备注输入框中按下 Shift+Tab 会批准编辑并授予整个会话的编辑权限，而不是关闭该输入框的问题
+- 修复了 Agent 工具在特定 Agent 不可用的会话中仍将其作为通用默认项展示的问题：此时若省略 `subagent_type`，将收到明确的错误提示并列出所有可用 Agent
+- 修复了当 Notebook 或单元格无法读取时，Notebook 单元格删除/替换确认对话框会静默忽略已有单元格内容的问题；对话框现在会说明原因
+- 修复了在 Claude 响应过程中运行 Slash 命令时显示 HTML 实体而非实际字符的问题
+- 修复了后台自动更新后 Prompt 页脚未显示“Update installed”重启提示的问题
+- 修复了在恢复或重新启动仍有未完成任务的会话时，展开的任务列表（`ctrl+t`）始终以折叠状态启动的问题
+- 优化了 `/ultrareview` 或 `/autofix-pr` 等云端会话在后台运行时的内存与 CPU 占用——不再在每次更新时重新扫描并重新渲染它们的事件流
+- 改进了权限对话框：显示的文本和“不再询问”选项现在始终与授权所涵盖的范围一致，且当内容无法完整显示时会隐藏“不再询问”选项
+- 优化了 macOS/Linux 原生构建版本中内置的 `grep`：病态模式现在会快速失败而不是耗尽内存，并且 `-m N` 与 `-A/-C` 搭配使用时能正确输出上下文
+- 改进了上下文超限错误提示，指出自动压缩何时处于关闭状态，并引导前往 `/config` 重新启用
+- Vim 模式：在切换详细转录（ctrl+o）或关闭面板时，现在会保留 NORMAL 模式及光标位置
+- 对话框：连续快速按下方向键和 Enter 键时，现在会选中当前导航到的选项，而不是之前高亮的选项
+- `SendMessage` 现在会直接拒绝超出跨会话投递大小限制的消息，而不是静默丢弃
+- Remote Control：`claude rc` 现在会执行与交互式启动相同的企业网关可用性检查
+- [VSCode] 修复了在恢复或重新加载包含多个 Claude 面板的窗口时，焦点会在打开的 Claude 标签页之间自动跳转的问题
+
+## 2.1.234 (2026-08-17)
+
+- 添加了可选的环境变量 `CLAUDE_CODE_PROJECT_DIR_NAME`：为每个会话分配独立配置目录的宿主环境可以为单项目 transcript 目录指定短名称
+- 添加了 `selection:clear` 快捷键动作，可绑定按键以清除应用内的文本选中状态；在 agents 视图中同样有效
+- 在页脚和状态栏中添加了 GitLab merge request 徽章：配置了 GitLab remote 并通过 glab CLI 认证的仓库会显示 MR !N 以及 draft/pending/green 状态
+- 当 claude.ai 用量限制重置时，Claude Code 现在会自动继续会话；可在 `/config` 中关闭该功能（"Continue automatically at usage limit"）
+- 现已指示 Claude 仅使用您的账户邮箱来识别您的身份，除非您明确要求，否则不会将其发送给无关服务
+- 安全性：远程文件读取、会话恢复、CLAUDE.md 包含、工作流脚本和文件上传现在会拒绝 Windows NT 命名空间（`\??\`）路径，增强了剩余预批准文件访问针对 NTLM 凭据泄漏攻击向量的防御
+- 修复了超长会话中 auto mode 在对话被压缩后，反复重新检查并拒绝沙盒命令网络访问的问题
+- 修复了在回复后台 subagent 工具权限提示时，会话级权限选择（包括拒绝）被丢弃的问题
+- 修复了非流式回退路径（通常经由第三方网关）上的 API 响应中包含缺少 thinking 字段的 thinking 块或缺少 text 字段的 text 块时发生崩溃的问题
+- 修复了包含罕见 Unicode 序列的某些消息导致 markdown 渲染变得极慢的问题
+- 修复了当会话名称达到 200 字符上限或包含大量 emoji 时，`SendMessage` 拒绝从 `ListAgents` 复制的接收者的问题
+- 修复了仓库检测错误解析带有异常 userinfo 的 git remote 主机，从而为错误主机生成链接和特定仓库行为的问题
+- 修复了 MCP 诊断输出已解析密钥的问题：作用域冲突警告现在显示配置的 `${VAR}` 形式，连接失败详情仅显示服务器来源
+- 修复了 `strictKnownMarketplaces` 允许列表接受主机与 git 实际连接目标不同的 SCP 风格 git marketplace 源的问题
+- 修复了全屏模式下复制模态框文本（如 `/login` OAuth URL）时会丢失字符的问题
+- 修复了渲染的 markdown 中 `---` 水平分割线与下一行内容挤连在一起的问题
+- 修复了在连续 shell 命令之间穿插 todo/task 更新时，命令会拆分为多行 "Ran 1 shell command" 的问题
+- 修复了在运行 `!` shell 命令期间打开的对话框（如 `/permissions`）在命令执行完毕时会被关闭的问题
+- 修复了按上箭头编辑排队输入后，排队的 `!` shell 命令被作为纯文本发送给模型的问题
+- 修复了排队消息在排队期间仍会重新出现在 prompt 历史中的问题；选择排队消息时按 Esc 不再中断当前轮次；且中途提交后 `!` 模式不再卡住
+- 修复了接受 "Try the new fullscreen renderer?" 提示后重启会话会丢失权限模式（例如 `--dangerously-skip-permissions`）、工具允许/拒绝规则、模型或 effort 标志的问题
+- 修复了 `/tui` 重启时丢失启动时的 `--allowed-tools`/`--disallowed-tools` 规则的问题；现在当会话包含重启无法继承的限制时，会拒绝切换并说明原因
+- 修复了若目录在仓库建立之前就已被记录，信任提示会遗漏整个仓库范围警告的问题
+- 修复了在权限重新提示期间关闭 IDE diff 标签页可能会用先前的输入回答新提示的问题
+- 修复：由 Claude Code Desktop 或 VS Code 托管的 Remote Control 会话期间发送给用户的文件现在会正常上传，从而可在手机端和网页端打开，而不再显示空卡片
+- 修复：在设置了 `CLAUDE_CODE_OAUTH_TOKEN` 的情况下执行 `/login` 后，过期 token 提醒不再泄漏到 Claude 自动恢复的轮次中——现在仅对您可见
+- 修复：权限预览现在仅转发给通过入站信任门禁接纳的 channel 服务器，并尊重服务器显式的权限功能停用配置
+- 修复：转发的权限预览中的凭据掩码不再可能对审批者隐藏命令、路径或目标；超大的私钥块现在会在完整脱敏强度下进行脱敏
+- 修复：权限预览中进行掩码的 provider API token 在紧跟 shell 分隔符时也能正常掩码
+- 修复了当跨会话消息显示为禁用时，Claude Desktop 会话间消息被接收方会话静默丢弃，导致发送方的查询持续 "thinking" 数分钟的问题
+- Remote Control：将本机登录到不同的 claude.ai 账户或组织现在会在数秒内停止运行中的会话并说明原因，而不再是数小时后显示误导性的 HTTP 404
+- 从 Claude Code Desktop 或 VS Code 启动的 Remote Control 会话现在会在权限模式更改时实时更新手机端和 claude.ai/code（以及在模型更改时更新 claude.ai/code）
+- Remote Control：在手机端或 claude.ai/code 上做出的 effort 选择现在适用于终端和 Desktop/VS Code 托管的会话，且会话会将其 effort 级别发布给已连接的客户端
+- `SendMessage` 和 `ListAgents` 现在会在账户会话列表过长而无法完整检查时进行提示，而不再将未获取到的会话视为不存在
+- 过期的 Anthropic profile 凭据现在会在 claude.ai 登录优先时引导您使用 `/login`
+- 改进了 transcript：您自己的 prompt 现在会以与回复相同的方式渲染 markdown（高亮代码块、行内代码、列表）
+- 改进了 "API returned an empty or malformed response" 错误提示，可说明返回的内容（内容类型、body 种类、大小、请求 ID）以及原始流式请求失败的原因
+- 改进了自动生成的会话标题，使其呈现为简短、具体的名称（例如 "Login button bug"），而不是复述您请求的完整句子（例如 "Fix the login button on mobile"）
+- 通过按需加载参考文档，将加载内置 `claude-api` skill 的上下文开销从约 200k+ tokens 降低至约 25k tokens
+- 现在可以在 Claude 工作时打开 `/permissions`——规则更改将应用于当前轮次的剩余部分
+- 现在可以在 Claude 工作时使用 `/add-dir <path>`；`/add-dir`、`/autocompact`、`/theme`、`/help`、`/config` 和 `/advisor` 对话框可在全屏 TUI 运行中途打开
+- 当一轮运行因不可恢复的错误（例如认证失效、余额耗尽或上下文溢出）中断时，`/goal` 现在会自动清除并发出通知，而不再保持就绪状态
+- `/goal`：当后台任务导致目标等待超过 30 分钟时，Claude 现在会检查任务状态，而不再无限期等待（设置 `CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` 可停用）
+- `claude setup-token` 现在会拒绝意外的多余参数，而不是静默忽略
+- 修改了全屏模式下的 Esc 行为，使其不再清除鼠标选中的文本：仍像往常一样中断或关闭，但选中的文本保持高亮
+- 移除了 auto mode 在每个 Agent 工具调用下方显示的冗余行 "Allowed by auto mode classifier"
+- 从 `/config` 中移除了 "Default teammate model" 设置；agent-team 队友现在默认使用 leader 的模型，除非生成时指定了模型
+- 调暗了运行中工具标题上的耗时计数器，不再与加粗的计数抢眼
+- 轮次之间投递的后台任务通知现在会在 `<system-reminder>` 标签内发送给模型，与轮次中途投递保持一致
+- Mantle：当主循环模型已被选定时，启动时跳过 admin-pin 可用性探测
+- Windows：当 `~/.claude.json` 为只读时，启动不再因反复重试重命名而卡顿
+
+## 2.1.233 (2026-08-14)
+
+- 为 `--worktree` 标志和 `claude agents` 视图新增了 GitLab merge request URL 支持（其中 MR 显示为 `!N`）
+- 在 Anthropic 上游服务中新增可选配置的 `forward_user_identity` 应用网关设置，该设置以请求头形式发送已登录用户的身份，以便网关背后的代理可以按用户统计费用
+- 在 Linux 上为 Bash 工具命令新增可选的内存 cgroup 支持（`CLAUDE_CODE_TOOL_MEMORY_LIMIT`），以防止失控的构建任务导致会话卡死
+- 新增 `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` 环境变量，用于配置 WebFetch 会话 URL 缓存的 TTL（默认值保持不变：15 分钟）
+- 修复了当 Claude 正在等待权限提示确认且环境关闭时，云端会话偶尔会被标记为丢失的问题
+- 修复了针对在固定超时后会终止长连接流的服务器（例如无服务器主机），MCP v2 连接会无休止地重新打开 subscriptions/listen 流的问题
+- 修复了在 Claude Desktop 或 VS Code 下运行时，权限提示不会触发 Notification 钩子的问题
+- 修复了在启用沙箱时，Linux 上的空闲会话有时会导致单个 CPU 核心占用率维持在 100% 的问题
+- 修复了当用户或项目 skill 覆盖内置 skill 时，内置 skill 别名（如 `/checkup` 和 `/review`）在 `-p` 模式下或加载了插件/MCP 时报告“Unknown command”的问题
+- 修复了 skill/命令的参数替换逻辑，防止参数值被作为模板标记重复展开
+- 修复了使用 NT `\??\` 设备前缀表示的 Windows 路径会绕过 UNC 路径验证的问题，修复了一个 NTLM 凭据泄露漏洞
+- 提升了 `claude self-hosted-runner` 的会话启动速度：现在创建会话分支时无需重写工作树，且两次服务器往返请求不再会阻塞 agent 的启动
+- 改进了应用网关的错误转发机制：来自 Vertex、Foundry 以及 Claude Platform on AWS 上游的 400/413 错误现在会携带上游自身的错误信息；修复了应用网关上自动压缩（auto-compact）的一个问题
+- 改进了 `claude plugin validate`，使其能够检查独立的 `.claude/skills` 目录，并报告 frontmatter 解析失败的 SKILL.md 文件
+- 改进了屏幕阅读器模式：`/effort` 选择器现在渲染为带有数字输入提示的编号列表，并且提示与对话框文本不再会被截断
+- 改进了打印模式的诊断信息：当发出的请求使用了 Claude Code 无法识别的 model ID 时，会在 stderr 中输出一行 `[claude-code:unrecognized_model]`；可通过 `modelOverrides` 进行映射以消除该提示
+- 调整了 GitHub 应用设置提示，使其不再出现在 origin remote 位于 gitlab.com 或 bitbucket.org 的代码仓库中；企业市场提示现已覆盖非 GitHub 的内部 git 托管服务
+- 待办/任务跟踪工具（TaskCreate/Get/Update/List、TodoWrite）在 Opus 4.8、Sonnet 5、Fable 5、Mythos 5 及更新的模型上不再默认可用；设置 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` 可重新启用
+- Windows：修复了 auto 模式下对于普通的 `cd <dir> && <command> > file` Bash 命令会反复暂停等待手动批准的问题（2.1.232 回归缺陷）
+- 还原了 2.1.232 中针对 Windows 上的 Cygwin 风格符号链接以及输入重定向（`< file`）所做的 Bash 权限变更；更精准的修改方案将在后续版本中重新引入
+
+## 2.1.232 (2026-08-13)
+
+- Subagent 分叉现已默认启用：`subagent_type: "fork"` 的 subagent 会继承完整对话和 prompt 缓存，并且交互式会话中非 teammate agent 的派生现在默认在后台运行
+- 在提示词中输入 `@` 即可按名称提及另一个 Claude 会话；Claude 随后会使用 `SendMessage` 直接连接该会话
+- `SendMessage` 现在可以直接投递给与某一活跃会话完全匹配的纯名称，而无需先要求使用引用进行确认
+- 同一台机器上的交互式会话现保持唯一名称：启动会话或将当前会话重命名为另一活跃会话已使用的名称时，会自动为其赋予一个 `name-word-word` 变体并给出提示
+- 在 `/config` 中添加了“Dialog expiry”和“Messages from your other sessions”（跨会话入站 accept/hold/refuse）配置行
+- 新增对 GitLab token 系列（`glrt-`、`gloas-`、`glptt-`、`glagent-`、`glimt-`、`glsoat-`、`glcbt-`、`glft-`、`glffct-`）的敏感信息脱敏，并对可路由的 `glpat-`/`gldt-` token 进行完整脱敏；`glab` CLI 的配置存储获得与 `gh` 相同的沙箱和凭据路径保护
+- 插件市场新增 GitLab 支持：纯 `gitlab.com` 仓库 URL（包括嵌套子组）现在可以像 `github.com` URL 一样克隆，且克隆认证失败提示会明确指出你实际的 git 主机
+- 设置：现已支持将 `additionalMarketplaces` 和 `allowedMarketplaces` 作为 `extraKnownMarketplaces` 和 `strictKnownMarketplaces` 更友好的别名
+- 企业策略：当 CLI 将纯仓库 URL 归类为 git clone 时，针对该纯仓库 URL 的 URL 类型 `blockedMarketplaces` 条目仍会持续阻止该 URL
+- Gateway：`desktop:` 覆盖层现在支持所有已发布的 Desktop 设置（此前为 11 个手动列出的键），并在启动时根据 Desktop 自身的 schema 进行验证；未知或无效的键会导致启动失败
+- Gateway：空的 `managed.policies[].match.groups`/`admin.admin_groups` 条目以及格式错误的 `email_domain` 值（为空或包含 `@`、空白字符、逗号）现在会在启动时报错失败，而不是静默匹配无人或授予管理员权限
+- 拥有 Fable 访问权限的组织可在 `/advisor` 中再次使用 Fable 5 作为 advisor，并通过 `/model fable` 设置用量额度授权同意
+- 修复了 PowerShell 中的权限绕过问题：写入变量的参数可能会静默覆盖 `$PSDefaultParameterValues` 并重定向后续命令的文件访问
+- 修复了 Windows 下的权限绕过问题：Git Bash 会跟随被路径验证视为常规文件的 Cygwin 风格符号链接；通过这些链接进行的写入现在需要权限审批
+- 修复了嵌套 git 仓库继承父目录信任的问题；现在每个仓库都需要单独确认信任
+- 修复了当服务器未能响应或向协议版本探测发送格式错误的回复时，MCP 连接会挂起满 30 秒连接超时的问题
+- 修复了在云端会话内由 bridge 托管的 Remote Control 会话会继承该会话的副本记录或凭据的问题
+- 修复了从 Claude Desktop 或 IDE 启动的 Remote Control 会话在每次恢复本地会话时都会显示为新 claude.ai 会话的问题；它们现在会重新连接到现有会话
+- 修复了 Remote Control 会话在空闲状态下对新连接的客户端显示为不可达的问题
+- 修复了会话 worker 重启时 Remote Control bridge 会话未恢复对话历史记录的问题
+- Remote Control：恢复一个已从 claude.ai 或应用中删除其会话的对话时，现在会启动一个替代会话，而不是因登录相关提示而报错失败（v2.1.227 引入的回归问题）
+- 修复了当托管设置加载失败时，云端 gateway `/login` 静默退出或在“Press Enter to continue”后留下无响应终端的问题；现在会显示具体原因
+- 修复了原生构建版本上的语音模式在语音服务拒绝连接时卡在“listening…”的问题；现在会立即显示拒绝信息
+- 修复了 mTLS 客户端证书轮换需要重启的问题；Claude Code 现在会在连接错误时自动重新加载轮换后的证书与密钥
+- 修复了使用格式错误的 AWS 或 Vertex region 值构建请求 URL 的问题；现在会回退到默认 region
+- 修复了在 Bedrock、Vertex 和 gateway 部署中，流式空闲超时错误导致请求失败而不是自动恢复的问题
+- 修复了包含截断文本的内容自适应覆盖层渲染过宽一列、以及开头截断文本折叠为省略号的问题
+- 修复了较长的 shell 命令或 agent 描述预览在 emoji 中间被截断时出现多余乱码字符的问题
+- 修复了因并发写入 `known_marketplaces.json` 可能导致插件市场被静默注销的启动竞态条件
+- 修复了当可以在重新启动后继续留存的工作正在运行时，`/update` 和 `/tui` 拒绝重启的问题
+- 修复了用量限制指引在 SDK 和远程会话中建议不可用 slash 命令的问题
+- 修复了交互式 `--advisor fable` 启动时的授权提示信息错误告知你在刚刚退出的交互式会话中运行 `/model fable` 的问题
+- 改进了全屏流式传输：由于不再在每次更新时对整个对话重新规范化，长会话能够保持流畅响应
+- 改进了托管设置审批对话框：显示端点 URL、对仅涉及遥测的变更使用更清晰的表述、跳过常规 OpenTelemetry 选项，并对服务端托管的沙箱二进制覆盖（`sandbox.bwrapPath`、`sandbox.socatPath`、`sandbox.ripgrep`）要求审批
+- 在 Claude 正在响应时调用 `/feedback` 和 `/bug` 现在会立即打开，而无需等待当前轮次完成
+- `/plugin install plugin@marketplace` 现在会优先刷新市场，因此无需手动更新市场即可安装新发布的插件
+- 在 high、xhigh 和 max effort 下的 `/code-review` 现在与其他级别一样在后台 agent 中运行
+- 粘贴及剪贴板中的图片读取不再阻塞事件循环
+- Remote Control 现在在网络抖动后会持续重连约 30 分钟，不再因一小时内分散发生的几次轻微抖动而断开
+- Remote Control：恢复对话不再静默抢占同台机器上仍持有 Remote Control 的另一个 Claude Code 实例的控制权；如需转移，请在该实例上运行 `/remote-control`
+- 更新了 agent 面板：已完成的 subagent 会立即隐藏并带有 `/tasks` 页脚提示，且“↓ N more”溢出指示器左移以提高可见性
+- Remote Control：终端现在会说明会话是被其他设备接管、从其他应用结束还是已被删除，并不再建议可能撤销此状态的重连操作
+- Bash 输入重定向（`< file`）现在在所有平台上都会像其参数拼写形式一样进行权限检查
+- 缩短了恢复已完成的后台 agent 时显示的信息
+- Cowork 会话不再内联来自用户范围 memory 文件的外部 @-imports
+- 加固了共享 `/tmp` 下自动生成的跨会话消息 socket 目录：预先植入的符号链接或其他用户的目录现在会被拒绝使用，而不是直接采用
+- 加固了 Linux 文件系统沙箱，以防受保护路径被绕过
+- 调整 `sandbox.ripgrep` 仅在用户、托管以及 `--settings` 配置中生效；项目设置不再能覆盖沙箱的 ripgrep 二进制文件
+- 移除了建议创建自定义 subagent 的启动提示，以及 `/powerup` 导览中的相应引导
+
+## 2.1.231 (2026-08-13)
+
+- 修复了对于使用预注册 OAuth 客户端的服务器（如 Slack），MCP OAuth 登录因 redirect URI 不匹配而失败的问题
+
+## 2.1.229 (2026-08-12)
+
+- 补充了 `claude remote-control --continue` 的文档说明，用于恢复最近的 Remote Control 会话
+- 为自托管 runner 会话新增对服务端下发的 Claude Code hook 支持，行为与托管环境保持一致
+- 在长时间思考停顿时为网关流式响应添加 SSE 保活 ping，防止 Vertex 和 Bedrock 上游因空闲超时断开连接
+- 插件市场新增 `command` 源：通过本地命令（例如 IDE）输出插件目录，每个会话重新解析并生效而无需重启；`mode: "link"` 支持就地使用
+- `ListAgents` 现将已断开连接的 Remote Control 会话标记为 `offline`，并将您的云端会话标记为 `cloud`
+- 修复了流式传输时长响应部分消失以及在终端中重复打印两次的问题
+- 修复了当工具调用包含非字符串的 `glob`、`file_path` 或 `command` 值时崩溃到错误屏幕的问题（包括在受影响会话使用 `--resume` 时）
+- 修复了进度条或 Markdown 表格在极窄终端窗口渲染时的 RangeError 崩溃（启动时运行 `claude --continue`/`--resume` 也可能崩溃）
+- 修复了 Windows 上工具调用或消息使用超长路径（`\\?\`）或 UNC 路径引用文件时的崩溃问题
+- 修复了通过 `CLAUDE_CODE_ATTRIBUTION_HEADER` 禁用归属请求头的用户（直连 Anthropic API），自动模式在每次工具调用时均失败的问题
+- 修复了使用自定义 `ANTHROPIC_BASE_URL` 网关的 claude.ai 订阅用户在调用 `/model` 时 Sonnet/Opus 1M 被拒绝的问题
+- 修复了与严格授权服务器进行 MCP OAuth 时的问题，重定向 URI 改用 `127.0.0.1` 代替 `localhost`
+- 修复了在笔记本终端输入斜杠命令后 Remote Control 客户端持续卡在加载动画（spinner）的问题
+- 修复了由 `/install-github-app` 生成的 Claude Code Review 工作流执行完成但未在 PR 上发布审查意见的问题
+- 修复了连接 IDE 插件时，编辑带有数千条 IDE 诊断信息的文件会导致界面卡顿数秒的问题
+- 修复了单次执行 `claude plugin` 命令残留孤立的存活状态文件、可能导致旧版本插件无法清理的问题
+- 修复了受 CPU 限制的容器内的动态工作流使用宿主机核心数而非容器 CPU 配额限制的问题
+- 修复了原子替换文件后的文件监听句柄泄露，以及 Windows 上计划任务监听器在网络或虚拟文件系统上失败时的未捕获错误
+- 修复了提交仅包含空白字符的消息时，SDK 和 `--input-format stream-json` 会话遇到 400 API 错误的问题
+- 修复了仅消息内容就超出 API 32 MB 请求上限的对话在无可剥离图片或文档时仍重试压缩的问题；现会直接失败一次并给出清晰明确的错误提示
+- 修复了来自 Claude Desktop 会话的 OpenTelemetry 导出在 Desktop 托管网关同时作为遥测端点时被该网关拒绝的问题
+- 修复了部署了 `managed-mcp.json` 且服务端下发 MCP 服务器时，自托管 runner 及其他远程会话在启动时退出的问题；现会跳过这些服务器并输出警告
+- 修复了自托管 runner 准备代码仓库时卡在 Git Credential Manager 凭据提示的问题；缺少凭据时 git 现会快速失败
+- 改进了工作流扇出机制，错开具有相同前缀的同级 agent 启动时间，以便后续 agent 可以命中缓存的提示词前缀而无需重复计费（可通过 `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS=0` 禁用）
+- 改进了“提示词过长”报错信息，除建议使用 `/compact` 外，还会解释自动压缩无法恢复的原因
+- 改进了沙箱机制：网络域名列表中的 IPv6 字面量现在使用方括号包裹（`[::1]:443`），歧义写法会强制执行闭锁失败（fail-closed）并由 `/doctor` 标出
+- 更新了 `/login`，在登录成功后会再次显示 `CLAUDE_CODE_OAUTH_TOKEN` 覆盖警告
+- 调整了 `/commit-push-pr`，带有危险参数（`--force`、`--amend`、`--no-verify` 等）的 git/gh 命令不再自动批准
+- 调整了自托管 runner 在 Windows 上的启动要求，必须显式指定 `--base-dir`；Windows 下没有默认检出目录
+- [VSCode] “报告问题”和 `/bug` 现在会打开内置反馈对话框，而非已停用的问卷链接
+- [VSCode] 支持通过拖动边缘调整 `/btw` 补充提问面板的大小，同时适用于侧边停靠和堆叠布局
+- [VSCode] 侧边栏新增会话分组功能——右键可创建、重命名或删除；Cmd/Ctrl+单击或 Shift+单击可一次移动多个会话
+
+## 2.1.228 (2026-08-11)
+
+- 修复了在发生罕见的内部布局错误后，交互式会话可能会完全停止重绘而进程仍在继续运行的问题
+- 修复了在 Windows 上从 git 安装目录的父级目录启动 Claude Code 时，无法找到 `git` / Git Bash 的问题
+- 修复了在自上次响应后更改过 `/model` 的情况下，运行 `/tui` 会使会话回退到较早模型的问题
+- 修复了安装或升级后的首个会话中，跨会话消息传递有时在没有收件箱的情况下启动的问题
+- 修复了在已连接状态下使用 Remote Control `/resume` 会将所恢复对话的标题或历史记录泄露到当前连接会话中的问题
+- 修复了当会话无需推送的代码仓的 `checkout` 钩子失败时，`claude self-hosted-runner` 会话在每个全新 runner 上都会失败的问题；现会跳过该代码仓并给出警告
+- 修复了 self-hosted runners 在后台任务完成与后续轮次开始之间的间隙意外结束会话的问题
+- 修复了会话清理操作会删除项目 memory 文件夹内内容的问题
+- 修复了当插件的唯一版本是指向开发检出目录的符号链接时，后台插件缓存清理会误删该插件缓存的问题
+- 修复了配置合并时，在更高优先级的配置层级中重新定义的 marketplace 条目可能会继承另一层级的自定义标头的问题；marketplace 条目现在作为整体条目进行合并
+- 修复了在调用 skill 后，deferred-tools 提醒有时会向模型重复发送两次的问题
+- 增强了从 claude.ai 同步的 skills 的安全性：不再遮蔽本地命令或 MCP prompts，描述经过清理和标记，且在本地机器上其正文不会执行 `!` 命令或展开 `@` 文件
+- 改进了跨会话消息：发送者和正文现以内联方式显示而非折叠行，且发送到其他机器上 Remote Control 会话的消息会将你的 Remote Control 会话名称显示为发送者
+- 改进了 Vertex AI 凭据处理：已过期或缺失的 Google Cloud 凭据现在会在数秒内直接报错，而非持续重试数分钟
+- 改进了压缩进度显示：重试倒计时和停滞提示现在会在压缩期间显示，而不仅是一个进度条
+- 更新了终端标题的忙碌加载动画字符，以减少某些终端标签栏的抖动
+- 更改了 Write 工具，使较新的模型可以覆盖在本会话中尚未读取的现有文件，与 Edit 工具的规则保持一致；较旧的模型仍需要先读取文件
+- 从 Pro、Max 和 Team 计划的首次使用提示中移除了关于 auto 模式会话费用略高的过时说明
+
+## 2.1.227 (2026-08-10)
+
+- 修复了当会话以过期的登录 token 启动时，功能标志评估未结合用户订阅层级，从而可能错误提示 Max 方案用户为 Fable 启用使用额度的问题
+- 修复了在 GitHub 托管的 runner 上，配置了 `allowed_non_write_users` 的 `claude-code-action` 会导致所有 Bash 命令执行失败的问题
+- 修复了 `/tui` 会恢复已被回退至首条消息之前的会话的问题
+- 优化了斜杠命令菜单：现在蓝色仅标记选中行，匹配字符改为加粗而非重新着色，并保留了 Emoji 及带重音符号名称的字形
+- 提升了性能：减少了文件未找到建议和 @提及 大小检查时的事件循环卡顿
+
+## 2.1.226 (2026-08-08)
+
+- Bug 修复与可靠性提升
