@@ -2,6 +2,60 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.301 (2026-10-15)
+
+- 新增 `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS`，讓無人值守重試模式（`CLAUDE_CODE_RETRY_WATCHDOG`）在遇到重設時間過遠的用量限制時直接結束請求，而非持續等待
+- 在 `claude-api` skill 中新增 OpenTelemetry 追蹤指引，包含使用 `ant` CLI 設定追蹤目的地
+- 為 vim 模式新增 `%` 移動操作（motion）：可單獨使用或搭配 d/c/y 跳轉至對應的括號
+- 在 mod 的 `Input` 中新增 `rows`：終端機中的多行文字欄位，按下 Enter 提交，Shift+Enter 或在 Enter 前輸入反斜線可換行
+- 在 OpenTelemetry `tool_decision` 事件中新增 `classifier_verdict` 與 `permission_mode`，以便區分自動模式分類器決策與權限規則
+- 當 `OTEL_LOG_TOOL_DETAILS=1` 時，在 OpenTelemetry `tool_decision` 事件中新增 `classifier_category`，標註分類器阻擋所符合的內建規則名稱
+- 修復結束時未經確認即刪除由 `WorktreeCreate` hook 建立的 worktree 的問題（當其可能包含未推送的 commit 時）
+- 修復當最新的 Fable 模型對您的組織不可用時，Anthropic API 上的 `fable`（及 `best`）模型別名會報錯的問題：Claude Code 現在會對先前的 Fable 模型重試一次
+- 修復當磁碟空間已滿導致無法重新整理登入狀態時，顯示誤導性的「Please run /login」錯誤訊息；現在錯誤訊息會指出該磁碟並提示刪除檔案
+- 修復搜尋程式在回傳任何結果前發生未預期的失敗時，Grep 和 Glob 會回報無相符項目的問題；現在會回傳表示搜尋失敗的錯誤
+- 修復工作流程 agent 在讀取到指出其任務文字不具使用者授權的 harness 附註後，有時會跳過步驟卻仍回報執行成功的問題
+- 修復當 PreToolUse hook 涵蓋 Edit 或 Write 時 artifact 更新被拒絕的問題；Claude 現在會先編輯檔案再重新發布，而非在發布呼叫中直接修改
+- 修復擁有過多或過長參數名稱的 skill 與命令在調用時會停頓數秒的問題；現在僅會填入前 64 個名稱，每個名稱上限為 64 個字元
+- 修復當參數填入大量佔位符時，skill、命令和 hook 會消耗大量記憶體的問題
+- 修復在基於 0.53 以前版本的 VTE 終端機（如 RHEL 8 上的 MATE Terminal）中，`>0q` 等殘留字元會遮蔽資料夾信任提示，以及結束時 shell 提示字元前出現 `>4m` 的問題
+- 修復在某些版本的 iTerm2 中啟動時提示字元出現多餘 `GOK` 文字的問題
+- 修復當提供者非 Bedrock 時，切換至名稱包含 `application-inference-profile` 的模型會執行 `awsAuthRefresh` 命令並延遲模型切換 hook 的問題
+- 修復在短期命令（如 `claude auth status` 或 `claude plugin list`）於權杖重新整理途中結束後，導致登入重新整理逾時及非預期登出的問題
+- 修復在權限檢查期間因回合中途發送的訊息而中斷的工具調用，被向模型回報為遭到使用者拒絕的問題
+- 修復在未事先詢問的情況下，切換至上下文視窗較小的模型可能會消耗用量額度於前一個模型所產生的摘要上的問題
+- 修復在回應名稱與所請求模型不符的 LLM 閘道背後，對話會使用非自選模型不斷重複壓縮的問題
+- 修復在速度較慢或負載較高的機器上，按下 Escape 後 vim 模式有時仍停留在 INSERT 的問題
+- 修復在 vim 模式下按下 Esc 會捨棄已輸入的 AskUserQuestion 回答的問題：自由文字欄位現在支援 vim NORMAL 模式，且 Esc 僅會在 NORMAL 模式下取消
+- 修復 Read 工具將 .xlsm、.parquet、.epub 和 .heic 等二進位檔案讀取為文字的問題
+- 修復僅有標頭列的 Markdown 表格在超出終端機寬度時無法繪製任何內容的問題，包含計畫審核卡片中的計畫
+- 修復 /claude-api skill 稱 CMEK 外部金鑰端點在 AWS 上的 Claude Platform 不可用的問題
+- 修復使用 `/rewind` 後，skill 不再列出給模型的問題
+- 修復在恢復的工作階段中，壓縮列針對未載入的歷史紀錄提供 ctrl+o 的問題；現在會說明先前的訊息儲存於何處，並於全螢幕模式下顯示
+- 修復在插斷回應後立即再次出現「new task? /clear to save tokens」提示的問題
+- 修復外掛程式或 skill hook 的 `ask` 決策權限提示未顯示該 hook 來自哪個外掛程式或 skill 的問題
+- 修復當其中一個 git 檢查逾時或失敗時，`/diff` 在 reftable 儲存庫中未察覺到衝突的 cherry-pick 或 revert 的問題
+- 修復在同一工作階段中執行 Bash `cd` 後，工作流程指令碼在讀取、編輯或重新執行時會請求權限或被拒絕的問題
+- 修復深色 ANSI 主題和 16 色終端機中的暗淡文字問題：填充方塊內文字變淡、選取與搜尋反白下不再變淡，且清單描述如同其他次要文字般變暗
+- 修復在新的 Claude Code 程序首次回應尚未完成前呼叫 mod 的 `$.model.fork` 會回傳 `nothing-to-fork` 的問題（如 `claude -p` 執行和雲端工作階段）
+- 全螢幕模式：修復在重建可見對話記錄時，`/compact` 和自動壓縮會使 UI 短暫卡住的問題
+- 自託管 runner：修復當受管設定限制 MCP 伺服器時，從 Slack 啟動的工作階段無法找到或附加儲存庫的問題；使用 `deniedMcpServers` 來停用這些工具
+- 自託管 runner：修復當無關的設定或工作階段失敗引用了 git 的 missing-ref 措辭時，工作階段被回報為來源分支已刪除且未進行重試的問題
+- 自託管 runner：修復日誌對於即將結束的工作階段承諾重試失敗或被拒絕的工作階段釋放的問題；重複失敗現在會顯示次數計數
+- Windows：修復已停止的背景 PowerShell 命令在其輸出檔案中遺漏結尾 `[killed]` 行的問題
+- 改善切換至上下文視窗較小的模型之體驗：對新模型而言過長的對話現在會先由前一個模型進行摘要
+- 改善長時間執行的 subagent 工作時的渲染效能：其進度軌跡現在改為增量更新，而非在每次渲染時全量重新處理
+- 改善 artifact：Claude 編寫的頁面現在會繪製浮動標頭（sticky header）上方的區域，使捲動的文字不再於行動裝置應用程式中顯示於該處
+- 改善 mod：在 VS Code 以及桌面和行動裝置應用程式中，問題對話方塊上方繪製的樹狀圖現在可支援 Markdown 且最多容納 48 列；終端機則維持 12 列純文字
+- 變更 mod hook 的 `.catch` 處理程序為僅在 hook 擲出例外或逾時時執行；在 hook 本身呼叫下觸發的事件現在會略過該 hook，而不會調用其 `.catch`
+- 變更 mod 的 `$.env.set`：在變數設定或取消設定完成時 resolve 為 `{}`，或在未寫入時 resolve 為包含原因說明的 `{ deny }`
+- [VSCode] 在 Claude 的回應中新增 LaTeX 數學式渲染，包含 `$$` 和多行 `\[ … \]` 區塊，以及行內 `$…$` 和 `\(…\)` 數學式
+- [VSCode] 在 VS Code 與 JetBrains 面板中，為 Pro 和 Max 方案的用量限制橫幅新增「Get more usage」連結
+- [VSCode] 修復導致面板當機或凍結的對話在每次重新載入時都會被重新開啟的問題
+- [VSCode] 修復聊天面板在長時間思考時變慢的問題：每次更新時不再重新解析全部的思考文字
+- [VSCode] 修復部分語言伺服器的診斷資訊顯示「[object Object]」而非規則代碼（例如 MD013）的問題
+- [VSCode] 修復在不支援聽寫的環境（非 claude.ai 登入、遠端視窗）中，仍會載入原生聽寫音訊模組以檢查麥克風權限的問題
+
 ## 2.1.300 (2026-10-14)
 
 - 在 mod 的提示詞裝飾（prompt decorations）中新增 `virtualText`：繪製在提示框中但絕不會進入草稿或提交提示詞的文字

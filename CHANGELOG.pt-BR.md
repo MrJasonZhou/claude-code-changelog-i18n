@@ -2,6 +2,60 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.301 (2026-10-15)
+
+- Adicionado `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` para que o modo de nova tentativa não assistido (`CLAUDE_CODE_RETRY_WATCHDOG`) encerre uma requisição ao atingir um limite de uso cujo reset demore demais, em vez de esperar
+- Adicionadas orientações de rastreamento com OpenTelemetry à skill `claude-api`, incluindo a configuração de destinos de traces com a CLI `ant`
+- Adicionado o movimento `%` ao modo vim: pula para o colchete correspondente, isoladamente ou com d/c/y
+- Adicionado `rows` ao `Input` de um mod: um campo de texto de várias linhas no terminal, onde Enter envia e Shift+Enter ou uma barra invertida antes do Enter inicia uma nova linha
+- Adicionados `classifier_verdict` e `permission_mode` aos eventos `tool_decision` do OpenTelemetry, permitindo distinguir as decisões do classificador do modo automático das regras de permissão
+- Adicionado `classifier_category` aos eventos `tool_decision` do OpenTelemetry, indicando a regra interna correspondente a um bloqueio do classificador quando `OTEL_LOG_TOOL_DETAILS=1`
+- Corrigido o encerramento que removia sem confirmação uma worktree criada por um hook `WorktreeCreate`, mesmo quando ela podia conter commits não enviados
+- Corrigido o alias dos modelos `fable` (e `best`) gerando erro na API da Anthropic quando o modelo Fable mais recente não está disponível para sua organização: o Claude Code agora tenta novamente uma vez usando o modelo Fable anterior
+- Corrigido o erro enganoso "Please run /login" quando o disco cheio impedia a renovação do login; o erro agora indica o disco e sugere a exclusão de arquivos
+- Corrigido o problema em que Grep e Glob informavam que não havia correspondências quando o programa de busca falhava inesperadamente antes de retornar resultados; agora eles retornam um erro informando que a busca falhou
+- Corrigido o problema em que agentes de workflow às vezes pulavam sua etapa e a execução ainda reportava sucesso após lerem a nota do harness informando que o texto da tarefa não possui autoridade do usuário
+- Corrigido o problema em que atualizações de artefatos eram recusadas quando um hook PreToolUse cobria Edit ou Write; o Claude agora edita o arquivo e depois o republica, em vez de modificá-lo na chamada de publicação
+- Corrigido o travamento por alguns segundos ao invocar skills e comandos com muitos argumentos ou nomes de argumentos muito longos; agora apenas os primeiros 64 nomes, com até 64 caracteres cada, são preenchidos
+- Corrigido o alto consumo de memória por skills, comandos e hooks quando seus argumentos preenchiam muitos placeholders
+- Corrigidos caracteres residuais como `>0q` cobrindo o prompt de confiança de diretório e `>4m` antes do prompt do shell ao sair, em terminais baseados em versões do VTE anteriores a 0.53, como o MATE Terminal no RHEL 8
+- Corrigido o texto residual `GOK` que aparecia no prompt durante a inicialização em algumas versões do iTerm2
+- Corrigido o problema em que mudar para um modelo cujo nome contém `application-inference-profile` executava o comando `awsAuthRefresh` e atrasava hooks de troca de modelo quando o provedor não era o Bedrock
+- Corrigidos timeouts na renovação da sessão e desconexões inesperadas após comandos rápidos como `claude auth status` ou `claude plugin list` serem encerrados no meio da renovação do token
+- Corrigida a chamada de ferramenta interrompida por uma mensagem enviada no meio do turno durante a verificação de permissão, que era reportada ao modelo como rejeitada pelo usuário
+- Corrigido um caso em que mudar para um modelo com janela de contexto menor podia consumir créditos de uso com um resumo gerado pelo modelo anterior sem perguntar antes
+- Corrigido o problema de conversas sendo compactadas repetidamente, em um modelo não selecionado por você, atrás de um gateway de LLM cujas respostas indicavam um modelo diferente do solicitado
+- Corrigido o modo vim que às vezes permanecia em INSERT após pressionar Escape em máquinas lentas ou ocupadas
+- Corrigido o problema da tecla Esc descartar uma resposta digitada no AskUserQuestion no modo vim: o campo de texto livre agora suporta o modo NORMAL do vim, e Esc cancela apenas a partir do NORMAL
+- Corrigido o problema da ferramenta Read ler arquivos binários como .xlsm, .parquet, .epub e .heic como texto
+- Corrigido o problema em que tabelas Markdown com apenas a linha de cabeçalho não renderizavam nada quando eram largas demais para o terminal, inclusive em planos no card de aprovação de plano
+- Corrigido o problema na skill /claude-api que indicava que endpoints com chave externa CMEK não estavam disponíveis na Claude Platform on AWS
+- Corrigido o problema em que skills deixavam de ser listadas para o modelo após o uso do `/rewind`
+- Corrigida a linha de compactação em uma sessão retomada que sugeria ctrl+o para histórico não carregado; agora ela informa onde as mensagens anteriores estão salvas e também é exibida em tela cheia
+- Corrigida a dica "new task? /clear to save tokens" reaparecendo logo após você interromper uma resposta
+- Corrigido o prompt de permissão para a decisão `ask` de um hook de plugin ou skill, que não mostrava de qual plugin ou skill o hook se originava
+- Corrigido o `/diff` que não detectava cherry-pick ou revert com conflitos em repositórios reftable quando uma de suas verificações do git sofria timeout ou falhava
+- Corrigidos scripts de workflow solicitando permissão ou sendo recusados ao serem lidos, editados ou reexecutados após um `cd` no Bash na mesma sessão
+- Corrigido o texto esmaecido no tema ANSI escuro e em terminais de 16 cores: tênue dentro de caixas preenchidas, não tênue sob destaques de seleção e busca, e descrições de listas esmaecidas como outros textos secundários
+- Corrigido o método `$.model.fork` de um mod retornando `nothing-to-fork` quando chamado antes do término da primeira resposta de um novo processo do Claude Code, como em execuções com `claude -p` e sessões em nuvem
+- Modo fullscreen: Corrigido o `/compact` e a autocompactação congelando brevemente a interface enquanto o histórico visível é reconstruído
+- Runner auto-hospedado: Corrigido o problema em que sessões iniciadas no Slack não conseguiam encontrar ou anexar um repositório quando configurações gerenciadas restringiam servidores MCP; use `deniedMcpServers` para manter essas ferramentas desativadas
+- Runner auto-hospedado: Corrigido o problema em que sessões eram reportadas como tendo uma branch de origem excluída e não eram repetidas quando uma falha não relacionada de setup ou de sessão citava a mensagem de referência ausente do git
+- Runner auto-hospedado: Corrigido o log que prometia uma nova tentativa de liberação de sessão com falha ou recusada para uma sessão em encerramento; falhas repetidas agora exibem uma contagem
+- Windows: Corrigido o problema em que comandos PowerShell interrompidos em segundo plano não incluíam a linha de encerramento `[killed]` em seu arquivo de saída
+- Melhorada a troca para um modelo com janela de contexto menor: uma conversa longa demais para o novo modelo agora é resumida primeiro pelo modelo anterior
+- Melhorado o desempenho de renderização enquanto um subagente de longa duração trabalha: seu rastro de progresso agora é atualizado incrementalmente, em vez de ser reprocessado por completo a cada renderização
+- Melhorados os artefatos: as páginas que o Claude escreve agora preenchem a faixa acima de um cabeçalho fixo (sticky header), evitando que o texto rolado apareça ali nos aplicativos móveis
+- Melhorados os mods: no VS Code e nos aplicativos desktop e mobile, a árvore desenhada acima do diálogo de pergunta agora pode conter Markdown e até 48 linhas; o terminal mantém 12 linhas de texto simples
+- Alterado o manipulador `.catch` do hook de um mod para rodar apenas quando o hook lançar uma exceção ou sofrer timeout; eventos disparados abaixo das chamadas do próprio hook agora ignoram esse hook sem consultar seu `.catch`
+- Alterado o método `$.env.set` de um mod para resolver com `{}` assim que a variável for definida ou removida, ou com `{ deny }` informando o motivo quando a escrita não for realizada
+- [VSCode] Adicionada renderização de fórmulas matemáticas em LaTeX nas respostas do Claude, incluindo blocos `$$` e multilinha `\[ … \]`, além de expressões inline `$…$` e `\(…\)`
+- [VSCode] Adicionado o link "Get more usage" ao banner de limite de uso para os planos Pro e Max nos painéis do VS Code e do JetBrains
+- [VSCode] Corrigido o problema em que uma conversa que trava ou congela o painel era reaberta a cada recarga
+- [VSCode] Corrigida a lentidão no painel de chat durante pensamentos longos: o texto completo de pensamento não é mais reanalisado a cada atualização
+- [VSCode] Corrigidos os diagnósticos exibindo "[object Object]" em vez do código da regra (ex.: MD013) para alguns language servers
+- [VSCode] Corrigido o módulo nativo de áudio para ditado sendo carregado para verificar permissões de microfone em locais onde o ditado não é oferecido (logins que não sejam do claude.ai, janelas remotas)
+
 ## 2.1.300 (2026-10-14)
 
 - Adicionado `virtualText` às decorações de prompt de um mod: texto renderizado na caixa de prompt que nunca entra no rascunho ou no prompt enviado
