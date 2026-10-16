@@ -2,6 +2,72 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.302 (2026-10-16)
+
+- クライアント側の auto mode 分類器が使用するモデルを選択するための `CLAUDE_CODE_AUTO_MODE_MODEL` を追加。サーバー側の auto mode 用モデルは変更されません
+- アイドル時のコンパクションを無効化または再度有効化するための `Idle compaction` の行を `/config` に追加。アイドル時のコンパクション後に表示される通知に無効化方法が記載されるようになりました
+- 単体版 Claude Design（claude.ai/design）が2026年12月14日までに終了する旨の通知を `/design-sync` および `/design-login` に追加
+- 会話のコンパクション実行中にターンを停止した際に "Prompt is too long" エラーが発生する問題を修正
+- セッション途中で Vertex または Bedrock に切り替えた後、リクエストが "diagnostics: Extra inputs are not permitted" で失敗する問題を修正
+- Read tool が任意のサイズの画像ファイルや、画像のような名前のパイプやデバイスを丸ごとメモリに読み込んでしまう問題を修正。128 MB を超える画像ソースは拒否されるようになりました
+- ゲートウェイが `anthropic/claude-opus-4-1` などのプレフィックス付きで Opus 4 や 4.1 を指定している場合に、`/autocompact` と `/effort` が誤ったモデルに保存される問題を修正
+- セッション途中に追加されたツールが ToolSearch 経由またはコンパクション後に再度読み込まれた際に、プロンプトキャッシュミスが発生する問題を修正
+- `claude plugin` やその他のサブコマンドが、キューに入った設定やコンフィグの書き込みが完了する前に終了することがあり、変更が失われたり `.tmp` ファイルが残ったりする問題を修正
+- git のデフォルトが reftable ref 形式の場合に、プラグインマーケットプレイスが更新のたびに再クローンされたり、新しくインストールされた git プラグインのバージョンが "unknown" と表示されたりする問題を修正
+- PowerShell tool がプラグインの `bin/` フォルダ内のコマンドを見つけられない問題や、結果が見つからない検索（rg、grep、findstr、git grep）を `Select-Object` などの書式設定コマンドレットにパイプした際にエラーが報告される問題を修正
+- デスクトップアプリ内の Claude が、MCP サーバーの承認や再接続のオプションが利用できない場合に、claude.ai の設定や `/mcp` を案内してしまう問題を修正
+- Claude が空の編集リストを送信した際に artifact の公開に失敗することがある問題、および artifact のより新しいバージョンによって拒否された後に Claude が誤った方法で更新を再試行する問題を修正
+- 大半の auto mode 分類器ブロックにおいて OpenTelemetry の `tool_decision` イベントから `classifier_category` が欠落していた問題、および `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT` が低い場合に新しい `tool_decision` 属性が `tool_use_id`、`tool_source`、`tool_parameters` を押し出してしまう問題を修正
+- agents ビューで長いリストを下にスクロールしたりセクションを折りたたんだりした後に、行が空白のままになる問題を修正
+- サインインしていない場合に `claude remote-control --help` が使用方法を表示せずに終了する問題を修正
+- クラウドセッションで利用できないにもかかわらず、`/design consent` と `/design revoke` が失敗時に `/design-login` を提案してしまう問題を修正。メッセージは claude.ai/design/settings を案内するようになりました
+- サーバーがプロトコルバージョン 2026-07-28 をネゴシエートしながら `resultType`、`ttlMs`、または `cacheScope` を省略した場合に、MCP サーバーでツールが表示されない、またはすべてのツール呼び出しが失敗する問題を修正
+- ご利用のプランでクレジット払いのみのモデルにおいて、プロンプトの提案が利用クレジットを消費してしまう問題を修正。クレジット課金される応答の後はスキップされるようになりました
+- バッククォートで囲まれた URL が折り返された際、1行目しかクリックできない問題を修正。ハイパーリンクをサポートするターミナルでは、URL 全体が1つのリンクになりました
+- プラグインが見つからない場合に、`claude plugin details <name>@builtin` がビルトインプラグインを表示しない `claude plugin list` を案内してしまう問題を修正。`/plugin` を案内するようになりました
+- リンクが開始する絵文字が1文字分広く折り返され、質問プレビューで非表示になったりテーブルがリストに崩れたりする問題を修正
+- 存在しないディレクトリを指す孤立した `.git` ファイルがある場合に、git 2.56 以降で worktree isolation が worktree の作成または再開を拒否する問題を修正
+- クラウドセッションが新しいプロセスで再開された後、セッションのコストと使用量がゼロから再カウントされる問題を修正
+- Self-hosted runner: git の reftable 形式で保存されたチェックアウトを再利用するセッションで、git fetch が "bad object refs/heads" で失敗する問題を修正
+- Windows: `--plugin-dir` で開始されたセッションを含め、exFAT または FAT32 ドライブ上のプロジェクトですべてのファイル書き込みが拒否される、または確認を求められる問題を修正
+- 多数のプラグインが有効な場合の起動時間を改善: プラグインのコマンドおよび agent ファイルの読み込みに必要なファイルシステムコールの回数が大幅に減少し、特に Windows で効果を発揮します
+- サーバー側分類器による auto mode を改善: セーフティチェックに対して長すぎる会話は、チェック対象のすべてのツール呼び出しが拒否されるのではなく、コンパクションされるようになりました
+- 別のフォルダから再度開かれたバックグラウンドセッションに LLM ゲートウェイがない場合のメッセージを改善: "Not logged in" ではなく理由が表示されるようになりました
+- サードパーティプロバイダー利用時、テレメトリ無効時、または新規インストール時において、パーミッションモードが指定されていない `claude -p` および Agent SDK セッションが `default` モードで開始されるよう変更。`--permission-mode auto` を指定した場合は auto が維持されます
+- ターミナルと同様に、`claude -p`、Agent SDK、デスクトップアプリ、VS Code においても fork subagents（`subagent_type: "fork"`）をデフォルトで有効に変更。`CLAUDE_CODE_FORK_SUBAGENT=0` で無効化でき、`claude mcp serve` では提供されません
+- デスクトップアプリおよび VS Code において、Claude に選択させるのではなくターミナルと同様にメインの会話の subagents を常にバックグラウンドで実行するよう変更。`claude -p`、Agent SDK、デスクトップアプリ、VS Code における subagent 自身の Agent 呼び出しは、デフォルトでフォアグラウンドで実行されるようになりました
+- フッターの `← for agents` ヒントがセッション開始の10秒後に非表示になるよう変更。待機中の agents 数は引き続き表示されます
+- 新しい会話が共有プロンプトキャッシュから読み込めるよう、システムプロンプト内での Claude in Chrome の指示文の配置場所を変更
+- prompt および agent のフックにおいて、同一イベントの同時実行を最大12個までに制限するよう変更。残りは順次待機します
+- 組織のポリシーによって `/feedback` が無効化されている場合に表示されるメッセージを変更: 組織の管理者ではなく GitHub issues を案内するようになりました
+- [VSCode] リスト内の閉じられていないコードブロックの後のテキストが、応答のストリーミング中にプレーンテキストとして表示され、その後コードに変化してしまう問題を修正
+- [VSCode] サーバー URL にクエリ文字列が含まれている場合に、パネルからの MCP サーバーへのサインインで壊れた認証ページが開いてしまう問題を修正
+- [VSCode] Claude 拡張機能がインストールされたブラウザに接続できないにもかかわらず、`@browser` バナーに "Browser connected" と表示される問題を修正
+- [Cloud sessions] 組織の同時クラウドセッション数の上限に達したなど、直近の実行が開始されなかった理由を示すバナーを routine のページに追加
+- [Cloud sessions] クラウドセッションにおいて最新のメッセージを除くすべてのメッセージで "Rewind to here" が失敗する問題を修正。self-hosted runners には Claude Code v2.1.246 以降が必要です
+- [Cloud sessions] GitHub が再チェックしている最中に、マージコンフリクトのあるプルリクエストがクラウドセッションのプルリクエストステータスバーで ready に戻ってしまう問題を修正
+- [Cloud sessions] クラウドセッションが予期せず停止した後に routine の実行が failed ではなく Completed と表示される問題、および開始前にアーカイブされた際に Cancelled と表示される問題を修正
+- [Cloud sessions] セッションの GitHub リポジトリの名前変更や移動が行われた後、クラウドセッションの diff ビューで変更が表示されなかったり読み込みに失敗したりする問題を修正
+- [Cloud sessions] 途中で失敗したスケジュール済みの routine 実行が1時間以上経過した後に最初から再実行され、同一レポートの重複投稿などの重複処理が発生する可能性がある問題を修正
+- [Cloud sessions] 開いているクラウドセッションで、ページをリロードするか画面を切り替えて戻るまで、他のデバイスから送信されたメッセージが表示されないことがある問題を修正
+- [Cloud sessions] クラウドセッションの開始に失敗した際のエラー表示を改善: "Something went wrong" ではなく "Connection lost" または "Server error" と表示されるようになりました
+- [Remote Control] コンピュータがオフラインになった後、Remote Control セッションで subagent のペインがローディング状態のままになり続ける問題を修正。Remote Control が切断された旨が表示されるようになりました
+- [Claude Tag] Claude が以前のメッセージの1つを編集して回答した後に、Slack チャンネルまたは DM 内のメンションの下に "is thinking…" が残り続ける問題を修正
+- [Claude Tag] Claude の Slack での返答において、番号付きまたは箇条書きのステップ配下にあるコードブロック内の URL が山括弧で囲まれ、コピーしたコマンドが壊れてしまう問題を修正
+- [Claude Tag] Slack に添付された HEIC、SVG、TIFF、BMP 画像が Claude に届かない問題を修正。他のファイルタイプと同様に working files のファイルとして届くようになりました
+- [Claude Tag] ロールによって Claude Tag を制限している組織で、新しい channel manager が Slack 内の Claude へのアクセス権を失う問題を修正。manager ロールにも Slack での Claude Tag が付与されるようになりました
+- [Claude Tag] MCP サーバーが同一ホストを共有するカスタムコネクタが、Claude Tag 管理設定で単一のコネクタとして表示される問題を修正。各サーバーが個別のコネクタとして扱われるようになりました
+- [Claude Tag] 単一の Slack 検索の遅延により、Slack 内の Claude がダイレクトメッセージに対して "DMs are temporarily unavailable" と応答してメッセージを破棄することがある問題を修正。破棄する前にリトライするようになりました
+- [Claude Tag] Slack Enterprise Grid 上の Claude とのダイレクトメッセージが Slack のワークスペースドロップダウンを無視する問題を修正。最後に Claude を開いた接続済みワークスペース配下で実行されるようになりました
+- [Claude Tag] チャンネルの月間支出上限に関する Slack 内の Claude の通知で、channel manager が引き上げ可能と表示されていた問題を修正。組織の owner の名前と usage ページへのリンクが表示されるようになりました
+- [Claude Tag] Claude の Slack での返答において、リンク直後の太字や斜体の閉じ記号、全角記号をリンクが取り込んでしまい、リンクおよび書式設定が壊れる問題を修正
+- [Claude Tag] Claude Tag 管理設定のリポジトリ検索を改善し、最大100件の接続済み GitHub アカウントを対象とし、GitHub App インストールの最初の5,000件を超えるプライベートリポジトリも検索可能に
+- [Claude Tag] Claude Tag 管理設定の Add place を改善し、組織の全チャンネルリストの読み込み完了を待たずに、入力または貼り付けたチャンネルがすぐに一覧表示されるように
+- [Claude Tag] Claude Tag 管理設定のワークスペースまたはチャンネルページにある Add > Domain を改善し、全チャンネルの読み込み完了を待たずに、そのページが読み込まれた時点で利用可能に
+- [Claude Tag] Claude Tag 管理設定を変更し、Claude のアクセス権限を Bundles、Connectors、Skills and plugins、Channels の4つのタブに整理
+- [Claude Tag] 組織設定の Roles ページを変更し、Claude Tag channel managers 用に作成されたロールを組織固有のロールの下の折りたたみ可能なセクションにグループ化
+- [Code Review] GitHub 接続のために画面を離れた後、Code Review のセットアップが再開されない問題を修正。管理設定に戻った際、リポジトリ選択画面で再度開くようになりました
+
 ## 2.1.301 (2026-10-15)
 
 - `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` を追加。無人リトライモード（`CLAUDE_CODE_RETRY_WATCHDOG`）において、利用制限のリセット日時が遠すぎる場合に待機するのではなくリクエストを終了するように変更
