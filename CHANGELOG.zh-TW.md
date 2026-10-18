@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.303 (2026-10-18)
+
+- 錯誤修復與穩定性提升
+
 ## 2.1.302 (2026-10-16)
 
 - 新增 `CLAUDE_CODE_AUTO_MODE_MODEL` 以選擇用戶端 auto mode 分類器使用的模型；這不會變更伺服器端 auto mode 的模型

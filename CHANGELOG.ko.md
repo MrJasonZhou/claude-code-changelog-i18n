@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.303 (2026-10-18)
+
+- 버그 수정 및 안정성 향상
+
 ## 2.1.302 (2026-10-16)
 
 - 클라이언트 측 auto mode 분류기가 사용할 모델을 선택할 수 있도록 `CLAUDE_CODE_AUTO_MODE_MODEL` 추가. 서버 측 auto mode의 모델은 변경되지 않음

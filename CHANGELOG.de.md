@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.303 (2026-10-18)
+
+- Fehlerbehebungen und Zuverlässigkeitsverbesserungen
+
 ## 2.1.302 (2026-10-16)
 
 - `CLAUDE_CODE_AUTO_MODE_MODEL` hinzugefügt, um das Modell auszuwählen, das der clientseitige Auto-Mode-Klassifikator verwendet; dies ändert nicht das Modell für den serverseitigen Auto-Mode
