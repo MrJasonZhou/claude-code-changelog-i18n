@@ -2,6 +2,85 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.304 (2026-10-19)
+
+- 当优先运行的插件跳过你的 mod 的某个 hook 时，在 transcript 中添加了一行记录，并标明该事件和插件名称
+- 在 mod 的 `tool.check` 应答中添加了 `decider: "person"`：仅权限对话框或 host 的回调可以批准该请求；在无法询问任何人的情况下，将直接以该 mod 提供的理由拒绝
+- 在 mod 的 `tool.check` 事件中添加了 `e.isReadOnly`，当工具调用为只读时设置
+- 新增 `/auto-mode-setup`：一个引导式配置流程，通过读取你的项目和最近会话让 auto mode 了解你的环境；现已支持 Bedrock、Vertex、Foundry、Claude apps gateway 以及已禁用遥测的会话
+- 新增 `/claude-api managed-agents-secure`，用于在不更改任何内容的情况下，将 Managed Agents agent 的配置与 Anthropic 发布的官方安全指南进行比对
+- 在 transcript 视图（Ctrl+O）的压缩摘要中添加了此前调用的工具名称
+- 在 Pro 和 Max 计划中添加了提示：当恢复非活跃会话将消耗相当比例的 5 小时用量限额时发出警告，可选择仍旧恢复，或开启新会话（若你提及旧会话，Claude 可以查阅之前的记录）
+- 修复了在启动时批准 `ANTHROPIC_API_KEY` 或在 `/config` 中切换 "Use custom API key" 后，组织策略直到每小时检查时才会刷新的问题
+- 修复了在 Linux 上当 `sandbox.filesystem.denyRead` glob 包含非字符类的方括号（例如 `[user-id]` 路由目录）时，沙箱命令无法启动的问题
+- 修复了对挂载驱动器或其顶层目录（`/Volumes`、`/media`、WSL 的 `/mnt/c`）执行 `rm -r` 时，未触发像 `rm -rf /Applications` 那样的安全确认提示的问题
+- 修复了在裁剪文件时若磁盘空间耗尽，`CLAUDE_CODE_TRANSCRIPT_LOCAL_GC` 会丢失已保存 transcript 中消息的问题
+- 修复了插件通过生成子 agent 或重新运行已结束的子 agent，导致无头运行超出 `--max-turns`、Stop 或输入结束限制的问题
+- 修复了 mod 重新加载失败时会移除当前保持加载版本的工具和命令，且相关提示信息有误或未明确说明旧版本是否仍处于加载状态的问题
+- 修复了当具有相同标签且未指定 `key` 的按钮无变更重绘时，对 mod 按钮的点击事件会丢失的问题
+- 修复了在应用受管设置的机器以及 Team 和 Enterprise 计划中，内置 `plugin-authoring` skill 的 mod 分享卡在密钥扫描阶段的问题
+- 修复了计划的 Cowork 云端会话中，当每个子 agent 的 WebFetch 需要 URL 批准却无人审批时，均会再次等待 5 分钟的问题
+- 修复了 Write 结果和拒绝的编辑将工作目录外的文件显示为 `../../…` 的问题；现在会显示为 `~/…` 或完整路径
+- 修复了在 Cowork 云端会话中，从 "/" 菜单中选取的 claude.ai Directory 插件的 skills 无法作为命令运行的问题
+- 修复了当终端登录了不同账号时，Remote Control 会永久扣留桌面端会话历史记录的问题
+- 修复了在付费计划中设置了 DISABLE_TELEMETRY 或 DO_NOT_TRACK 时，无法从 Claude Desktop 启动 Remote Control 的问题
+- 修复了在 SDK 和桌面端会话中，模型切换、消息与中断操作需要排队等待上下文用量检查完成的问题
+- 修复了在 LLM 网关后出现的 `context_management: Extra inputs are not permitted` 错误；Claude Code 现在会在不携带该字段的情况下重发请求
+- 修复了在首次运行设置期间登录或 `/logout` 后首次启动时，通过服务端托管设置下发的 OpenTelemetry 配置在整个会话期间被忽略的问题
+- 修复了 macOS 和 Linux 上 Claude Desktop Code 标签页会话中未沙箱化的 Bash 命令无法识别 shell 启动文件（如 ~/.zshrc）导出的环境变量的问题
+- 修复了服务器报错后 Consumer Terms 提示被跳过一天或更长时间的问题
+- 修复了发生网络或服务器错误后，`/privacy-settings` 可能会提供不适用于你的选项的问题
+- 修复了当 Claude Code 正在压缩被 API 判定为过长而拒绝的会话时，若终止当前轮次会导致出现 "Context limit reached" 或 "Prompt is too long" 错误的问题
+- 修复了子 agent 在刚结束工作后被发送消息或恢复执行时，有时会遗忘其最近工作内容的问题
+- 修复了 `claude --help` 中关于 `--tools`、`--resume`、`--debug`、`--json-schema`、`--disable-slash-commands`、`--system-prompt-snapshot` 和 `claude update` 的描述，使其与实际行为一致
+- 修复了当 HEAD 处于 detached 状态或位于其他分支时，`claude --worktree` 在退出时未经询问便删除 worktree 及其分支，从而可能导致 commit 丢失的问题
+- 修复了恢复的会话和云端会话在启动时每当插件重新加载都会向 Claude 重新发送整个 skill 列表的问题
+- 修复了中断操作无法终止等待空闲管道或名称类似于图像设备上的 Read 操作的问题
+- 修复了当 `CLAUDE_CODE_EFFORT_LEVEL` 为 `auto` 或 `unset` 且未发送 level 时，`/effort status`、`/effort ultracode` 以及提示符的 effort 指示器会显示预估的 effort 级别的问题
+- 修复了在同一工具调用上的 Agent SDK 回调 hook 超时时，PreToolUse hook 的拒绝原因会被超时错误覆盖的问题
+- 修复了当无法将大型命令的输出文件复制到会话的 tool-results 文件夹时，Bash 和 PowerShell 会将其删除的问题（除非磁盘已满）
+- 修复了在宽度小于约 100 列的终端中，输入带预览的多选问题备注时会被 "…" 截断导致输入内容被隐藏的问题 (anthropics/claude-code#82768)
+- 修复了设定为 1 小时上限的自主节奏 `/loop` 唤醒恰好在 1 小时 prompt cache 过期后触发的问题，此类唤醒现在不再会在未命中缓存的情况下重新读取会话
+- 修复了 agent teams 的问题：从主会话批准关闭请求不再会退出整个 CLI
+- 修复了某个 skill 的 `once` hook 在运行后还会一并移除另一个 skill 相同 hook 的问题
+- 修复了 transcript 模式下的 `{` 和 `}` 会将提示符置于不一致的行或屏幕外，而非 transcript 第一行的问题
+- 修复了 `CLAUDE_CODE_AUTO_COMPACT_WINDOW=200k` 会静默设置为 100K 窗口的问题：该变量现在像 `--autocompact` 一样支持 `k` 和 `M` 后缀，并在值超出范围或被忽略时发出警告
+- 修复了在 agents 视图中若在释放鼠标按键前按下 Ctrl+C，会清除选中文本而未能复制的问题
+- 改进了 `/usage`：显示用量数据的速率限制何时结束，而不是提示 "try again in a moment"
+- 改进了在会话中编写的 mod 加载、重新加载或加载失败时显示的行信息
+- 改进了包含多个视图的 artifacts：当你索取其链接时，Claude 现在会列出每个视图的链接，并说明在切换视图时地址栏保持不变
+- 改进了云端会话：新会话的首轮交互不再需要等待从 claude.ai 同步的插件的本地 (stdio) MCP 服务器启动，除非服务器设置了 `alwaysLoad: true`
+- 改进了当服务器拒绝附带其他会话数据的状态更新时，远程会话恢复其状态的机制
+- 优化了 auto mode 下的会话文件大小：安全分类器的上下文不再随每个请求一同存储
+- 改进了 `claude -p` 的无效配置警告：未成功加载的文件仅列出阻碍其加载的原因，且每个文件的长列表会被截断限制
+- 改进了 SDK 和无头模式下恢复大型压缩会话的表现：恢复后的首个请求发送得更快
+- 提高了多个子 agent 同时运行时的响应速度与吞吐量
+- 优化了在长会话或已恢复会话中发送请求时的内存占用
+- Self-hosted runner：改进了当 git 主机对会话的代码仓库返回 "not found" 时显示的错误信息：现在会指明仓库名称以及应向谁咨询
+- Windows：在使用标准 Git for Windows 安装时，通过直接运行 git.exe 而非通过其 cmd 启动程序，改进了 git 命令的启动速度
+- 修改了 mod 的 `settings.read` hook，使其能够接收每个配置层并重写合并后的配置，从而让受管 mod 可以将组织配置设为上限（包括数据保留清理所使用的 `cleanupPeriodDays`）
+- 将 `/artifacts` 的删除确认更改为显示带编号的选项：按 1 或 Enter 保留 artifact，按 2 删除，同时 y、n 和 Esc 依然有效
+- 将用于启用 Claude 在会话中编写的 mod 的询问更改为不包含链接或 session id 的纯文本；新一轮交互开始时该询问仍然保留，并且在你启用它们时 Claude 会告知加载了哪些内容
+- 将自定义 `ANTHROPIC_BASE_URL` 下的工具搜索更改为默认开启；若网关返回 400 或 422，则会在不启用它的情况下重试
+- 更改了压缩逻辑，使其在压缩完成后再次向 Claude 发送 skill 列表；`/reload-skills` 现在仅发送新增或修改的 skill
+- 更改了 skill hooks 规则：来自单一来源（代码仓库、个人文件夹或插件）的 skills 在每个会话中最多只能注册 1,024 个 hooks 和 16,384 个匹配字符
+- 更改了仅允许插件 hooks 策略下的 skills 行为：在主会话中使用且其 hooks 被排除的 skill 将不再获得其 `allowed-tools` 权限
+- 更新了 /claude-api skill，使其在 Claude Platform on AWS 上使用 `ant` CLI，而不是回退到 SDK 或 curl
+- 移除了 `claude plugin validate` 中用于预测 mod 的 hooks 将在何处运行的说明信息
+- 移除了 Opus 5.5 上 `/fast` 对话框标题中的 "(research preview)" 标签
+- [VSCode] 为运行在 Amazon Bedrock、Google Vertex AI、Microsoft Foundry、LLM 网关后或已关闭遥测的会话，在聊天面板中增加了 mod 绘制支持
+- [VSCode] 修复了导致会话启动失败并提示 "Subprocess initialization did not complete within 60000ms" 的一个原因：SessionStart 命令 hook 运行所耗费的时间不再计入该限制（累计最多 10 分钟）
+- [VSCode] 修复了在启动期间关闭会话会导致其 Claude Code 进程持续运行直至启动流程结束的问题
+- [VSCode] 修复了在同时运行旧版 Claude Code 的机器上，长时间打开的面板中 mod 的绘制内容会消失直至下一轮交互的问题
+- [VSCode] 修复了设置 `claudeCode.claudeProcessWrapper` 时 Past conversations 会隐藏会话的问题
+- [VSCode] 将后台子 agent 更改为在其 Agent 卡片下方显示为单行状态，而不是将每一步流式输出到聊天中；完整 transcript 保留在 /tasks 中
+- [Cloud sessions] 修复了云端会话中 composer 的 @ 列表中文件夹未显示名称的问题，此前选择文件夹只会添加空格而非提及
+- [Claude Tag] 修复了任务进行中当频道变为跨 Enterprise Grid 工作区共享时 Claude 在 thread 中停止响应的问题；现在它会发送一次性提示，告知在新 thread 中 @提及它
+- [Claude Tag] 修复了在 thread 外部输入 `@Claude !fork` 时没有任何可见回复的问题；Claude 现在会向你显示一条私密提示，说明需在 thread 内部运行
+- [Code Review] 为 Code Review 添加了审查级别：Owner 可为组织选择 Quick、Standard（默认）或 Deep，并可为各个代码仓库指定独立级别
+- [Code Review] 在 Code Review 管理员设置中新增了一个选项，可自动审查 GitHub 组织中的每个仓库（包括后续新增的仓库），无需逐个手动选择
+- [Code Review] 修复了管理员开启 Code Review 后一两分钟内创建的 Pull Request 会被静默跳过的问题；现在这些请求会重试并被审查
+
 ## 2.1.303 (2026-10-18)
 
 - Bug 修复与可靠性改进

@@ -2,6 +2,85 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.304 (2026-10-19)
+
+- 新增了一行逐字稿紀錄，當優先執行的外掛程式跳過你的 mod hook 時，會列出該事件與外掛程式名稱
+- 在 mod 的 `tool.check` 回應中新增了 `decider: "person"`：僅有權限對話框或宿主的 callback 可以核准請求，且在無法詢問任何人的情況下會以 mod 的理由拒絕
+- 在 mod 的 `tool.check` 事件中新增了 `e.isReadOnly`，會在工具呼叫為唯讀時設定
+- 新增 `/auto-mode-setup`：引導式設定功能，可讀取你的專案與近期工作階段以讓 auto mode 了解你的環境，現在也支援 Bedrock、Vertex、Foundry、Claude apps gateway 以及停用遙測的工作階段
+- 新增 `/claude-api managed-agents-secure`，可在不變更任何設定的情況下，將 Managed Agents agent 的設定與 Anthropic 發布的安全指南進行比對
+- 在逐字稿檢視（Ctrl+O）的壓縮摘要中新增了先前所呼叫工具的名稱
+- 在 Pro 與 Max 方案中新增警示，當恢復非活動中的對話會消耗顯著比例的 5 小時用量上限時發出提示：可選擇強制恢復，或開啟新對話並在提及舊對話時讓 Claude 前去查詢
+- 修正在啟動時核准 `ANTHROPIC_API_KEY` 或在 `/config` 中切換「Use custom API key」後，組織政策直到每小時檢查時才會重新整理的問題
+- 修正當 `sandbox.filesystem.denyRead` glob 包含非字元類別的方括號（例如 `[user-id]` 路由資料夾）時，沙盒化指令在 Linux 上無法啟動的問題
+- 修正對已掛載磁碟機或其頂層資料夾（`/Volumes`、`/media`、WSL 的 `/mnt/c`）執行 `rm -r` 時，未出現類似 `rm -rf /Applications` 安全提示的問題
+- 修正當修剪檔案時磁碟空間不足，導致 `CLAUDE_CODE_TRANSCRIPT_LOCAL_GC` 從已儲存逐字稿中遺失訊息的問題
+- 修正外掛程式透過衍生 subagent 或重新執行已完成的 subagent，使 headless 執行超過 `--max-turns`、Stop 或已結束輸入後仍持續運作的問題
+- 修正 mod 重新載入失敗時會移除仍維持載入狀態版本的工具與指令，且其訊息可能錯誤或未說明先前版本是否仍然載入的問題
+- 修正具有相同標籤且未設定 `key` 的按鈕在未變更重繪時，點擊 mod 按鈕會遺失的問題
+- 修正在具備受控設定的機器以及 Team 和 Enterprise 方案上，內建 `plugin-authoring` skill 中的 mod 分享會在機密掃描時中止的問題
+- 修正排程的 Cowork 雲端工作階段中，每個 subagent 的 WebFetch 若需要無人批准的 URL 核准時，皆會再次等待五分鐘的問題
+- 修正 Write 結果與被拒絕的編輯將工作目錄外的檔案顯示為 `../../…` 的問題；現在會顯示為 `~/…` 或完整路徑
+- 修正 claude.ai Directory 外掛程式的 skill 在 Cowork 雲端工作階段從「/」選單選取時無法作為指令執行的問題
+- 修正當終端機登入不同帳號時，Remote Control 會永久保留桌面版對話歷史紀錄而不釋出的問題
+- 修正在付費方案上設定 DISABLE_TELEMETRY 或 DO_NOT_TRACK 時，Remote Control 無法從 Claude Desktop 啟動的問題
+- 修正 SDK 與桌面版工作階段中，模型切換、訊息與中斷會被阻塞在 context 用量檢查之後的問題
+- 修正 LLM gateway 後方的 `context_management: Extra inputs are not permitted` 錯誤；Claude Code 現在會在不含該欄位的情況下重新傳送請求
+- 修正在初次執行設定期間或 /logout 後首次啟動登入時，透過伺服器受控設定發送的 OpenTelemetry 設定在整個工作階段中被忽略的問題
+- 修正 macOS 與 Linux 上 Claude Desktop 的 Code 分頁工作階段中，非沙盒化的 Bash 指令無法讀取 shell 啟動檔（例如 ~/.zshrc）中匯出的環境變數的問題
+- 修正伺服器發生錯誤後，Consumer Terms 聲明會被跳過一天或更長時間的問題
+- 修正網路或伺服器發生錯誤後，`/privacy-settings` 提供的選項可能不適用於你的問題
+- 修正當 API 因對話過長而拒絕，且 Claude Code 正在壓縮對話時停止輪次，會出現「Context limit reached」或「Prompt is too long」錯誤的問題
+- 修正 subagent 在剛完成後若立即收到訊息或被恢復執行，有時會遺忘其最近工作內容的問題
+- 修正 `claude --help` 中關於 `--tools`、`--resume`、`--debug`、`--json-schema`、`--disable-slash-commands`、`--system-prompt-snapshot` 與 `claude update` 的說明文字，以符合實際運作行為
+- 修正當 HEAD 處於 detached 狀態或位於其他分支時，`claude --worktree` 在結束時未經詢問便刪除 worktree 及其分支，導致可能遺失 commit 的問題
+- 修正恢復的工作階段與雲端工作階段在每次啟動時外掛程式重新載入時，都會再次將完整 skill 清單傳送給 Claude 的問題
+- 修正中斷操作無法結束正在等待閒置 pipe 或名稱類似影像之裝置的 Read 的問題
+- 修正當 `CLAUDE_CODE_EFFORT_LEVEL` 為 `auto` 或 `unset` 且未傳送任何層級時，`/effort status`、`/effort ultracode` 與提示字元的 effort 指示器會顯示猜測之 effort 等級的問題
+- 修正當同一工具呼叫上的 Agent SDK callback hook 逾時，導致 PreToolUse hook 的拒絕原因被逾時錯誤覆蓋的問題
+- 修正當大型指令的輸出檔案無法複製到工作階段的 tool-results 資料夾時，Bash 與 PowerShell 會將其刪除的問題（除非磁碟空間已滿）
+- 修正帶有預覽的多選問題中輸入的備註在小於約 100 欄寬度的終端機中會被「…」截斷，導致輸入內容被隱藏的問題 (anthropics/claude-code#82768)
+- 修正排定在 1 小時上限的自主節奏 `/loop` 喚醒剛好在 1 小時 prompt cache 過期後觸發的問題，使這些喚醒不再需要在未快取的情況下重新讀取對話
+- 修正 agent teams：從主工作階段核准關閉請求不再會導致整個 CLI 結束
+- 修正 skill 的 `once` hook 在執行後會一併移除另一個 skill 的相同 hook 的問題
+- 修正逐字稿模式的 `{` 與 `}` 會將游標停在不一致的列或螢幕外，而非逐字稿第一列的問題
+- 修正 `CLAUDE_CODE_AUTO_COMPACT_WINDOW=200k` 會靜默設定為 100K 視窗的問題：該變數現在與 `--autocompact` 一樣支援 `k` 與 `M` 字尾，並會在值超出範圍或被忽略時發出警告
+- 修正 agents 檢視中若在釋放滑鼠按鈕前按下 Ctrl+C，會清除所選文字而未複製的問題
+- 改善 `/usage`，使其顯示用量數據的速率限制何時結束，而非「try again in a moment」
+- 改善在工作階段中編寫的 mod 載入、重新載入或載入失敗時顯示的訊息行
+- 改善具備多個檢視的 artifact：當索取其連結時，Claude 現在會列出各檢視的連結，並說明切換檢視時網址列保持不變
+- 改善雲端工作階段：新對話的第一輪不再等待從 claude.ai 同步之外掛程式的本機 (stdio) MCP 伺服器，除非伺服器設定了 `alwaysLoad: true`
+- 改善遠端工作階段在伺服器拒絕夾帶其他工作階段資料的狀態更新時，復原其狀態的機制
+- 改善 auto mode 下的工作階段檔案大小：安全分類器的 context 不再隨每個請求一同儲存
+- 改善 `claude -p` 的無效設定警告：未成功載入的檔案只會列出阻礙載入的原因，且過長的清單會以單一檔案為單位設定上限
+- 改善在 SDK 與 headless 模式下恢復大型已壓縮工作階段的表現：恢復後的第一個請求會更快送出
+- 改善多個 subagent 同時執行時的回應速度與輸送量
+- 改善在漫長或恢復的對話中傳送請求時的記憶體用量
+- Self-hosted runner：改善當 git host 對工作階段的存放庫回覆「not found」時顯示的錯誤：現在會指出存放庫名稱以及該向誰尋求協助
+- Windows：改善標準 Git for Windows 安裝環境下的 git 指令啟動速度，改為直接執行其 git.exe 而非透過 cmd 啟動程式
+- 變更 mod 的 `settings.read` hook，使其接收每個設定層並覆寫合併後的設定，讓受控 mod 能將組織的設定視為上限，包含保留清理所使用的 `cleanupPeriodDays`
+- 變更 `/artifacts` 刪除確認畫面以顯示編號選項：輸入 1 或 Enter 保留 artifact，2 刪除，且 y、n 與 Esc 仍可正常使用
+- 變更啟用 Claude 在工作階段中編寫之 mod 的詢問為純文字，不含連結或工作階段 ID；新輪次開始時該提示仍會保留，且啟用時 Claude 會告知載入了哪些內容
+- 變更自訂 `ANTHROPIC_BASE_URL` 後方的 tool search 預設為啟用；若 gateway 回傳 400 或 422，則會在不含該功能的情況下重試
+- 變更壓縮行為，在壓縮後會重新傳送 skill 清單給 Claude；`/reload-skills` 現在只會傳送新增或變更的 skill
+- 變更 skill hook：單一來源（存放庫、自己的資料夾或外掛程式）的 skill 每個工作階段最多可註冊 1,024 個 hook 與 16,384 個比對器字元
+- 變更僅允許外掛程式 hook 之政策下的 skill 行為：在主對話中使用但其 hook 被阻擋的 skill，不再能取得其 `allowed-tools`
+- 更新 /claude-api skill，在 Claude Platform on AWS 上改用 `ant` CLI，而非退回使用 SDK 或 curl
+- 移除 `claude plugin validate` 中預測 mod hook 將在何處執行的附註說明
+- 移除 Opus 5.5 上 `/fast` 對話框標題中的「(research preview)」標籤
+- [VSCode] 為在 Amazon Bedrock、Google Vertex AI 與 Microsoft Foundry 上、在 LLM gateway 後方或已關閉遙測的工作階段，在聊天面板中新增 mod 繪製支援
+- [VSCode] 修正工作階段因「Subprocess initialization did not complete within 60000ms」而啟動失敗的其中一個原因：SessionStart 指令 hook 執行的時間不再計入該限制，總計最多 10 分鐘
+- [VSCode] 修正工作階段在啟動時被關閉，卻仍保持其 Claude Code 程序持續執行直到啟動完成的問題
+- [VSCode] 修正在同時執行較舊版本 Claude Code 的機器上，長時間開啟的面板中的 mod 繪圖會消失直到下一輪才重現的問題
+- [VSCode] 修正當設定 `claudeCode.claudeProcessWrapper` 時，Past conversations 會隱藏工作階段的問題
+- [VSCode] 變更背景 sub-agent 在其 Agent 卡片下方顯示為單行狀態，而非將每一步驟串流至聊天室；完整逐字稿保留在 /tasks 中
+- [Cloud sessions] 修正雲端工作階段中編輯區 @ 清單內的資料夾未顯示名稱，且選取後僅加入空格而非 mention 的問題
+- [Claude Tag] 修正當頻道在任務執行途中跨 Enterprise Grid 工作區共用時，Claude 在討論串中停止回應的問題；現在會發布一次性通知提示在新的討論串中 @ 提及它
+- [Claude Tag] 修正在討論串外輸入 `@Claude !fork` 時未收到任何可見回覆的問題；Claude 現在會顯示私人附註，提示你應在討論串內執行
+- [Code Review] 在 Code Review 中新增審查層級：Owner 可為組織選擇 Quick、Standard（預設）或 Deep，並可為個別存放庫指定各自的層級
+- [Code Review] 在 Code Review 管理員設定中新增一個選項，可審查 GitHub 組織中的所有存放庫（包含後續新增的存放庫），無需逐一選取
+- [Code Review] 修正管理員開啟 Code Review 後一兩分鐘內建立的 pull request 會被靜默略過的問題；現在會重試並進行審查
+
 ## 2.1.303 (2026-10-18)
 
 - 錯誤修復與穩定性提升
