@@ -2,6 +2,47 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.305 (2026-10-20)
+
+- Se agregó `sandbox.allowNestedUserNamespaces` para que los comandos en sandbox en Linux puedan crear espacios de nombres de usuario (Chromium, rootless podman); esto les permite eludir las protecciones de archivos del sandbox
+- Se agregó `CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS` para que el modo de reintento desatendido (`CLAUDE_CODE_RETRY_WATCHDOG`) detecte un límite de uso levantado antes de su restablecimiento
+- Se corrigió el fallo de todas las solicitudes en Vertex, Bedrock y otros proveedores cuando el endpoint o una pasarela rechaza tool search, y detrás de pasarelas con ToolSearch deshabilitado u omitido en `--tools` (una regresión de 2.1.304): Claude Code ahora reintenta sin ello
+- Se corrigió que los ajustes `/effort` y `/autocompact` no se aplicaran cuando el nombre del modelo difería de un valor en `modelOverrides` por mayúsculas/minúsculas o por una etiqueta `[1m]`
+- Se corrigió que los nuevos worktrees en un repositorio bare a veces comenzaran desde el HEAD local en lugar de la rama predeterminada, y que a veces no se limpiaran los worktrees sin cambios de los subagentes
+- Se corrigió que los comandos de Bash en un disco lleno fallaran con una ruta de archivo `ENOSPC` sin procesar: el error ahora indica que el disco está lleno y que no se ejecutó nada
+- Se corrigió que un servidor MCP pasado mediante una sesión en la nube o por `setMcpServers` del SDK fuera reemplazado más adelante en la sesión por un servidor con el mismo nombre de tu propia configuración
+- Se corrigió que Claude indicara el modelo incorrecto para el trabajo de un subagente después de que este cambiara a un modelo de respaldo
+- Se corrigió que las sesiones en la nube y los compañeros de equipo no avisaran a Claude cuando una compactación debía omitir los mensajes más antiguos de su resumen para ajustarse
+- Se corrigieron más casos de sesiones en la nube programadas de Cowork que esperaban cinco minutos por cada subagente cuyo WebFetch requería una aprobación de URL que nadie podía conceder
+- Se corrigió que la reanudación del Workflow volviera a ejecutar agentes `pipeline()` y `parallel()` ya completados en lugar de servirlos desde el registro de la ejecución
+- Se corrigió que Remote Control dejara entradas vacías "(session)" en `/resume` después de cambiar de conversación con `/resume`
+- Se corrigió que las filas de `/usage` se truncaran en terminales estrechas
+- Se corrigió que las advertencias de inicio se imprimieran como texto sin procesar sobre el logotipo: ahora van al registro de depuración, y las reglas de permisos que no restringen nada se muestran como filas de advertencia debajo del banner
+- Se corrigió el modo de lector de pantalla: los cuadros de búsqueda ahora dicen "Search:" en lugar de un símbolo que VoiceOver leía como "telephone recorder", y el texto resaltado del prompt, como las coincidencias de búsqueda con Ctrl+R y "ultrathink", ya no tiene espacios dentro de las palabras
+- Self-hosted runner: se corrigió que un script de inicio que solo comparte su stdout con el runner o el orquestador fallara con `Resource temporarily unavailable` cuando `TERM` está configurado (una regresión de 2.1.300)
+- Self-hosted runner: se corrigió el fallo de acceso al repositorio desde 2.1.296 cuando un git credential helper o programa askpass lee su configuración a través de `GIT_CONFIG`
+- Self-hosted runner: se corrigió que el orquestador reportara el tiempo de espera agotado en un hook spawn-runner cuando un runner iniciado en segundo plano mantenía su salida abierta
+- Se mejoró `/usage`: cada advertencia es ahora una corrección de una línea que indica su origen, y `f` aplica las correcciones; las mismas correcciones aparecen en VS Code y `/doctor`
+- Se mejoraron los cuadros de diálogo de consentimiento de MCP para que sea menos probable que un Enter destinado al prompt se tome como Aceptar
+- Se mejoró `Image` de un mod para renderizar su imagen a pantalla completa en iTerm2 3.5 y versiones posteriores, donde antes solo mostraba su texto `alt`
+- Remote Control: se mejoraron los mensajes de spawn-mode: presionar `w` ahora indica que el nuevo modo se guardó para la carpeta, y un inicio posterior de `claude remote-control` que use el modo guardado indica de dónde provino
+- Se modificó `allowedMcpServers` para que deje de filtrar servidores stdio de `managed-mcp.json` que usan `${VAR}` únicamente en `env`: los que tu lista de permitidos omitió ahora se cargan al actualizar; usa `deniedMcpServers` para mantenerlos desactivados
+- Se modificaron los plugins que Claude Desktop monta por ruta para que ya no conserven sus `allowed-tools` cuando la configuración administrada de tu organización establece `allowManagedPermissionRulesOnly`
+- Se modificó la confirmación de eliminación de `/artifacts` para aceptar 1 o Enter para conservar, 2 para eliminar y Esc para cancelar; `y` y `n` ya no responden a ella
+- Se modificó el panel acoplado de un mod para mantenerse dentro del 45% del ancho de la terminal, incluido el ancho conservado de una terminal más ancha
+- [VSCode] Se agregó el estado de spinner "Running start-up hooks", con anuncio para lector de pantalla, mientras se ejecutan los hooks SessionStart o Setup
+- [VSCode] Se corrigió que el spinner truncara "Compacting..." cuando la configuración `spinnerVerbs` reemplaza los verbos integrados por otros más cortos
+- [VSCode] Se modificó el mensaje mostrado cuando una sesión no inicia a tiempo y no hay ningún hook ejecutándose: ahora prioriza los registros de salida y enumera las causas en lugar de apuntar primero al inicio de sesión y a la red
+- [Cloud sessions] Se corrigió que la página de administración de Cloud environments rechazara erróneamente guardar un entorno existente con un error de "installs packages"
+- [Cloud sessions] Se mejoró la eliminación de un entorno autohospedado para que el diálogo y los mensajes de error indiquen qué bloquea la eliminación y qué afectará
+- [Claude Tag] Se agregaron los canales públicos de Slack a los que Claude no se ha unido a la búsqueda Add place de administración de Claude Tag, para que los administradores puedan configurar uno desde allí
+- [Claude Tag] Se corrigieron los access bundles de Claude Tag para que un repositorio trasladado a otra cuenta de GitHub pueda agregarse nuevamente
+- [Claude Tag] Se corrigió que una rutina configurada en un hilo de DM de Slack dejara de publicar después de que otra rutina en ese hilo reiniciara la conversación; ahora ambas continúan publicando allí
+- [Claude Tag] Se corrigió que las rutinas configuradas en un hilo de Slack reportaran éxito sin publicar después de que finalizara la conversación; ahora esas ejecuciones se omiten y se le notifica al creador
+- [Claude Tag] Se mejoraron las páginas de administración de Claude Tag en organizaciones grandes para que las ediciones de plugins, skills y bundles funcionen mientras la lista de canales aún se está cargando
+- [Code Review] Se corrigió que Code Review a veces no revisara el commit más reciente cuando ingresaban varios pushes en un pull request durante una revisión
+- [Code Review] Se modificaron las re-revisiones de Code Review para que ya no comiencen con LGTM mientras los hallazgos bloqueantes anteriores sigan abiertos
+
 ## 2.1.304 (2026-10-19)
 
 - Se añadió una línea a la transcripción cuando un plugin que se ejecuta primero omite uno de los hooks de tu mod, indicando el evento y el plugin

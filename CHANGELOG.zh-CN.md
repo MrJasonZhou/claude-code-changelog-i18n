@@ -2,6 +2,47 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.305 (2026-10-20)
+
+- 新增 `sandbox.allowNestedUserNamespaces`，以便 Linux 上的沙箱命令可以创建用户命名空间（Chromium、rootless podman）；这允许它们绕过沙箱的文件保护
+- 新增 `CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS`，以便无人值守重试模式（`CLAUDE_CODE_RETRY_WATCHDOG`）能感知在重置时间前已解除的使用限制
+- 修复了在 Vertex、Bedrock 及其他提供商上，当端点或网关拒绝工具搜索，或网关禁用 ToolSearch / `--tools` 中未包含 ToolSearch 时每个请求均失败的问题（2.1.304 回归问题）：Claude Code 现在会在不带该工具的情况下重试
+- 修复了当模型名称与 `modelOverrides` 中的值仅有大小写差异或包含 `[1m]` 标签时，`/effort` 和 `/autocompact` 设置未生效的问题
+- 修复了裸仓库中的新 worktree 有时从本地 HEAD 而非默认分支签出，以及未更改的 subagent worktree 有时未被清理的问题
+- 修复了磁盘已满时 Bash 命令失败并直接输出 `ENOSPC` 原始文件路径的问题：错误信息现在会提示磁盘已满且未运行任何内容
+- 修复了由云会话或 SDK 的 `setMcpServers` 传入的 MCP 服务器在会话后续被个人设置中同名服务器替换的问题
+- 修复了 subagent 切换到 fallback 模型后，Claude 在说明 subagent 工作时报错模型名称的问题
+- 修复了云会话和 teammates 在压缩（compaction）为了容纳内容而不得不将最早的消息排除在摘要之外时，未通知 Claude 的问题
+- 修复了定时 Cowork 云会话中，每个 subagent 的 WebFetch 需要无人审批的 URL 授权而导致等待五分钟的更多情况
+- 修复了 Workflow 恢复运行时重新运行已完成的 `pipeline()` 和 `parallel()` agent，而不是从运行日志（journal）中直接获取结果的问题
+- 修复了使用 `/resume` 切换会话后，Remote Control 在 `/resume` 中遗留空 "(session)" 条目的问题
+- 修复了在较窄的终端中 `/usage` 行被截断的问题
+- 修复了启动警告在 logo 上方作为原始文本打印的问题：它们现在会输出到 debug 日志，未限制任何内容的权限规则则会在横幅下方显示为警告行
+- 修复了屏幕阅读器模式：搜索框现在显示 "Search:"，而非 VoiceOver 会朗读为 "telephone recorder" 的符号；高亮提示文本（如 Ctrl+R 搜索匹配和 "ultrathink"）的单词内部不再出现多余空格
+- Self-hosted runner：修复了仅与 runner 或 orchestrator 共享标准输出的启动脚本在设置了 `TERM` 时因 `Resource temporarily unavailable` 失败的问题（2.1.300 回归问题）
+- Self-hosted runner：修复了自 2.1.296 以来，当 git credential helper 或 askpass 程序通过 `GIT_CONFIG` 读取配置时仓库访问失败的问题
+- Self-hosted runner：修复了后台启动的 runner 保持其输出流打开时，orchestrator 会将 spawn-runner hook 报告为超时的问题
+- 优化了 `/usage`：每条警告现在都提供指明来源的单行修复方案，按 `f` 即可应用修复；相同的修复建议也会出现在 VS Code 和 `/doctor` 中
+- 优化了 MCP 授权确认对话框，减少将本用于输入 prompt 的 Enter 键误当作 Accept 的情况
+- 优化了 mod 的 `Image`，使其在 iTerm2 3.5 及更高版本中以全屏渲染绘制图片，此前仅显示其 `alt` 文本
+- Remote Control：优化了 spawn-mode 的消息提示：按 `w` 现在会提示新模式已保存至该文件夹，之后使用已保存模式启动 `claude remote-control` 时会说明其配置来源
+- 变更了 `allowedMcpServers`，不再过滤仅在 `env` 中使用 `${VAR}` 的 `managed-mcp.json` stdio 服务器：白名单中此前被排除的服务器升级后将会加载；如需禁用请使用 `deniedMcpServers`
+- 变更了 Claude Desktop 按路径挂载的插件行为：当组织的托管设置配置了 `allowManagedPermissionRulesOnly` 时，不再保留插件的 `allowed-tools`
+- 变更了 `/artifacts` 删除确认操作：现在按 1 或 Enter 保留，按 2 删除，按 Esc 取消；不再响应 `y` 和 `n`
+- 变更了 mod 的停靠窗格行为，使其宽度保持在终端宽度的 45% 以内（包括从更宽终端继承过来的宽度）
+- [VSCode] 新增了在 SessionStart 或 Setup hook 运行时显示的 "Running start-up hooks" 加载动画状态，并支持屏幕阅读器播报
+- [VSCode] 修复了当 `spinnerVerbs` 设置将内置动词替换为简短动词时，加载动画会截断 "Compacting..." 的问题
+- [VSCode] 变更了会话未及时启动且无 hook 运行时显示的消息：现在优先展示输出日志并列出可能的原因，而不是首先指向登录和网络问题
+- [Cloud sessions] 修复了 Cloud environments 管理页面错误地以 "installs packages" 报错拒绝保存现有环境的问题
+- [Cloud sessions] 优化了删除 self-hosted 环境的体验，对话框和错误信息现在会说明阻碍删除的原因以及将产生的影响
+- [Claude Tag] 在 Claude Tag 管理页面的 Add place 搜索中增加了 Claude 尚未加入的公开 Slack 频道，以便管理员直接在此配置
+- [Claude Tag] 修复了 Claude Tag access bundles，使迁移至其他 GitHub 账号的仓库可以被重新添加
+- [Claude Tag] 修复了在 Slack 私信线程中设置的 routine 在该线程中另一个 routine 重启会话后停止发送消息的问题；现在两者都会继续在该线程中发送
+- [Claude Tag] 修复了在 Slack 线程中设置的 routine 在会话结束后未发送内容却报告成功的问题；现在这些运行会被跳过并通知创建者
+- [Claude Tag] 优化了大型组织中的 Claude Tag 管理页面，使频道列表仍在加载时即可编辑 plugin、skill 和 bundle
+- [Code Review] 修复了在审查期间 pull request 收到多次 push 时，Code Review 有时未审查最新 commit 的问题
+- [Code Review] 变更了 Code Review 的重新审查逻辑：在先前的阻碍性审查意见仍未解决时，不再以 LGTM 开头
+
 ## 2.1.304 (2026-10-19)
 
 - 当优先运行的插件跳过你的 mod 的某个 hook 时，在 transcript 中添加了一行记录，并标明该事件和插件名称
