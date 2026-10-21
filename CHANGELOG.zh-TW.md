@@ -2,6 +2,11 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.306 (2026-10-21)
+
+- 修復雲端工作階段中的 `claude -p` 在未載入該工作階段環境變數啟動時，會回報 "Not logged in" 的問題
+- 修復在包含大量 MCP 工具的工作階段中，API 錯誤被替換為 "prompt is too long" 以及觸發非必要壓縮的問題
+
 ## 2.1.305 (2026-10-20)
 
 - 新增 `sandbox.allowNestedUserNamespaces`，讓 Linux 上的沙盒指令可以建立 user namespaces（如 Chromium、rootless podman）；這允許它們繞過沙盒的檔案保護機制

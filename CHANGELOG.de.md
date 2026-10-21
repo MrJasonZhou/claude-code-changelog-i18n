@@ -2,6 +2,11 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.306 (2026-10-21)
+
+- Fehler behoben, bei dem `claude -p` in Cloud-Sessions "Not logged in" meldete, wenn es ohne die Umgebungsvariablen der Session gestartet wurde
+- Fehler behoben, bei dem in Sessions mit vielen MCP-Tools ein API-Fehler durch "prompt is too long" ersetzt und eine unnötige Kompaktierung ausgelöst wurde
+
 ## 2.1.305 (2026-10-20)
 
 - `sandbox.allowNestedUserNamespaces` hinzugefügt, damit Befehle in einer Sandbox unter Linux Benutzer-Namespaces erstellen können (Chromium, rootless podman); dies ermöglicht es ihnen, die Datei-Schutzmechanismen der Sandbox zu umgehen

@@ -2,6 +2,11 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.306 (2026-10-21)
+
+- Correction de `claude -p` dans les sessions cloud qui indiquait "Not logged in" lorsqu'il était lancé sans les variables d'environnement de la session
+- Correction d'une erreur d'API remplacée par "prompt is too long", et d'une compaction inutile, dans les sessions comportant de nombreux outils MCP
+
 ## 2.1.305 (2026-10-20)
 
 - Ajout de `sandbox.allowNestedUserNamespaces` afin que les commandes dans le bac à sable sous Linux puissent créer des espaces de noms utilisateur (Chromium, podman sans privilèges root) ; cela leur permet de contourner les protections de fichiers du bac à sable

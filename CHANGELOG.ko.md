@@ -2,6 +2,11 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.306 (2026-10-21)
+
+- 클라우드 세션 내에서 세션 환경 변수 없이 실행될 때 `claude -p`가 "Not logged in"으로 표시되던 문제 수정
+- MCP 도구가 많은 세션에서 API 오류가 "prompt is too long"으로 대체되던 문제 및 불필요한 압축이 발생하던 문제 수정
+
 ## 2.1.305 (2026-10-20)
 
 - Linux의 샌드박스 명령이 사용자 네임스페이스를 생성할 수 있도록 `sandbox.allowNestedUserNamespaces` 추가(Chromium, rootless podman). 이를 통해 샌드박스의 파일 보호를 우회할 수 있습니다.
