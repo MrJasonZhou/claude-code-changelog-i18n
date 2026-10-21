@@ -2,6 +2,52 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.307 (2026-10-21)
+
+- 新增 `/claude-api api-version`，可將 Claude API 程式碼遷移至 API 版本 `2026-10-21`
+- 新增 `claude_code.safety_event` OpenTelemetry 事件，用於記錄每個被權限規則、auto 模式、安全檢查、hook 或 sandbox 攔截、提示確認或退回的工具呼叫
+- 修復在設定 `CLAUDE_CODE_DISABLE_1M_CONTEXT` 且模型為帶有 `[1m]` 後綴的別名（如 `opus[1m]`）時，請求因找不到模型錯誤而失敗的問題
+- 修復在自訂 `ANTHROPIC_BASE_URL` 閘道背後及 Foundry 上發送 `prompt-caching-scope` beta 標頭的問題（該標頭在這些環境下無作用）
+- 修復在 macOS 上登入鑰匙圈鎖定時，MCP 伺服器在 `claude -p` 中顯示「needs authentication」的問題；現在會說明原因，且解鎖後的下一次執行無需重新登入即可連線
+- 修復 macOS 或 Linux 電腦在連線過程中進入睡眠時，MCP 伺服器被回報為逾時且在無周邊（headless）執行中保持失敗狀態的問題
+- 修復 HTTP MCP 工具呼叫在連線中途關閉時被重複發送兩次的問題；現在僅會重試唯讀或等冪（idempotent）的工具
+- 修復在背景任務執行時，回合有時會在未取得 SDK MCP 伺服器最新工具的情況下開始的問題
+- 修復在讀取大量 PDF 頁面、圖片或其他大型工具結果的回合中出現部分「Autocompact is thrashing」錯誤的問題
+- 修復雲端工作階段中的 `/autocompact` 在工作階段重新啟動後恢復為預設視窗大小的問題
+- 修復使用 `/clear` 清除的對話在雲端或自我託管 runner 工作階段重新啟動時有時會重新出現的問題
+- 修復在 Claude apps 閘道工作階段中 `CLAUDE_STREAM_FIRST_BYTE_TIMEOUT_MS` 被忽略的問題
+- 修復在設定 `OTEL_EXPORTER_OTLP_HEADERS` 時，來自 Claude apps 閘道背後之 Claude Desktop 工作階段的遙測資料被拒絕的問題
+- 修復 `/permissions` > Recently denied 未顯示被拒絕的 shell 指令，以及 auto 模式的本機分類器在檢查重試指令時忽略該處核准的問題；現在核准該項目會顯示指令名稱而非其描述
+- 修復 `/help` 與 `/` 指令選單針對內建技能（如 `/claude-api`）顯示面向模型的長描述而非簡短描述的問題
+- 修復 subagent 逐字稿（transcript）在串流回應中記錄占位 token 使用量及空白 stop reason 的問題
+- 修復透過 Agent SDK 的 `setModel()` 及其建置之應用程式切換模型時，若 API 確認模型耗時超過 5 秒即被拒絕的問題；Claude Code 現在最多等待 15 秒
+- 修復透過已連線應用程式停止背景指令（例如桌面應用程式封存閒置工作階段）時被向 Claude 回報為使用者手動停止的問題；現在通知會標註其輸出檔案名稱
+- 修復 Cowork 雲端工作階段中的 WebFetch 在網站回應 4xx 狀態或 robots.txt 拒絕時回報工具錯誤的問題；現在會如同本機工作階段一樣回傳正常結果
+- 修復在直接設定的 GitHub MCP 伺服器上，寫入工具顯示的表單關閉後未在桌面應用程式的 Code 分頁中建立任何內容的問題
+- 修復當伺服器關閉重用的連線時，Artifact 工具讀取因連線重設（connection reset）而失敗的問題
+- Self-hosted runner：修復使用 `--use-anthropic-git-proxy` 的工作階段會提交先前工作階段殘留在 clone 中的 `.claude/settings.local.json` 的問題
+- Self-hosted runner：修復在 checkout hook 執行期間封存或重新排隊工作階段、或停止 runner 時，導致 hook 處理程序持續執行且 runner 槽位被佔用的問題
+- 改善無法解析之工具呼叫的復原機制：Claude Code 現在在以錯誤結束回合前，最多重試該呼叫兩次
+- 改善同時啟動的 fork subagent：現在每個 subagent 都會被告知哪一次啟動屬於自己，大幅降低 fork 嘗試執行彼此工作的機率
+- 改善瀏覽器登入流程：登入完成後立即顯示成功頁面，無需等待帳號個人資料載入
+- 改善雲端與自我託管 runner 工作階段中的網路搜尋錯誤訊息：被拒絕並回傳帶有原因的 403 搜尋現在會顯示該具體原因，而非一般的「Authentication error」
+- 改善當桌面應用程式的其中一個 MCP 伺服器無法連線時，雲端工作階段的首字回應時間
+- 改善對話記錄（transcript）包含大量貼上圖片或 PDF 讀取內容之工作階段的 Remote Control 連線時間
+- 變更 WebSearch 額度用盡時 Claude 收到的通知，同時提示其不要在瀏覽器中或透過 computer use 查詢搜尋引擎
+- 變更 `axScreenReader` 設定及設定檔 `env` 區塊中的 `CLAUDE_AX_SCREEN_READER`，使其僅套用自 user、managed 或 `--settings` 設定（自 2.1.305 起）
+- Self-hosted runner：變更 checkout hook 預設在 30 分鐘後強制停止並判定工作階段設定失敗；若需要更長時間，請調高 `--checkout-hook-timeout-min` 或將其設為 `0`
+- Self-hosted runner：變更為 Anthropic 託管 git 建置的憑證檔案，使其比照 CLI 過濾信任的憑證；`[runner:warn]` 訊息行會指出排除的憑證數量
+- [VSCode] 新增語音聽寫自動停止時（15 秒未辨識到語音，或達到 2 分鐘上限）麥克風按鈕上的提示通知，說明停止原因並保留目前已輸入的文字
+- [VSCode] 修復點擊 Show more 展開的長提示詞遮蔽整個聊天面板的問題：釘選的提示詞現在上限為面板高度的 40% 並可滾動捲動
+- [VSCode] 修復包含 LaTeX 數學式的清單項目或表格儲存格局部內容在貼上至多圖文編輯器時，被貼成新清單或表格的問題
+- [VSCode] 修復當 `NODE_EXTRA_CA_CERTS` 僅設定於 `~/.claude/settings.json` 時，語音聽寫在 TLS 檢驗代理伺服器背後失敗的問題；現在亦會遵循 `CLAUDE_CODE_CERT_STORE`
+- [VSCode] 變更「still open somewhere else」通知以涵蓋擴充功能重新啟動殘留的 Claude 處理程序（通常會在約 10 分鐘內自行結束）
+- [VSCode] 變更語音聽寫機制，使其比照 CLI 過濾信任的憑證
+- [VSCode] 變更擴充功能本身的請求，使其比照 CLI 過濾信任的憑證，並信任環境變數或使用者設定中指定的 `NODE_EXTRA_CA_CERTS` 檔案
+- [Cloud sessions] 修復儲存庫選取器在搜尋仍於背景執行時顯示「No repositories match」的問題；現在會顯示「Searching…」直至結果回傳
+- [Cloud sessions] 修復自我託管環境中「Waiting for a runner」狀態被截斷的問題；在使用隨選 runner 時，現在會自您最後發送的訊息起累計計時並顯示失敗的嘗試次數
+- [Code Review] 在 Code Review 中新增 `@claude review stop`（亦支援 `off` 及 `pause`），可在不啟動新審查的情況下結束 pull request 上的 `@claude review always` 訂閱
+
 ## 2.1.306 (2026-10-21)
 
 - 修復雲端工作階段中的 `claude -p` 在未載入該工作階段環境變數啟動時，會回報 "Not logged in" 的問題

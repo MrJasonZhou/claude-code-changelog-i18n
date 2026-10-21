@@ -2,6 +2,52 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.307 (2026-10-21)
+
+- 新增 `/claude-api api-version`，用于将 Claude API 代码迁移至 API 版本 `2026-10-21`
+- 为每个被权限规则、自动模式、安全检查、hook 或沙箱阻止、提示或退回的工具调用添加了 `claude_code.safety_event` OpenTelemetry 事件
+- 修复了当设置了 `CLAUDE_CODE_DISABLE_1M_CONTEXT` 且模型为带有 `[1m]` 后缀的别名（如 `opus[1m]`）时，请求因 model-not-found 错误而失败的问题
+- 修复了在自定义 `ANTHROPIC_BASE_URL` 网关后方以及在不起作用的 Foundry 上仍会发送 `prompt-caching-scope` beta 请求头的问题
+- 修复了在 macOS 上登录钥匙串锁定时，MCP 服务器在 `claude -p` 中显示“needs authentication”的问题；现会说明原因，解锁后的下一次运行无需重新登录即可连接
+- 修复了当 macOS 或 Linux 计算机在连接时进入睡眠状态，导致 MCP 服务器被报告超时并在无头运行中保持失败状态的问题
+- 修复了 HTTP MCP 工具调用在连接途中关闭时会被发送两次的问题；现在仅对只读或幂等工具进行重试
+- 修复了在后台任务运行时，轮次有时会在缺少 SDK MCP 服务器最新工具的情况下启动的问题
+- 修复了在读取大量 PDF 页面、图像或其他大型工具结果的轮次中出现的部分“Autocompact is thrashing”错误
+- 修复了云端会话中的 `/autocompact` 在会话重启后恢复为默认窗口的问题
+- 修复了通过 `/clear` 清除的对话在云端或自托管 runner 会话重启时有时会重新出现的问题
+- 修复了在 Claude apps 网关会话中 `CLAUDE_STREAM_FIRST_BYTE_TIMEOUT_MS` 被忽略的问题
+- 修复了当设置了 `OTEL_EXPORTER_OTLP_HEADERS` 时，来自 Claude apps 网关后方 Claude Desktop 会话的遥测数据被拒绝的问题
+- 修复了 `/permissions` > Recently denied 不显示被拒绝的 shell 命令，以及自动模式的本地分类器在检查重试命令时忽略此处批准的问题；批准某一行现在会指明命令名称，而非其描述
+- 修复了 `/help` 和 `/` 命令菜单对内置技能（如 `/claude-api`）显示面向模型的长描述而非简短描述的问题
+- 修复了 subagent transcript 对流式响应记录占位 token 使用量以及空 stop reason 的问题
+- 修复了通过 Agent SDK 的 `setModel()` 及其构建的应用切换模型时，若 API 确认模型耗时超过 5 秒则会被拒绝的问题；Claude Code 现在最多等待 15 秒
+- 修复了通过连接的应用（例如桌面应用归档空闲会话）停止的后台命令被向 Claude 报告为由用户停止的问题；通知中现在会指明其输出文件
+- 修复了 Cowork 云端会话中的 WebFetch 在网站返回 4xx 状态或 robots.txt 拒绝时报告工具错误的问题；现在作为正常结果返回，与本地会话一致
+- 修复了直接配置的 GitHub MCP 服务器上的写入工具在桌面应用的 Code 标签页中显示表单后关闭却未创建任何内容的问题
+- 修复了当服务器关闭了复用的连接时，Artifact 工具读取因连接重置而失败的问题
+- 自托管 runner：修复了带有 `--use-anthropic-git-proxy` 的会话会提交之前会话留在 clone 中的 `.claude/settings.local.json` 的问题
+- 自托管 runner：修复了在 checkout hook 期间归档或重新排队会话，或停止 runner 时，会导致 hook 的进程持续运行且 runner 槽位被占用的问题
+- 改进了无法解析的工具调用的恢复能力：Claude Code 现在最多重试调用两次，然后才会以错误结束该轮次
+- 改进了一起启动的 fork subagents：现在会告知每个 subagent 哪一次启动属于它自己，从而大幅降低 forks 尝试启动彼此任务的可能性
+- 改进了浏览器登录体验：一旦登录完成即显示成功页面，无需等待账户个人资料加载
+- 改进了云端和自托管 runner 会话中的网络搜索错误提示：带有原因的 403 拒绝搜索现在会显示该具体原因，而不是通用的“Authentication error”
+- 优化了当桌面应用的一个 MCP 服务器无法连接时，云端会话首次回复的时间
+- 优化了 transcript 包含大量粘贴图像或 PDF 读取记录的会话的 Remote Control 连接时间
+- 更改了当 WebSearch 额度用尽时 Claude 收到的通知，补充告知其不要在浏览器中或通过 computer use 查询搜索引擎
+- 更改了设置 `env` 块中的 `axScreenReader` 设置和 `CLAUDE_AX_SCREEN_READER`，使其仅在来自用户、托管或 `--settings` 设置时生效（自 2.1.305 起）
+- 自托管 runner：将 checkout hook 更改为默认在 30 分钟后停止，并判定会话设置失败；如果需要更长时间，请调高 `--checkout-hook-timeout-min` 或将其设置为 `0`
+- 自托管 runner：更改了为 Anthropic 托管的 git 构建的证书文件，像 CLI 一样过滤其受信任证书；`[runner:warn]` 行会给出被排除的数量
+- [VSCode] 当语音听写自行停止（15 秒内未识别到语音，或达到 2 分钟上限）时，在麦克风按钮上添加了通知，说明原因并提示已保留当前文本
+- [VSCode] 修复了通过 Show more 展开的长提示词遮挡整个聊天面板的问题：固定的提示词现在最大限制为面板的 40% 并支持滚动
+- [VSCode] 修复了在富文本编辑器中粘贴包含 LaTeX 数学的列表项或表格单元格片段时会被粘贴为新列表或表格的问题
+- [VSCode] 修复了当仅在 `~/.claude/settings.json` 中设置了 `NODE_EXTRA_CA_CERTS` 时，听写在 TLS 审查代理后方失败的问题；现在它也遵循 `CLAUDE_CODE_CERT_STORE`
+- [VSCode] 更改了“still open somewhere else”通知，使其同时涵盖扩展重启残留的 Claude 进程（该进程通常会在大约 10 分钟内自行结束）
+- [VSCode] 更改了语音听写功能，像 CLI 一样过滤其受信任证书
+- [VSCode] 更改了扩展自身的请求，使其像 CLI 一样过滤其受信任证书，并信任环境变量或用户设置中指定的 `NODE_EXTRA_CA_CERTS` 文件
+- [Cloud sessions] 修复了搜索仍在进行时仓库选择器显示“No repositories match”的问题；现在在结果返回前会显示“Searching…”
+- [Cloud sessions] 修复了自托管环境上“Waiting for a runner”状态被截断的问题；对于按需 runners，现在会从你的上一条消息开始计时并显示失败的尝试
+- [Code Review] 为 Code Review 添加了 `@claude review stop`（以及 `off` 和 `pause`），用于在不启动新审查的情况下终止 Pull Request 上的 `@claude review always` 订阅
+
 ## 2.1.306 (2026-10-21)
 
 - 修复了在云端会话中未携带该会话环境变量启动时，`claude -p` 提示 "Not logged in" 的问题

@@ -2,6 +2,52 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.307 (2026-10-21)
+
+- Se añadió `/claude-api api-version` para migrar el código de Claude API a la versión de API `2026-10-21`
+- Se añadió el evento de OpenTelemetry `claude_code.safety_event` para cada llamada a herramienta que una regla de permisos, el modo automático, una comprobación de seguridad, un hook o el sandbox haya detenido, solicitado confirmación o devuelto
+- Se corrigió que las solicitudes fallaran con un error de modelo no encontrado cuando `CLAUDE_CODE_DISABLE_1M_CONTEXT` está configurado y el modelo es un alias con el sufijo `[1m]`, como `opus[1m]`
+- Se corrigió el envío del encabezado beta `prompt-caching-scope` detrás de gateways `ANTHROPIC_BASE_URL` personalizados y en Foundry, donde no tiene ningún efecto
+- Se corrigió que los servidores MCP mostraran "needs authentication" en `claude -p` en macOS mientras el llavero de inicio de sesión estaba bloqueado; ahora indican el motivo y la siguiente ejecución tras desbloquearlo se conecta sin necesidad de volver a iniciar sesión
+- Se corrigió que los servidores MCP se reportaran con tiempo de espera agotado y permanecieran en estado fallido en ejecuciones headless cuando un equipo macOS o Linux entraba en suspensión mientras se conectaban
+- Se corrigió que las llamadas a herramientas HTTP MCP se enviaran dos veces cuando la conexión se cerraba a mitad de la llamada; ahora solo se reintentan las herramientas de solo lectura o idempotentes
+- Se corrigió que un turno a veces comenzara sin las herramientas más recientes de un servidor SDK MCP cuando había una tarea en segundo plano en ejecución
+- Se corrigieron algunos errores "Autocompact is thrashing" en turnos que leían muchas páginas de PDF, imágenes u otros resultados voluminosos de herramientas
+- Se corrigió que `/autocompact` en sesiones en la nube volviera a la ventana predeterminada tras reiniciar la sesión
+- Se corrigió que una conversación borrada con `/clear` a veces reapareciera al reiniciar una sesión en la nube o en un runner autoalojado
+- Se corrigió que se ignorara `CLAUDE_STREAM_FIRST_BYTE_TIMEOUT_MS` en sesiones a través de gateways de Claude apps
+- Se corrigió el rechazo de la telemetría de sesiones de Claude Desktop detrás de un gateway de Claude apps cuando `OTEL_EXPORTER_OTLP_HEADERS` está configurado
+- Se corrigió que `/permissions` > Recently denied no mostrara el comando de shell denegado, y que el clasificador local del modo automático ignorara una aprobación desde allí al verificar un comando reintentado; aprobar una fila ahora indica el nombre del comando y no su descripción
+- Se corrigió que `/help` y el menú de comandos `/` mostraran descripciones largas orientadas al modelo para skills integradas como `/claude-api` en lugar de sus descripciones breves
+- Se corrigió que las transcripciones de subagentes registraran un uso de tokens de marcador de posición y un motivo de detención vacío para respuestas en streaming
+- Se corrigió que los cambios de modelo mediante `setModel()` del Agent SDK, y las aplicaciones basadas en él, fueran rechazados si la API tardaba más de 5 segundos en confirmar el modelo; Claude Code ahora espera hasta 15 segundos
+- Se corrigió que un comando en segundo plano detenido mediante una aplicación conectada (como la aplicación de escritorio archivando una sesión inactiva) se reportara a Claude como detenido por el usuario; la notificación ahora indica su archivo de salida
+- Se corrigió que WebFetch en sesiones en la nube de Cowork reportara un error de herramienta cuando un sitio web respondía con un estado 4xx o un rechazo por robots.txt; ahora es un resultado normal, al igual que en las sesiones locales
+- Se corrigió que las herramientas de escritura en un servidor GitHub MCP configurado directamente mostraran un formulario que se cerraba sin crear nada en la pestaña Code de la aplicación de escritorio
+- Se corrigió que las lecturas de herramientas Artifact fallaran por reinicio de conexión cuando el servidor había cerrado una conexión reutilizada
+- Self-hosted runner: Se corrigió que las sesiones con `--use-anthropic-git-proxy` hicieran commit de un archivo `.claude/settings.local.json` dejado en el clon por una sesión anterior
+- Self-hosted runner: Se corrigió que archivar o poner en cola de nuevo una sesión, o detener el runner, durante su hook de checkout dejara los procesos del hook en ejecución y el slot del runner ocupado
+- Se mejoró la recuperación ante llamadas a herramientas imposibles de parsear: Claude Code ahora reintenta la llamada hasta dos veces antes de finalizar el turno con un error
+- Se mejoraron los subagentes bifurcados que se lanzan conjuntamente: ahora a cada uno se le indica cuál es su propio lanzamiento, por lo que es mucho menos probable que los forks intenten iniciar el trabajo del otro
+- Se mejoró el inicio de sesión en el navegador: la página de éxito ahora aparece en cuanto se completa el inicio de sesión, sin esperar a que se cargue el perfil de tu cuenta
+- Se mejoraron los errores de búsqueda web en sesiones en la nube y en runners autoalojados: una búsqueda rechazada con un 403 que indique un motivo ahora muestra dicho motivo en lugar de un "Authentication error" genérico
+- Se mejoró el tiempo hasta la primera respuesta en sesiones en la nube cuando uno de los servidores MCP de la aplicación de escritorio no puede conectarse
+- Se mejoró el tiempo de conexión de Remote Control para sesiones cuya transcripción contiene imágenes grandes pegadas o lecturas de PDF
+- Se modificó el aviso que recibe Claude cuando se agota el presupuesto de WebSearch para indicarle también que no consulte motores de búsqueda en un navegador ni mediante computer use
+- Se modificó la configuración `axScreenReader` y `CLAUDE_AX_SCREEN_READER` en un bloque `env` de configuración para que se aplique únicamente desde los ajustes de usuario, administrados o de `--settings` (desde 2.1.305)
+- Self-hosted runner: Se modificaron los hooks de checkout para que se detengan tras 30 minutos de forma predeterminada, dando por fallida la configuración de la sesión; si el tuyo necesita más tiempo, aumenta `--checkout-hook-timeout-min` o establécelo en `0`
+- Self-hosted runner: Se modificó el archivo de certificados generado para git gestionado por Anthropic a fin de filtrar sus certificados de confianza tal como lo hace la CLI; una línea `[runner:warn]` indica la cantidad excluida
+- [VSCode] Se añadió un aviso en el botón del micrófono cuando el dictado por voz se detiene automáticamente (15 segundos sin habla reconocida o el límite de 2 minutos), explicando el motivo e indicando que se conserva el texto obtenido hasta el momento
+- [VSCode] Se corrigió que un prompt largo expandido con Show more cubriera todo el panel de chat: ahora un prompt fijado está limitado al 40% del panel y se desplaza con scroll
+- [VSCode] Se corrigió que parte de un elemento de lista o celda de tabla con expresiones matemáticas en LaTeX se pegara como una nueva lista o tabla en editores de texto enriquecido
+- [VSCode] Se corrigió que el dictado fallara detrás de un proxy con inspección TLS cuando `NODE_EXTRA_CA_CERTS` está configurado únicamente en `~/.claude/settings.json`; ahora también respeta `CLAUDE_CODE_CERT_STORE`
+- [VSCode] Se modificó el aviso "still open somewhere else" para cubrir también un proceso de Claude residual de un reinicio de la extensión, el cual suele finalizar por sí solo en unos 10 minutos
+- [VSCode] Se modificó el dictado por voz para que filtre sus certificados de confianza del mismo modo que la CLI
+- [VSCode] Se modificaron las solicitudes propias de la extensión para que filtren sus certificados de confianza tal como lo hace la CLI y confíen en el archivo `NODE_EXTRA_CA_CERTS` indicado en el entorno o en los ajustes de usuario
+- [Cloud sessions] Se corrigió que el selector de repositorios indicara "No repositories match" mientras aún se ejecutaba una búsqueda; ahora muestra "Searching…" hasta que lleguen los resultados
+- [Cloud sessions] Se corrigió que el estado "Waiting for a runner" en entornos autoalojados quedara cortado; con runners bajo demanda ahora realiza un conteo ascendente desde tu último mensaje y muestra los intentos fallidos
+- [Code Review] Se añadió `@claude review stop` (también `off` y `pause`) a Code Review, finalizando una suscripción `@claude review always` en un pull request sin iniciar una nueva revisión
+
 ## 2.1.306 (2026-10-21)
 
 - Se corrigió que `claude -p` dentro de sesiones en la nube reportara "Not logged in" al iniciarse sin las variables de entorno de la sesión
