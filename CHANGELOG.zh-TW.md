@@ -2,6 +2,88 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.309 (2026-10-22)
+
+- 修復 macOS 與 Linux 上的沙盒化 Bash 指令在每次執行前，會於沙盒外執行 Shell 啟動檔的問題
+- 修復當模式目錄透過符號連結存取時，macOS 沙盒的 `denyWrite` glob 模式無法套用至路徑實際位置的問題
+- 修復沙盒化指令與自動接受的編輯能夠修改透過 `--mcp-config` 傳入的 MCP 設定檔之問題
+- 修復已停用的 MCP 伺服器在列印與 SDK 工作階段中被後續的權限提示重新連線的問題
+- 修復 Bash 權限檢查信任了可能因重定向開啟失敗而設定之變數的問題
+- 修復 Bash 權限檢查在 `cd` 被包裝或帶有前綴時，未如同單純 `cd` 那樣針對某些在執行 git 前切換目錄的複合指令進行提示之問題
+- 修復在某些同時包含子 Shell 的指令中，`Edit(path)` 拒絕規則未能阻擋對該路徑進行 Bash 重定向的問題
+- 修復 worktree 隔離工作階段接受了隔離防護機制本應拒絕之帶有語系前綴指令的問題
+- 修復 zsh 上 worktree 隔離工作階段接受了隔離防護機制本應拒絕之算術運算指令的問題
+- 修復 Claude Code 建立的 worktree 與分支簽出，使其如同其他 git 操作一樣忽略 git replace ref
+- 修復當設定目錄透過符號連結存取時，設定檔存放區寫入保護未生效的問題
+- 修復在讀取極大巢狀 CLAUDE.md 下的檔案後，工作階段不斷重複壓縮的問題；超過大小限制的巢狀 CLAUDE.md 現在只會載入開頭部分
+- 修復在回應開始前按下 ctrl+enter（立即傳送）只會將訊息排入佇列，以及在提示的 hook 執行期間按下時會重啟 hook 卻仍將訊息保留在佇列中的問題
+- 修復在 `!` 模式下從 Shell 執行具鍵盤綁定的斜線指令之問題
+- 修復 ctrl+o 未顯示其他 agent 與工作階段中仍在等待遞送之訊息的問題；現在它們會完整出現在逐字稿下方並標註為等待中
+- 修復過長的工具輸出預覽在 emoji 中間被截斷，導致產生 `jq` 無法解析的工作階段逐字稿之問題
+- 修復在與父行程共用 `/proc` 的 Linux 沙盒中，Read 對 PDF 頁面範圍回報「檔案不存在」的問題
+- 修復由 Claude Desktop 代管的工作階段在連線重新整理時，訊息有時會遺失的問題
+- 修復當同一台電腦上的終端機登入不同帳號或組織時，Claude 桌面版應用程式中的 Claude Code 工作階段遺漏部分功能的問題
+- 修復當目錄不在 git 儲存庫內時，`claude remote-control` 狀態列將分支顯示為 `HEAD` 的問題
+- 修復分割窗格的 agent 隊友未繼承 leader 命令列所指定的工具拒絕與 `--tools` 規則之問題
+- 修復透過 `/rename` 重新命名的工作階段在 VS Code 視窗重新載入或非互動式 `--resume` 後，對其他工作階段顯示為自動產生名稱的問題
+- 修復若該輪透過 `/code-review --fix`、subagent 或 Shell 指令修改了已建立 checkpoint 的檔案，`/rewind` 清單卻顯示「無程式碼變更」的問題
+- 修復 `/privacy-settings` 顯示過時的「協助改善我們的 AI 模型」設定值之問題；現在亦會在無法擷取該設定時提出提示
+- 修復當您的組織不接受意見反應時，意見反應回報提示「稍後再試」的問題；現在會顯示伺服器端原因以及回報錯誤的管道
+- 修復過大的 /feedback 回報直接失敗而非在不帶逐字稿的情況下重新傳送之問題
+- 修復當 `--add-dir` 目錄中的 skill 與已有 skill 撞名而無法存取的問題；現在該 skill 會以 `<folder>:<name>` 格式提供
+- 修復當檔案由 Shell 修改時，`/verify` 與 `/code-review` 找不到巢狀套件專屬 skill 的問題
+- 修復 /claude-api skill 聲稱 `ant beta:worker poll --on-work` 會傳遞追蹤上下文給指令的問題
+- 修復 /claude-api skill 的 C# 追蹤設定遺漏來自雲端平台客戶端 span 的問題
+- 修復 /claude-api skill 聲稱發往 AWS 上的 Claude Platform 請求的 API span 無法加入呼叫端追蹤的問題
+- 修復在 PowerShell 中執行的 hook 在其程式以代碼 2 結束時未進行阻擋，以及在 Windows 上帶有 `"shell": "powershell"` 的 `PreToolUse` 與 `PermissionRequest` hook 在未安裝 Git for Windows 時未予防護的問題
+- 修復使用別名（如 `haiku`）指定模型的 mod `turn.step` hook 導致每個請求皆因模型錯誤而失敗的問題：現在別名能正確解析為對應模型
+- 修復從 claude.ai 同步的 plugin 與 skill 在發生磁碟讀取錯誤後被移除（有時發生在工作階段中）的問題
+- 修復部分一般網頁（如包含特定縮小化腳本或 Claude 無法預先讀取的產物）被拒絕發佈或更新產物的問題
+- 修復對話在該輪被壓縮後，Claude 在該輪剩餘時間內對每次產物更新皆重複請求權限的問題
+- 修復當 `ANTHROPIC_BEDROCK_BASE_URL` 設為預設的 `bedrock-runtime.<region>.amazonaws.com` 端點時，Amazon Bedrock 上細粒度工具串流維持關閉的問題
+- 修復在僅傳送 keepalive ping 的閘道後方，「等待 API 回應」提示閃爍的問題：離開 Anthropic 後端的路由現在會等待 45 秒
+- 修復 Claude 在 PR、issue 與留言中將角色名稱與佔位符寫成 mention，因而標註無關 GitHub 使用者的問題
+- Linux：修復當背景指令存活時間長於工作階段時，沙盒寫入拒絕限制被解除的問題
+- Windows：修復 PowerShell 權限檢查自動核准某些以當前目錄為目標且帶有額外參數的 `Set-Location` 或 `cd` 指令之問題；現在這些指令會要求核准
+- macOS：修復在未安裝 Xcode 或 Command Line Tools 的 Mac 上，每次啟動 Claude Code 都會彈出「安裝命令列開發者工具」對話方塊的問題
+- Self-hosted runner：修復 `--startup-timeout-min` 終止了首個提示（如 `/code-review`）仍在 subagent 中運作的工作階段之問題；凍結的行程仍會被終止
+- 改善了 Claude Code 在 Windows 上自身執行之諸多 git 指令的速度；在所有平台上，即使 git 設為其他語言，這些指令的錯誤訊息現在皆以英文顯示
+- 改善了當 hooks 模組巢狀過深而無法載入時的錯誤提示：現在會指出具體檔案名稱，而非僅顯示單純的 stack-overflow 訊息
+- 改善了磁碟已滿的處理機制：因磁碟空間不足而被截斷的 Bash 指令現在會明確說明並列出需清理的目錄，且在暫存磁區已滿時啟動會印出清楚的訊息，而非原始的 ENOSPC 錯誤
+- 改善了 /claude-api skill，在被要求加入 OpenTelemetry 時，於 SDK 追蹤之外同時提供 API 追蹤
+- 改善了 /claude-api skill，使其在回報功能不支援前先檢查即時線上文件
+- Self-hosted runner：改善了遷移至新 runner 的工作階段：Claude 現在能看到被中斷的工具呼叫，並標記為結果未知
+- 更新了內建的 dataviz skill，使其接受 APCA 作為文字對比度衡量標準（在需要符合 AA 規範處仍保留 WCAG 2 對比率），在其調色盤驗證腳本中新增 `apca(text, background)` 函式，並指出彩色圖表填色內的標籤應使用白色還是接近黑色
+- 更新了 /claude-api skill：服務帳戶金鑰與 Workload Identity Federation 權杖現在可用於管理 OpenTelemetry 目的地
+- 變更了 `sed -i` 的行為，改為取得標準 Bash 提示並照常執行，而非模擬檔案編輯預覽；與其他 Bash 編輯操作相同，此操作不再能透過 `/rewind` 還原
+- 變更了 `claude ultrareview` 以強制要求工作區信任：在終端機會提出詢問，否則拒絕執行；腳本可傳入無值的 `--trust-workspace`（在其前面加上 PR 編號或基準分支），或設定 `CLAUDE_CODE_DISABLE_ULTRAREVIEW_TRUST_CHECK=1`
+- 變更了桌面版應用程式與 VS Code 中略過權限模式下的危險 `rm` 與 `rmdir` 提示，直接拒絕該指令並提供改寫建議，以確保無人值守的工作階段能持續運作
+- 變更了設定中自沙盒排除之指令的行為，在沙盒已啟用但無法執行的情況下，於寫入其寫入清單路徑前會提出詢問；該情況下將拒絕退回至非沙盒模式執行
+- 變更了 worktree 的建立與重複使用機制，在一般 clone 以及設定有 Bash 沙盒的 partial clone 中，git 不再按需擷取物件；此類 partial clone 會優先擷取所需物件
+- 變更了 `/claude-api` skill，改為基於 `multiagent_20261001` 架構建置 Managed Agents subagent 團隊並預設啟用動態工作流程，而非使用 `coordinator`
+- [VSCode] 新增了一則記錄警告，說明在語音輸入或擴充套件自身的請求未能通過憑證驗證時（例如在進行 TLS 檢驗的 Proxy 後方）應如何處理
+- [VSCode] 修復編輯器快取了不完整的檔案複本後，Claude 面板保持一片空白的問題；現在會自動復原，或說明錯誤原因與解決方式
+- [VSCode] 修復每次在未傳送訊息的情況下開啟新工作階段時，Session 歷程記錄會被空的「未命名」工作階段佔滿之問題
+- [VSCode] 修復如 `/goal` 等過長的斜線指令訊息塞滿聊天面板的問題；現在它們會與其他提示一樣折疊在「顯示更多」後方 (anthropics/claude-code#97469)
+- [VSCode] 修復聊天面板寬度縮小後，長訊息未能折疊在「顯示更多」後方的問題
+- [VSCode] 修復在聊天輸入框中按下 Ctrl+J 一律插入換行符號的問題：當 ~/.claude/keybindings.json 的 Chat 內容中 "ctrl+j" 設為 null 時，現在會交由 VS Code 與作業系統處理
+- [VSCode] 修復提示上方來自 mod 的「來自 … 套件」標籤繪製在斜線指令與 @-mention 選單之上的問題 (anthropics/claude-code#102981)
+- [VSCode] 修復貼上複製的 LaTeX 數學式時，產生空白清單項目、段落或程式碼區塊，以及清單項目從 1 重新編號的問題
+- [VSCode] 修復當您的組織不接受意見反應時，意見反應錯誤僅顯示 HTTP 狀態碼的問題
+- [VSCode] 改善了聊天面板中的 Edit 與 Write 速度：每次編輯後等待新問題的時間在多數情況下縮短至 0.75 秒（原為 1 到 1.5 秒）
+- [Cloud sessions] 修復 routine 表單中的「新增連接器」清單在連接器仍在載入時顯示為無可用連接器的問題
+- [Cloud sessions] 修復雲端環境編輯器打亂環境變數順序，並對同時包含單雙引號的值加上反斜線的問題
+- [Cloud sessions] 修復管理員設定中自託管環境詳細資料對話方塊，使其標題、分頁與按鈕保持可見，僅對內容部分進行捲動
+- [Cloud sessions] 修復雲端工作階段中的「閱讀文件」工具列顯示跳脫後的 JSON 而非易讀網頁之問題
+- [Cloud sessions] 改善了雲端工作階段的 Changes 窗格，現在會明確標示其僅列出已推送的 commit 還是僅列出 Claude 的編輯
+- [Claude Tag] 修復 Slack 中的 Claude 誤將您核准給頻道的草稿張貼至您的私訊（DM）中的問題；未指定頻道的貼文現在會被拒絕，以確保其能送至核准的頻道
+- [Claude Tag] 修復當工作階段已停止時，Slack 中 Claude 核准卡片上的「允許」與「拒絕」無反應的問題；您的回應現在會重新啟動該工作階段
+- [Claude Tag] 修復 Slack 頻道的 workspace 遷移至不同的 Claude 組織後，Claude 忽略該頻道中未標註訊息的問題（包含 Enterprise Grid 上未共用的頻道）
+- [Claude Tag] 修復 Slack 頻道中的 Claude 在讀取其他人剛新增至該討論串的最新訊息前，就搶先張貼討論串回覆的問題
+- [Claude Tag] 修復當清單載入失敗時，Claude Tag 管理員設定中的 Slack 頁面顯示未連線任何 workspace 的問題；現在會顯示帶有「重試」按鈕的錯誤訊息
+- [Code Review] 修復若先前建立 PR 的嘗試失敗，已完成的 review 在 PR 上未顯示任何 check 的問題；最後一次嘗試現在會新增一個已完成的 check
+- [Code Review] 修復在執行中的 review 後排隊的 push 在 `@claude review stop` 後仍會啟動 review 的問題；其 check 現在會關閉並說明原因
+
 ## 2.1.308 (2026-10-22)
 
 - 錯誤修正與可靠性提升

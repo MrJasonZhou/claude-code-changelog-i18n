@@ -2,6 +2,88 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.309 (2026-10-22)
+
+- Correction des commandes Bash sandboxées sur macOS et Linux qui exécutaient les fichiers de démarrage du shell en dehors du bac à sable avant chaque commande
+- Correction des motifs glob `denyWrite` du bac à sable macOS qui ne s'appliquaient pas à l'emplacement réel d'un chemin lorsque le dossier du motif était atteint via un lien symbolique
+- Correction des commandes sandboxées et des modifications auto-acceptées qui pouvaient modifier le fichier de configuration MCP passé avec `--mcp-config`
+- Correction d'un serveur MCP désactivé qui était reconnecté lors d'une demande d'autorisation ultérieure dans les sessions print et SDK
+- Correction de la vérification des permissions Bash qui faisait confiance à une variable définie par une commande dont l'ouverture de la redirection pouvait échouer
+- Correction des vérifications de permissions Bash qui ne demandaient pas confirmation pour certaines commandes composées changeant de répertoire avant d'exécuter git lorsque le `cd` était encapsulé ou préfixé, comme elles le font pour un simple `cd`
+- Correction d'une règle de refus `Edit(path)` qui ne bloquait pas une redirection Bash vers ce chemin dans certaines commandes contenant également un sous-shell
+- Correction des sessions isolées par worktree qui acceptaient certaines commandes préfixées par une locale que la protection d'isolation aurait dû refuser
+- Correction des sessions isolées par worktree sous zsh qui acceptaient certaines commandes arithmétiques que la protection d'isolation aurait dû refuser
+- Correction des worktrees et des checkouts de branches créés par Claude Code pour qu'ils ignorent les références git replace, comme le font déjà ses autres opérations git
+- Correction de la protection en écriture du magasin de profils qui ne s'appliquait pas lorsque le répertoire de configuration était atteint via un lien symbolique
+- Correction des sessions qui se compactaient en boucle après la lecture de fichiers sous un très grand CLAUDE.md imbriqué ; un CLAUDE.md imbriqué dépassant la limite de taille ne charge désormais que son début
+- Correction de ctrl+enter (send now) qui ne mettait un message en file d'attente que s'il était pressé avant le début de la réponse, et relançait les hooks d'un prompt tout en laissant le message en file d'attente lorsqu'il était pressé pendant l'exécution de ces hooks
+- Correction des commandes slash associées à un raccourci clavier qui s'exécutaient dans le shell depuis le mode `!`
+- Correction de ctrl+o qui n'affichait pas les messages des autres agents et sessions encore en attente de remise ; ils apparaissent désormais en entier sous la transcription, signalés comme étant en attente
+- Correction des aperçus trop longs de sorties d'outils qui étaient coupés au milieu d'un emoji, laissant des transcriptions de session impossibles à analyser pour `jq`
+- Correction de Read qui renvoyait "File does not exist" pour les plages de pages de PDF dans les bacs à sable Linux partageant le `/proc` parent
+- Correction des messages provenant d'une session hébergée par Claude Desktop qui étaient parfois perdus lors du rafraîchissement de sa connexion
+- Correction de fonctionnalités manquantes dans les sessions Claude Code de l'application Claude pour ordinateur lorsque le terminal de la même machine était connecté à un compte ou une organisation différente
+- Correction de la ligne d'état de `claude remote-control` qui affichait `HEAD` comme branche pour un dossier ne faisant pas partie d'un dépôt git
+- Correction des coéquipiers agents en volet divisé (split-pane) qui n'héritaient pas des règles d'interdiction d'outils et de `--tools` définies sur la ligne de commande du leader
+- Correction des sessions renommées avec `/rename` qui apparaissaient sous un nom généré pour les autres sessions après un rechargement de fenêtre VS Code ou un `--resume` non interactif
+- Correction de la liste de `/rewind` qui affichait "No code changes" pour un tour ayant modifié des fichiers sous point de contrôle via `/code-review --fix`, un sous-agent ou une commande shell
+- Correction de `/privacy-settings` qui affichait une valeur obsolète pour "Help improve our AI models" ; il indique désormais également quand le paramètre ne peut pas être récupéré
+- Correction des retours utilisateurs qui indiquaient "try again later" lorsque votre organisation n'accepte pas les retours ; la raison renvoyée par le serveur et l'endroit où signaler un bug sont désormais affichés
+- Correction des rapports /feedback trop volumineux qui échouaient au lieu d'être renvoyés sans la transcription
+- Correction d'un skill situé dans un dossier `--add-dir` qui était inaccessible lorsqu'un autre skill portait déjà son nom ; il est désormais proposé sous la forme `<folder>:<name>`
+- Correction de `/verify` et `/code-review` qui ne trouvaient pas le propre skill d'un package imbriqué lorsque ses fichiers avaient été modifiés depuis le shell
+- Correction du skill /claude-api qui indiquait que `ant beta:worker poll --on-work` transmettait le contexte de trace à la commande
+- Correction de la configuration du traçage C# du skill /claude-api qui omettait les spans des clients de plateformes cloud
+- Correction du skill /claude-api qui indiquait que les spans d'API pour les requêtes vers Claude Platform sur AWS ne pouvaient pas rejoindre la trace de l'appelant
+- Correction des hooks s'exécutant dans PowerShell qui ne bloquaient pas lorsque le programme du hook se terminait avec le code 2, et sur Windows des hooks `PreToolUse` et `PermissionRequest` avec `"shell": "powershell"` qui laissaient passer l'exécution lorsque Git for Windows n'était pas installé
+- Correction du hook `turn.step` d'un mod désignant un modèle par un alias, comme `haiku`, qui faisait échouer chaque requête avec une erreur de modèle : l'alias se résout désormais vers son modèle
+- Correction des plugins et skills synchronisés depuis claude.ai qui étaient supprimés, parfois en cours de session, après une erreur de lecture de disque
+- Correction des publications et mises à jour d'artifacts qui étaient refusées pour certaines pages ordinaires, comme les pages contenant certains scripts minifiés ou des artifacts que Claude n'avait pas pu lire au préalable
+- Correction de Claude qui demandait une autorisation à chaque mise à jour d'artifact pour le reste d'un tour après le compactage de la conversation au cours de ce tour
+- Correction du streaming fin des outils (fine-grained tool streaming) qui restait désactivé sur Amazon Bedrock lorsque `ANTHROPIC_BEDROCK_BASE_URL` était configuré avec le point de terminaison par défaut `bedrock-runtime.<region>.amazonaws.com`
+- Correction de l'indication "Waiting for API response" qui clignotait derrière les passerelles n'envoyant que des pings de keepalive : les requêtes en dehors de l'infrastructure d'Anthropic attendent désormais 45 secondes
+- Correction de Claude qui notifiait des utilisateurs GitHub non concernés en écrivant des noms de rôles et des variables indicatives sous forme de mentions dans les PR, issues et commentaires
+- Linux : Correction des interdictions d'écriture du bac à sable qui se levaient lorsqu'une commande en arrière-plan survivait à la session
+- Windows : Correction des vérifications de permissions PowerShell qui approuvaient automatiquement certaines commandes `Set-Location` ou `cd` ciblant le répertoire courant et comportant des arguments supplémentaires ; celles-ci demandent désormais une approbation
+- macOS : Correction de la boîte de dialogue "Install Command Line Developer Tools" qui s'ouvrait à chaque démarrage de Claude Code sur un Mac sans Xcode ni les Command Line Tools
+- Self-hosted runner : Correction de `--startup-timeout-min` qui arrêtait une session dont le premier prompt, tel que `/code-review`, était encore en cours d'exécution dans un sous-agent ; un processus bloqué reste arrêté
+- Amélioration de la vitesse de nombreuses commandes git exécutées par Claude Code pour lui-même sur Windows ; sur toutes les plateformes, les erreurs de ces commandes s'affichent désormais en anglais même lorsque git est configuré dans une autre langue
+- Amélioration du message d'erreur lorsqu'un module de hooks est trop profondément imbriqué pour être chargé : il indique désormais le nom du fichier au lieu d'afficher un simple message de stack-overflow
+- Amélioration de la gestion des disques pleins : une commande Bash interrompue par un disque plein l'indique désormais et précise le dossier à libérer, et un démarrage sur un volume temporaire saturé affiche un message clair au lieu d'une erreur ENOSPC brute
+- Amélioration du skill /claude-api pour proposer le traçage d'API aux côtés du traçage SDK lorsqu'il est demandé d'ajouter OpenTelemetry
+- Amélioration du skill /claude-api pour vérifier la documentation en ligne avant d'indiquer qu'une fonctionnalité n'est pas prise en charge
+- Self-hosted runner : Amélioration des sessions migrant vers un nouveau runner : Claude voit désormais l'appel d'outil interrompu, avec la mention résultat inconnu
+- Mise à jour du skill dataviz intégré pour accepter APCA comme mesure de contraste de texte (en conservant les ratios WCAG 2 là où la conformité AA est requise), ajout d'une fonction `apca(text, background)` à ses scripts de validation de palette, et indication si un libellé au sein d'un remplissage de graphique coloré doit être blanc ou presque noir
+- Mise à jour du skill /claude-api : les clés de compte de service et les jetons Workload Identity Federation peuvent désormais gérer les destinations OpenTelemetry
+- Modification de `sed -i` pour obtenir l'invite Bash standard et s'exécuter tel quel, sans aperçu simulé de modification de fichier ; comme les autres modifications Bash, il n'est plus restauré par `/rewind`
+- Modification de `claude ultrareview` pour exiger la confiance dans l'espace de travail : confirmation demandée sur un terminal, sinon refus ; les scripts passent `--trust-workspace`, qui ne prend aucune valeur (placez un numéro de PR ou une branche de base avant), ou définissent `CLAUDE_CODE_DISABLE_ULTRAREVIEW_TRUST_CHECK=1`
+- Modification de l'invite pour les commandes dangereuses `rm` et `rmdir` en mode bypass permissions dans l'application Desktop et VS Code afin de refuser immédiatement la commande avec une suggestion de réécriture, permettant aux sessions sans surveillance de poursuivre leur exécution
+- Modification des commandes que les paramètres excluent du bac à sable afin de demander confirmation avant d'écrire dans les chemins de sa liste d'écriture lorsque le bac à sable est activé mais ne peut pas s'exécuter ; la solution de repli hors bac à sable y est refusée
+- Modification de la création et de la réutilisation des worktrees pour que git ne récupère plus les objets à la demande, aussi bien dans les clones ordinaires que dans les clones partiels configurés avec un bac à sable Bash ; un tel clone partiel les récupère désormais au préalable
+- Modification du skill `/claude-api` pour créer les équipes de sous-agents Managed Agents sur `multiagent_20261001` avec les flux de travail dynamiques activés par défaut, au lieu de `coordinator`
+- [VSCode] Ajout d'un avertissement dans les logs précisant la marche à suivre lorsque la dictée ou les requêtes propres à l'extension échouent à la vérification de certificat, par exemple derrière un proxy d'inspection TLS
+- [VSCode] Correction du panneau Claude restant vide après la mise en cache par l'éditeur d'une copie incomplète de ses fichiers ; il récupère désormais tout seul ou indique ce qui a échoué et comment y remédier
+- [VSCode] Correction de l'historique des sessions qui se remplissait de sessions "Untitled" vides à chaque démarrage d'une nouvelle session sans envoi de message
+- [VSCode] Correction des messages longs issus de commandes slash telles que `/goal` qui encombraient le panneau de discussion ; ils se replient désormais derrière Show more comme les autres prompts (anthropics/claude-code#97469)
+- [VSCode] Correction des messages longs qui ne se repliaient pas derrière Show more après avoir réduit la largeur du panneau de discussion
+- [VSCode] Correction de Ctrl+J dans la saisie du chat qui insérait systématiquement un saut de ligne : le comportement est désormais délégué à VS Code et à l'OS lorsque "ctrl+j" est défini sur null dans le contexte Chat de ~/.claude/keybindings.json
+- [VSCode] Correction de l'étiquette "From the … plugin" d'un mod au-dessus du prompt qui s'affichait par-dessus les menus de commandes slash et de mentions @ (anthropics/claude-code#102981)
+- [VSCode] Correction d'un élément de liste, paragraphe ou bloc de code vide, ainsi que des éléments de liste renumérotés à partir de 1, lors du collage de formules mathématiques LaTeX copiées
+- [VSCode] Correction de l'erreur de feedback n'affichant qu'un code de statut HTTP lorsque votre organisation n'accepte pas les retours
+- [VSCode] Amélioration de la vitesse d'Edit et Write dans le panneau de discussion : le délai d'attente de nouveaux problèmes après chaque modification est désormais de 0,75 seconde dans la plupart des cas, contre 1 à 1,5 seconde auparavant
+- [Cloud sessions] Correction de la liste Add connector dans les formulaires de routines qui indiquait qu'aucun connecteur n'était disponible pendant leur chargement
+- [Cloud sessions] Correction de l'éditeur d'environnement cloud qui mélangeait les variables d'environnement et ajoutait des antislashs aux valeurs contenant les deux types de guillemets
+- [Cloud sessions] Correction de la boîte de dialogue des détails de l'environnement auto-hébergé dans les paramètres d'administration afin que son titre, ses onglets et ses boutons restent visibles pendant que seul le contenu défile
+- [Cloud sessions] Correction de la ligne d'outil "read documentation" dans les sessions cloud, qui affichait du JSON échappé au lieu d'une page lisible
+- [Cloud sessions] Amélioration du volet Changes d'une session cloud, qui indique désormais lorsqu'il liste uniquement les commits poussés ou uniquement les modifications de Claude
+- [Claude Tag] Correction de Claude dans Slack qui publiait par erreur dans vos DM un brouillon approuvé pour un canal ; une publication sans canal est désormais refusée afin de pouvoir être envoyée dans le canal approuvé
+- [Claude Tag] Correction d'Allow et Deny sur les cartes d'approbation de Claude dans Slack qui ne faisaient rien lorsque la session était arrêtée ; votre réponse relance désormais la session
+- [Claude Tag] Correction de Claude qui ignorait les messages non tagués dans un canal Slack après le déplacement de son espace de travail vers une autre organisation Claude, y compris les canaux non partagés sur Enterprise Grid
+- [Claude Tag] Correction de Claude dans un canal Slack qui publiait une réponse dans un fil avant de lire un message plus récent venant d'être ajouté à ce fil
+- [Claude Tag] Correction de la page Slack dans les paramètres d'administration de Claude Tag qui indiquait qu'aucun espace de travail n'était connecté lorsque le chargement de la liste échouait ; elle affiche désormais une erreur avec un bouton Retry
+- [Code Review] Correction d'une revue terminée qui n'affichait aucun check sur la pull request lorsque les tentatives précédentes de création avaient échoué ; une ultime tentative ajoute désormais un check complété
+- [Code Review] Correction d'un push mis en file d'attente derrière une revue en cours qui démarrait tout de même une revue après `@claude review stop` ; son check se ferme désormais en indiquant la raison
+
 ## 2.1.308 (2026-10-22)
 
 - Corrections de bugs et améliorations de la fiabilité
