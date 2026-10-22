@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.308 (2026-10-22)
+
+- 버그 수정 및 안정성 개선
+
 ## 2.1.307 (2026-10-21)
 
 - Claude API 코드를 API 버전 `2026-10-21`로 이전할 수 있도록 `/claude-api api-version` 추가

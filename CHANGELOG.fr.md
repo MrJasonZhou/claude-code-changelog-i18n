@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.308 (2026-10-22)
+
+- Corrections de bugs et améliorations de la fiabilité
+
 ## 2.1.307 (2026-10-21)
 
 - Ajout de `/claude-api api-version` pour migrer le code Claude API vers la version d'API `2026-10-21`

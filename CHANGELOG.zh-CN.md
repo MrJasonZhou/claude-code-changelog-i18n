@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.308 (2026-10-22)
+
+- Bug 修复与可靠性提升
+
 ## 2.1.307 (2026-10-21)
 
 - 新增 `/claude-api api-version`，用于将 Claude API 代码迁移至 API 版本 `2026-10-21`
