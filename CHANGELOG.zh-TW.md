@@ -2,6 +2,35 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.310 (2026-10-23)
+
+- 新增在 Bedrock、Vertex 與 Foundry 上的 Monitor 工具及外掛 monitors，並支援在停用遙測或非必要流量時使用；在這些環境中長秒數的前台 sleep 現在也會被封鎖
+- 修正在某些會拒絕 `effort-2025-11-24` beta 值或對話途中 system messages 的閘道與相容伺服器後端請求失敗的問題；Claude Code 現在會不帶這些參數重試
+- 修正當 `cleanupPeriodDays` 設為極大值時，背景清理仍會刪除部分近期檔案（如貼上的圖片）的問題
+- 修正發生 "Prompt is too long" 錯誤後的壓縮（compaction）保留了過多包含密集文字（如 base64 或 SVG）的對話內容，導致下一次請求可能再次失敗的問題
+- 修正檔案讀取權限提示未顯示符號連結（symbolic link）目標路徑的問題
+- 修正在外部編輯器進行長時間編輯後，關閉編輯器的瞬間會觸發提問的自動繼續逾時問題
+- Windows：修正在缺少 Git Bash 且 Hook 指令僅包含引號字串（例如加引號的路徑）時，PreToolUse 與 PermissionRequest hooks 仍會放行工具呼叫的問題
+- 改善 auto mode 在工作目錄外首次讀取前的提示：現在會說明封鎖這些讀取是否會導致 shell 指令要求權限
+- 改善非互動式工作階段（`-p`、Agent SDK）在 transcript 檔案過大進行壓縮時的記憶體用量
+- 改善 mod 的 `Image` 繪製：在啟用 `allow-passthrough` 與 `focus-events` 的 tmux 中，以及在全螢幕轉譯的 kitty、Ghostty 和 iTerm2 3.5+ 下，原本僅顯示 `alt` 文字的問題已獲改善
+- Linux：改善 `/sandbox` 與沙盒啟動警告，當 bubblewrap 因 Ubuntu 的 AppArmor 對 user namespaces 的限制而無法啟動沙盒時，會明確指出該限制及解除方法
+- 變更在非互動式工作階段中 MCP 工具呼叫逾時且伺服器 elicitation 未獲回應時的錯誤訊息：現在會告知 Claude 未收到回覆，且不要重複呼叫
+- [VSCode] 修正在計畫審查卡片的 "Send feedback and keep planning" 按鈕上按下 Enter 會核准計畫而非送回意見回饋的問題
+- [VSCode] 修正從 Session history 的 Web 分頁開啟雲端工作階段並點選 "Switch branch & continue" 後，面板顯示 "Something went wrong" 的問題
+- [Cloud sessions] 在 Enterprise 自訂角色中新增 Claude Code 雲端工作階段與 Remote Control 權限，讓 Owners 可依角色控制各自的存取權限
+- [Cloud sessions] 新增 Choose file 按鈕，可從檔案載入雲端環境的 setup script
+- [Cloud sessions] 修正雲端環境編輯對話框中儲存與封存失敗時，對話框內未顯示錯誤的問題
+- [Cloud sessions] 修正 routine API token 操作失敗時僅顯示 toast 的問題；現在錯誤會顯示於 routine 編輯對話框中
+- [Cloud sessions] 改善工作階段啟動檢查清單，在可捲動的區塊中顯示雲端環境 setup script 的輸出內容
+- [Cloud sessions] 變更管理員設定中開啟 Cloud sessions 或 Remote Control 的行為：現在會要求確認並列出擁有該權限的自訂角色
+- [Cloud sessions] 變更雲端環境對話框：現在透過個別項目開啟網路存取、setup script 與環境變數，而非一次列出所有編輯器
+- [Claude Tag] 修正當以粗體、斜體或刪除線格式發送時，Claude Tag 會將 `!restart` 和 `!help` 等 `!` 指令視為一般訊息的問題
+- [Claude Tag] 修正當背景重新整理 bundle 清單失敗時，Claude Tag 管理員頻道與工作區頁面會被載入錯誤取代的問題
+- [Claude Tag] 修正管理員設定中的 Claude Tag spend limits 頁面在頻道名稱仍在載入時回報無頻道符合篩選條件的問題
+- [Code Review] 修正 Code Review 管理員區塊在重新整理存放庫清單失敗後，隱藏存放庫與切換開關的問題
+- [Code Review] 改善 Code Review 管理員區塊：首次載入失敗時會自動重試，若仍失敗則顯示 Try again 橫幅
+
 ## 2.1.309 (2026-10-22)
 
 - 修復 macOS 與 Linux 上的沙盒化 Bash 指令在每次執行前，會於沙盒外執行 Shell 啟動檔的問題

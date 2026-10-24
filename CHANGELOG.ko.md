@@ -2,6 +2,35 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.310 (2026-10-23)
+
+- Bedrock, Vertex, Foundry 및 원격 측정이나 비필수 트래픽이 비활성화된 환경에 Monitor 도구 및 플러그인 모니터 추가. 해당 환경에서 장시간 포그라운드 sleep도 차단됨
+- `effort-2025-11-24` 베타 값이나 대화 도중의 시스템 메시지를 거부하는 일부 게이트웨이 및 호환 서버에서 요청이 실패하던 문제 수정. 이제 Claude Code가 해당 항목 없이 재시도함
+- `cleanupPeriodDays`가 매우 큰 값으로 설정되었을 때 백그라운드 정리 작업이 붙여넣은 이미지 등 일부 최근 파일을 삭제하던 문제 수정
+- "Prompt is too long" 오류 발생 후 compaction 시 base64 또는 SVG와 같은 밀도 높은 텍스트가 포함된 대화 내용을 너무 많이 유지하여 다음 요청이 다시 실패할 수 있던 문제 수정
+- 파일 읽기 권한 확인 프롬프트에서 심볼릭 링크가 가리키는 대상 경로가 표시되지 않던 문제 수정
+- 외부 에디터에서 오랜 편집 후 닫히는 순간 질문의 auto-continue 타임아웃이 즉시 발동하던 문제 수정
+- Windows: Git Bash가 없고 훅의 명령어가 따옴표로 묶인 경로 등 따옴표로 감싸진 문자열로만 구성된 경우 PreToolUse 및 PermissionRequest 훅이 도구 호출을 그대로 통과시키던 문제 수정
+- 작업 디렉터리 외부의 첫 번째 읽기 작업 전 표시되는 auto mode 프롬프트 개선: 해당 읽기를 차단할 경우 셸 명령어가 권한을 요청하게 된다는 점을 안내하도록 변경
+- 트랜스크립트 파일이 매우 클 때 비대화형 세션(`-p`, Agent SDK)의 compaction 중 메모리 사용량 개선
+- kitty, Ghostty 및 전체 화면 렌더링이 적용된 iTerm2 3.5+ 환경에서 `allow-passthrough`와 `focus-events`가 켜진 tmux 내 mod의 `Image`가 `alt` 텍스트만 표시되던 문제를 개선하여 정상 렌더링되도록 수정
+- Linux: Ubuntu의 사용자 네임스페이스에 대한 AppArmor 제한으로 인해 bubblewrap이 샌드박스를 시작하지 못할 때, 해당 제한 사항과 해제 방법을 안내하도록 `/sandbox` 및 샌드박스 시작 경고 개선
+- 비대화형 세션에서 서버의 elicitation에 응답하지 않아 타임아웃된 MCP 도구 호출의 오류 메시지 변경: 이제 Claude에게 응답이 오지 않았음을 알리고 호출을 반복하지 않도록 안내함
+- [VSCode] 플랜 검토 카드의 "Send feedback and keep planning" 버튼에서 Enter 키를 누르면 피드백을 전달하는 대신 플랜이 승인되던 문제 수정
+- [VSCode] Session history의 Web 탭에서 연 클라우드 세션에서 "Switch branch & continue"를 실행한 후 패널에 "Something went wrong"이 표시되던 문제 수정
+- [Cloud sessions] Enterprise 커스텀 역할에 Claude Code 클라우드 세션 및 Remote Control 권한을 추가하여 Owner가 역할별로 각 기능에 대한 접근 권한을 제어할 수 있도록 개선
+- [Cloud sessions] 클라우드 환경의 설정 스크립트를 파일에서 불러올 수 있는 Choose file 버튼 추가
+- [Cloud sessions] 클라우드 환경 편집 대화상자에서 저장 및 아카이브 실패 시 대화상자 내에 오류가 표시되지 않던 문제 수정
+- [Cloud sessions] 루틴 API 토큰 작업 실패 시 토스트 알림만 표시되던 문제 수정. 이제 루틴 편집 대화상자에 오류가 표시됨
+- [Cloud sessions] 클라우드 환경의 설정 스크립트 출력을 스크롤 박스로 표시하도록 세션 시작 체크리스트 개선
+- [Cloud sessions] 관리자 설정에서 Cloud sessions 또는 Remote Control을 활성화할 때 확인 절차를 거치고 해당 권한을 가진 커스텀 역할 목록을 표시하도록 변경
+- [Cloud sessions] 클라우드 환경 대화상자에서 모든 편집기를 한 번에 나열하는 대신 네트워크 액세스, 설정 스크립트, 환경 변수를 각 행에서 열 수 있도록 변경
+- [Claude Tag] `!restart`, `!help` 등의 `!` 명령어가 굵게, 기울임꼴 또는 취소선 서식으로 전송되었을 때 일반 메시지로 취급되던 문제 수정
+- [Claude Tag] 번들 목록의 백그라운드 새로고침이 실패할 때 Claude Tag 관리자 채널 및 워크스페이스 페이지가 로드 오류 화면으로 대체되던 문제 수정
+- [Claude Tag] 관리자 설정의 Claude Tag 지출 한도 페이지에서 채널 이름을 불러오는 동안 필터와 일치하는 채널이 없다고 잘못 표시되던 문제 수정
+- [Code Review] 리포지토리 목록 새로고침에 실패한 후 Code Review 관리 섹션에서 리포지토리와 토글 스위치가 숨겨지던 문제 수정
+- [Code Review] 첫 로드 실패 시 재시도하고, 계속 실패할 경우 Try again 배너 하나를 표시하도록 Code Review 관리 섹션 개선
+
 ## 2.1.309 (2026-10-22)
 
 - macOS 및 Linux의 샌드박스 처리된 Bash 명령이 각 명령 실행 전 샌드박스 외부에서 셸 시작 파일을 실행하던 문제 수정

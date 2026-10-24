@@ -2,6 +2,35 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.310 (2026-10-23)
+
+- Adicionada a ferramenta Monitor e monitores de plugins no Bedrock, Vertex e Foundry, e quando a telemetria ou o tráfego não essencial estão desativados; sleeps longos em foreground agora também são bloqueados nesses casos
+- Corrigidas falhas em requisições atrás de alguns gateways e servidores compatíveis que rejeitam o valor beta `effort-2025-11-24` ou mensagens de sistema no meio da conversa; o Claude Code agora tenta novamente sem eles
+- Corrigida a limpeza em segundo plano excluindo alguns arquivos recentes, como imagens coladas, quando `cleanupPeriodDays` está configurado com um valor muito alto
+- Corrigida a compactação após um erro "Prompt is too long" mantendo parte excessiva de uma conversa com texto denso, como base64 ou SVG, fazendo com que a requisição seguinte pudesse falhar novamente
+- Corrigidos os prompts de permissão de leitura de arquivo que não mostravam para onde um link simbólico aponta
+- Corrigido o timeout de continuação automática de uma pergunta disparando no instante em que o editor externo era fechado após uma edição longa
+- Windows: Corrigidos os hooks PreToolUse e PermissionRequest permitindo a passagem de uma chamada de ferramenta quando o Git Bash está ausente e o comando do hook consiste apenas em strings entre aspas, como um caminho entre aspas
+- Melhorado o prompt do auto mode antes da primeira leitura fora dos diretórios de trabalho: agora ele informa quando o bloqueio dessas leituras faz com que comandos shell solicitem permissão
+- Melhorado o uso de memória de sessões não interativas (`-p`, Agent SDK) durante a compactação quando o arquivo de transcrição é muito grande
+- Melhorado o `Image` de um mod para renderizar dentro do tmux com `allow-passthrough` e `focus-events` ativados, no kitty, Ghostty e iTerm2 3.5+ com renderização em tela cheia, onde antes exibia apenas seu texto `alt`
+- Linux: Melhorados o `/sandbox` e o aviso de inicialização da sandbox para apontar a restrição do AppArmor do Ubuntu em user namespaces, e como removê-la, quando ela impede o bubblewrap de iniciar a sandbox
+- Alterado o erro para chamadas de ferramentas MCP que expiram em uma sessão não interativa enquanto a solicitação do servidor não é respondida: agora ele informa ao Claude que nenhuma resposta foi recebida e para não repetir a chamada
+- [VSCode] Corrigido o pressionamento de Enter no botão "Send feedback and keep planning" do card de revisão de plano aprovando o plano em vez de enviar seus comentários de volta
+- [VSCode] Corrigido o painel exibindo "Something went wrong" após "Switch branch & continue" em uma cloud session aberta a partir da aba Web do Session history
+- [Cloud sessions] Adicionadas permissões de cloud sessions e Remote Control do Claude Code a funções personalizadas do Enterprise, permitindo que Owners controlem o acesso a cada uma por função
+- [Cloud sessions] Adicionado o botão Choose file para carregar o script de configuração de um cloud environment a partir de um arquivo
+- [Cloud sessions] Corrigidas falhas ao salvar e arquivar no diálogo de edição de cloud environment que não exibiam nenhum erro dentro do diálogo
+- [Cloud sessions] Corrigidas falhas em ações de token de API de rotinas que exibiam apenas um toast; o erro agora aparece no diálogo de edição da rotina
+- [Cloud sessions] Melhorado o checklist de início de sessão para exibir a saída do script de configuração de um cloud environment em uma caixa com rolagem
+- [Cloud sessions] Alterada a ativação de Cloud sessions ou Remote Control nas configurações de administração para solicitar confirmação e listar as funções personalizadas que possuem essa permissão
+- [Cloud sessions] Alterado o diálogo de cloud environment para abrir acesso à rede, script de configuração e variáveis de ambiente a partir de linhas, em vez de listar todos os editores de uma só vez
+- [Claude Tag] Corrigido o Claude Tag tratando comandos com `!`, como `!restart` e `!help`, como mensagens comuns quando enviados em negrito, itálico ou tachado
+- [Claude Tag] Corrigidas as páginas de canal de administração e de workspace do Claude Tag sendo substituídas por um erro de carregamento quando uma atualização em segundo plano da lista de bundles falha
+- [Claude Tag] Corrigida a página de limites de gastos do Claude Tag nas configurações de administração informando que nenhum canal corresponde a um filtro enquanto os nomes dos canais ainda estão carregando
+- [Code Review] Corrigida a seção de administração do Code Review ocultando seus repositórios e switches após uma falha na atualização da lista de repositórios
+- [Code Review] Melhorada a seção de administração do Code Review para tentar novamente o primeiro carregamento e exibir um banner de Try again caso ainda falhe
+
 ## 2.1.309 (2026-10-22)
 
 - Corrigido o problema em que comandos Bash isolados no sandbox no macOS e Linux executavam os arquivos de inicialização da shell fora do sandbox antes de cada comando
