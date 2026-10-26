@@ -2,6 +2,101 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.311 (2026-10-26)
+
+- Adicionados `--hold-idle-file` e `--max-hold-min` ao `self-hosted-runner`, para manter uma sessão ociosa enquanto o host relata processos deixados em execução
+- Adicionada uma dica para o estilo de saída Explanatory, exibida ao solicitar explicações ao Claude
+- Corrigidos travamentos longos na inicialização e após ler ou editar arquivos quando um arquivo CLAUDE.md contém um item de lista muito longo
+- Corrigido problema em que interromper o Claude só fazia efeito após um timeout enquanto um servidor MCP não respondia à leitura de um recurso ou uma skill ainda estava sendo baixada
+- Corrigidas sessões de contexto padrão sendo interrompidas com "Usage credits required for 1M context" quando uma requisição passava de 200K tokens; o Claude Code agora compacta a conversa e continua
+- Corrigidos Write e Edit travando por até 5 segundos após a execução e relatando 0 linhas alteradas ao modificar milhares de linhas em um arquivo
+- Corrigido problema que impedia subagents de usar ferramentas MCP de servidores que concluem a conexão após o início do subagent
+- Corrigido o Claude vendo conteúdo desatualizado de MEMORY.md e CLAUDE.md logo após a compactação automática quando esses arquivos foram editados anteriormente na sessão
+- Corrigidas sessões do `claude -p` e do SDK salvando mensagens de transcrição fora de ordem ou mantendo mensagens que foram desfeitas
+- Corrigidos hooks `SubagentStop` sendo executados cerca de duas vezes por minuto para cada subagent em execução, em vez de uma vez ao finalizar
+- Corrigido o seletor de arquivos @ ignorando regras de negação do `.ignore`/`.rgignore` que reincluem arquivos ignorados pelo git
+- Corrigida a remoção da worktree isolada de um subagent enquanto um subagent em segundo plano iniciado por ele ainda trabalhava nela
+- Corrigidos agents em segundo plano no modo auto que aguardam seus próprios shells iniciando um novo turno na conversa principal a cada retorno de suspensão
+- Corrigida a descrição da ferramenta Bash que afirmava que o diretório de trabalho sempre persistia entre chamadas
+- Corrigido o bloco de ambiente indicando um shell no qual os comandos não são executados, como o fish quando a ferramenta Bash usa o zsh
+- Corrigidos `claude mcp add`, `claude mcp remove` e `/mcp` indicando a pasta atual em vez da entrada do projeto em `~/.claude.json` que contém um servidor de escopo local quando executados abaixo da raiz do repositório
+- Corrigidos `claude mcp list` e `claude mcp get` exibindo o código de erro duas vezes em linhas de falha de conexão (por exemplo, `ENOENT: ENOENT: …`)
+- Corrigidas sessões de Remote Control presas em "Connecting" por cerca de dois minutos quando um proxy de rede bloqueia uma requisição de inicialização
+- Corrigidas mensagens enviadas pelo Claude para uma sessão na nuvem ou de Remote Control aparecendo como suas próprias mensagens nos aplicativos móveis do Claude
+- Corrigido o Claude não sendo informado sobre a causa quando um arquivo anexado a uma mensagem enviada via Remote Control ou para uma sessão na nuvem não pôde ser salvo por falta de espaço em disco, ou quando anexos além dos primeiros 20 foram ignorados
+- Corrigidos WebFetch e WebSearch travando em respostas paradas em sessões de nuvem do Cowork; requisições inacabadas agora falham após 300 segundos
+- Corrigida uma sessão em segundo plano encerrada inesperadamente entre turnos não sendo reiniciada enquanto estava conectada, fixada ou com uma tarefa agendada ou despertador configurado
+- Corrigido o erro "background service did not respond" sugerindo o comando desativado `claude daemon restart`; agora ele sugere `claude daemon stop --any` e informa que isso encerra as sessões em segundo plano
+- Corrigido `claude respawn <id>` iniciando o serviço em segundo plano antes de relatar que nenhuma sessão em segundo plano corresponde ao id
+- Corrigido o `/effort` não alertando sobre um miss de prompt cache no modo de planejamento quando o modelo do plano difere do modelo da sessão
+- Corrigido o `/ide` informando que a extensão do VS Code foi instalada antes do término da instalação ou quando ela falhava
+- Corrigida a pré-visualização de arquivo da ferramenta Write pulando linhas e calculando incorretamente linhas ocultas quando uma linha é mais larga que o terminal
+- Corrigido ↑ na aba de chat de um agent recuperando uma mensagem que ainda aguardava envio, fazendo com que reenviá-la gerasse uma segunda cópia
+- Corrigidas sessões de nuvem do Cowork perdendo seus conectores e a maioria das ferramentas após reiniciar quando um plugin ou suas configurações definiam um `agent`; sessões de nuvem do Cowork agora ignoram essa configuração
+- Corrigidas sessões de agent teams exibindo uma lista de tarefas vazia ao retornar com `--resume`, `--continue`, `/resume` ou `--session-id`, inclusive após `/clear` ou falha, e `/branch` escrevendo na lista da sessão original
+- Corrigido o problema em que colar texto mencionando um arquivo de imagem, como `! open /tmp/shot.png` ou `/review look at /tmp/shot.png`, anexava a imagem e removia seu caminho do prompt
+- Corrigido o card de rascunho de feedback exibindo seus atalhos 1/2/0 e Esc enquanto o prompt contém texto, momento em que essas teclas atuam no prompt em vez do card
+- Corrigida uma barra invertida isolada entre aspas ou colchetes/parênteses, como `"\"` ou `(\)`, desaparecendo das respostas do Claude
+- Corrigidos colegas de equipe agent compactando seu histórico quando `DISABLE_COMPACT` está definido
+- Corrigido o menu de rewind oferecendo "Summarize from here" e "Summarize up to here" quando `DISABLE_COMPACT` está definido
+- Corrigido um `/code-review` finalizado, ou outra skill executada em um sub-agent, rodando uma segunda vez ao reiniciar uma sessão na nuvem ou em segundo plano
+- Corrigido o thinking oculto e longo sendo cortado por inatividade no Google Vertex AI, Microsoft Foundry e Claude Platform on AWS, onde o endpoint envia atualizações de progresso do thinking
+- Corrigido o `/ide` informando ter instalado o plugin do JetBrains quando nada foi instalado
+- Corrigido assinantes do Claude Pro e Max sendo orientados a consultar o administrador quando a assinatura não puder ser usada; a mensagem agora direciona para as configurações de faturamento
+- Corrigido o painel de diff abrindo sozinho após uma edição em terminais amplos em tela cheia quando não havia nada para exibir
+- Corrigido o `/mcp` exibindo um servidor remoto como com falha após "Clear authentication" quando o servidor funciona sem login
+- Corrigido o `/mcp` exibindo "authenticated" para um servidor remoto para o qual o Claude Code não envia credenciais
+- Corrigida uma pasta de plugins via `--plugin-dir` carregando como um único plugin quando um `.mcp.json` vazio estava na sua raiz
+- Corrigido o `/usage` nunca exibindo grandes misses de prompt cache sob "What's contributing to your limits usage?"
+- Corrigidos links da linha de status permanecendo em texto simples em sessões em segundo plano após você abri-las em um terminal com suporte a links
+- Corrigida a confirmação do /rewind dizendo que a conversa "will be forked" quando as mensagens posteriores são removidas da conversa
+- Corrigido o aviso do /rewind que afirmava erroneamente que edições manuais e do Bash nunca são afetadas por uma restauração de código
+- Corrigida a aprovação de plano no modo leitor de tela enviando feedback descartado com Escape
+- Corrigido o Claude Code repetindo requisições que a API marcou para não tentar novamente, o que podia reter um turno por minutos ou, no modo de repetição autônoma (`CLAUDE_CODE_RETRY_WATCHDOG`), indefinidamente
+- Linux: Corrigidos comandos Bash em sandbox falhando com `bwrap: Can't create file` quando uma pasta `--plugin-dir` também era um diretório adicionado e `permissions.blockReadsOutsideWorkingDirectories` estava ativado
+- Self-hosted runner: Corrigida a falha ao iniciar uma sessão quando um limite de taxa (HTTP 429 ou um wrapper do git que sai com 75) bloqueia um repositório somente leitura adicionado; agora ela inicia sem esse repositório
+- Melhorado o tempo de inicialização para contas Pro e Max, ignorando duas requisições de rede em inicializações dentro de uma hora desde a última verificação
+- Melhorados `/teleport` e `claude --teleport` para alertar quando uma sessão compactada na nuvem é carregada a partir de sua última compactação, de modo que as mensagens resumidas não fiquem na cópia local
+- Melhoradas as mensagens exibidas quando o processo de uma sessão em segundo plano é encerrado: elas não prometem mais uma reinicialização que não acontecerá e explicam como retomar a sessão
+- Melhorados artifacts com múltiplas visualizações: o Claude agora roteia cada visualização pelo `#name` do link e não diz mais que a barra de endereços permanece a mesma ao alternar entre visualizações
+- Melhorados comandos de shell que atingem o timeout: o resultado agora exibe a saída gerada até o momento e informa que o comando ainda está rodando em segundo plano
+- Melhorada a compactação: quando a resposta do modelo não contém um resumo, o Claude Code agora normalmente solicita o resumo mais uma vez antes de substituir a conversa
+- Melhorada a escolha da ferramenta Artifact entre página e documento: explicações e trabalhos visuais ou interativos tornam-se páginas de artifact; documentos destinam-se a textos que as pessoas continuam editando ou compartilhando
+- Melhorado o tempo de inicialização para inicializações cujos únicos argumentos são opções e seus valores, como `claude --model opus`
+- Melhorado o erro de API "Connection dropped": agora ele indica onde verificar primeiro (o proxy ou gateway em uso, ou então VPN ou firewall; apenas Anthropic API, Bedrock, Vertex e Foundry permanecem inalterados)
+- Melhorado o modo leitor de tela: excluir uma regra em /permissions agora diz "Deleted allow rule …" imediatamente
+- Melhorada a mensagem exibida quando um código de login colado é recusado: agora ela informa que o código pode ter expirado ou já ter sido usado, e orienta a fazer login novamente
+- Melhorados os envios pelo conector do Slack: o Claude agora verifica o tópico do canal em busca de regras de postagem antes de enviar mensagens a um canal não especificado
+- Melhorado o modo leitor de tela: as perguntas do Claude são listadas como "Questions: Color (answered), Pages", sem setas ou símbolos
+- Alterado o `ultrathink` no terminal interativo para executar seu turno com esforço xhigh no Opus 5.5, Sonnet 5.5, Haiku 5.5 e Fable 5.1 via Anthropic API; digitado enquanto o Claude está trabalhando, ele eleva o restante desse turno
+- Alterado o efeito arco-íris de `ultrathink` para aparecer apenas onde a palavra-chave pode aumentar o esforço, e não quando a palavra estiver entre aspas ou fizer parte de um caminho de arquivo
+- Alterado Ctrl+D na visualização de agent para corresponder ao prompt: com a entrada vazia, pressioná-lo duas vezes encerra
+- Alterada a saída de `--output-format json` e `stream-json` para gravar caracteres DEL, de controle C1 e de formatação Unicode dentro de strings como escapes `\uXXXX`; os valores analisados permanecem inalterados
+- Alterados nomes e IDs de modelos para remover o sufixo `[1m]` e seu rótulo em modelos onde o sufixo não tem efeito; o sufixo ainda é aceito
+- Alterados avisos de inicialização sobre regras de permissão em arquivos de configuração para serem exibidos uma vez por usuário até que a regra seja alterada
+- Alterado `/code-review` para instruir o Claude a priorizar o nível de esforço e usar max apenas quando solicitado
+- Alterado `DISABLE_COMPACT` em arquivos de configuração e no `$.env.set` de mods para permitir apenas desativar a compactação, não reativá-la
+- Alterado o Claude Code no Bedrock, Mantle, Vertex e Foundry para carregar configurações de modelos a partir de um arquivo assinado em downloads.claude.ai; defina CLAUDE_CODE_MODEL_CATALOG=off para desativar isso
+- Alteradas sessões que definem `CLAUDE_CODE_SYNC_SKILLS` com busca de feature flags desativada para reutilizar uma lista de skills do claude.ai de até 10 minutos atrás obtida por outra sessão na máquina
+- Alterados cliques em setas e barras de rolagem em listas em tela cheia para atuarem ao soltar o botão do mouse, permitindo cancelar o clique ao mover o cursor para fora antes de soltá-lo
+- Alterado `claude purge` para informar que exclui dados apenas neste computador, e não qualquer dado armazenado pela Anthropic
+- [VSCode] Adicionada coloração de sintaxe aos blocos de código nas respostas do Claude, nos temas claro, escuro e escuro de alto contraste
+- [VSCode] Adicionado o status de carregamento "Running UserPromptSubmit hooks" e anúncio para leitores de tela em hooks UserPromptSubmit lentos
+- [VSCode] Corrigidas custom skills e custom slash commands enviados do painel do VS Code ou JetBrains omitindo o arquivo aberto ou as linhas selecionadas que mensagens comuns incluem (anthropics/claude-code#102799)
+- [VSCode] Corrigido o congelamento do host da extensão enquanto o shell de login executava seus arquivos de inicialização para ler o PATH no macOS e Linux
+- [VSCode] Corrigido problema em que clicar em uma imagem no resultado de uma ferramenta, ou fechar sua pré-visualização, também abria o texto do resultado em uma aba do editor
+- [VSCode] Corrigido o ditado por voz continuando a gravar após o envio de uma mensagem com o botão Send; o envio agora encerra o ditado antes, assim como ao pressionar Enter
+- [VSCode] Alterada a extensão para iniciar sessões do Claude Code com `DISABLE_TELEMETRY` definido enquanto a configuração de telemetria do VS Code estiver desativada, de modo a não enviar métricas de uso ou relatórios de erros nem buscar feature flags
+- [VSCode] Alterada a barra lateral da lista de sessões para carregar sessões Web ao abrir a aba Web pela primeira vez, e não na inicialização
+- [Cloud sessions] Corrigidas rotinas em ambientes hospedados pela Anthropic permanecendo bloqueadas após o proprietário sair da organização e retornar; o proprietário agora pode reativá-las
+- [Cloud sessions] Corrigida a falha na exclusão ou regeneração de token de API de rotina que não exibia nada caso o diálogo de edição já tivesse sido fechado; agora uma notificação de erro em toast é exibida
+- [Cloud sessions] Corrigidos diálogos de ambiente na nuvem, incluindo o de administração, aceitando nomes duplicados; eles agora recusam nomes que outro ambiente listado já possua
+- [Claude Tag] Adicionada a visualização Skills nas análises do Claude Tag mostrando a frequência com que o Claude executa cada skill vinculada em canais do Slack e quais não são utilizadas, com links de Usage nas configurações de administração
+- [Claude Tag] Melhoradas as rotinas do Claude Tag executadas em uma nova sessão: uma execução sem nada a relatar agora pode terminar sem postar uma mensagem descartável no canal
+- [Claude Tag] Alteradas as configurações de administração do Claude Tag para exibir um cadeado em vez de # para canais privados do Slack que sua própria conta do Slack consegue visualizar
+- [Code Review] Melhorado o check run do Code Review para informar que nenhuma revisão automática adicional será iniciada quando o modelo ainda não conseguir analisar uma alteração na nova tentativa automática
+- [Code Review] Melhorada a confiabilidade do Code Review: uma revisão cuja sessão falha ao iniciar devido a uma instabilidade temporária no servidor agora é repetida uma vez automaticamente, e seu check run informa isso
+
 ## 2.1.310 (2026-10-23)
 
 - Adicionada a ferramenta Monitor e monitores de plugins no Bedrock, Vertex e Foundry, e quando a telemetria ou o tráfego não essencial estão desativados; sleeps longos em foreground agora também são bloqueados nesses casos

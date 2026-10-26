@@ -2,6 +2,101 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.311 (2026-10-26)
+
+- `self-hosted-runner`에 `--hold-idle-file` 및 `--max-hold-min`을 추가하여, 호스트가 계속 실행 중인 프로세스를 보고하는 동안 유휴 세션을 유지하도록 개선
+- Claude에게 설명을 요청할 때 표시되는 Explanatory 출력 스타일에 대한 팁 추가
+- CLAUDE.md 파일에 매우 긴 목록 항목이 포함되어 있을 때 시작 시점 및 파일 읽기/편집 후 장시간 멈추던 현상 수정
+- MCP 서버가 리소스 읽기에 응답하지 않았거나 스킬이 아직 다운로드 중일 때 Claude 중단 요청이 타임아웃까지 적용되지 않던 현상 수정
+- 요청이 200K 토큰을 초과할 때 표준 컨텍스트 세션이 "Usage credits required for 1M context" 오류와 함께 중단되던 현상 수정. 이제 Claude Code가 대화를 압축하고 계속 진행합니다
+- 파일에서 수천 줄을 변경할 때 Write 및 Edit 실행 후 최대 5초 동안 지연되고 변경된 줄 수가 0줄로 보고되던 현상 수정
+- 서브에이전트 시작 후 연결이 완료된 서버의 MCP 도구를 서브에이전트가 사용할 수 없던 현상 수정
+- 세션 앞부분에서 해당 파일들이 수정되었을 때, 자동 압축 직후 Claude가 이전 버전의 MEMORY.md 및 CLAUDE.md 내용을 참조하던 현상 수정
+- `claude -p` 및 SDK 세션에서 트랜스크립트 메시지가 순서에 맞지 않게 저장되거나 철회된 메시지가 남아 있던 현상 수정
+- `SubagentStop` 훅이 서브에이전트 완료 시 1회 실행되는 대신 실행 중인 각 서브에이전트에 대해 분당 약 2회씩 실행되던 현상 수정
+- @ 파일 피커가 git-무시된 파일을 다시 포함시키는 `.ignore`/`.rgignore` 부정 규칙을 무시하던 현상 수정
+- 서브에이전트가 시작한 백그라운드 서브에이전트가 작업 중인 동안 해당 서브에이전트의 격리된 worktree가 삭제되던 현상 수정
+- 자체 셸에서 대기 중인 자동 모드의 백그라운드 에이전트가 깨어날 때마다 새로운 메인 대화 턴을 시작하던 현상 수정
+- Bash 도구 설명에서 호출 간에 작업 디렉터리가 항상 유지된다고 잘못 안내하던 현상 수정
+- Bash 도구가 zsh를 사용하는데 fish가 표시되는 등 환경 블록에 명령이 실행되지 않는 셸이 표시되던 현상 수정
+- 저장소 루트 하위에서 실행할 때 `claude mcp add`, `claude mcp remove` 및 `/mcp`가 로컬 스코프 서버가 정의된 `~/.claude.json` 내 프로젝트 항목 대신 현재 폴더명을 지정하던 현상 수정
+- `claude mcp list` 및 `claude mcp get` 실행 시 연결 실패 라인에 오류 코드가 중복 표시되던 현상(예: `ENOENT: ENOENT: …`) 수정
+- 네트워크 프록시가 시작 요청을 차단할 때 Remote Control 세션이 약 2분 동안 "Connecting" 상태로 유지되던 현상 수정
+- Claude가 클라우드 또는 Remote Control 세션으로 보낸 메시지가 Claude 모바일 앱에서 사용자가 직접 보낸 메시지로 표시되던 현상 수정
+- 디스크 공간 부족으로 인해 Remote Control 또는 클라우드 세션으로 전송된 메시지의 첨부 파일이 저장되지 못했을 때나, 메시지 첨부 파일 중 처음 20개를 초과한 파일들이 누락되었을 때 Claude에게 원인이 전달되지 않던 현상 수정
+- Cowork 클라우드 세션에서 응답이 멈췄을 때 WebFetch 및 WebSearch가 응답 대기 상태로 멈추던 현상 수정. 완료되지 않은 요청은 이제 300초 후 실패 처리됩니다
+- 턴 사이에 충돌이 발생한 백그라운드 세션이 연결되어 있거나 고정되었거나 예약된 작업 또는 wake-up이 설정되어 있음에도 재시작되지 않던 현상 수정
+- "background service did not respond" 오류에서 비활성화된 `claude daemon restart`를 제안하던 현상 수정. 이제 `claude daemon stop --any`를 제안하고 백그라운드 세션이 종료됨을 안내합니다
+- `claude respawn <id>` 실행 시 해당 id와 일치하는 백그라운드 세션이 없다고 보고하기 전에 백그라운드 서비스를 시작하던 현상 수정
+- 플랜 모델과 세션 모델이 다를 때 plan 모드에서 프롬프트 캐시 미스에 대해 `/effort`가 경고하지 않던 현상 수정
+- 설치가 완료되기 전이거나 실패했을 때도 `/ide`가 VS Code 확장이 설치되었다고 표시하던 현상 수정
+- 줄 길이가 터미널 너비보다 길 때 Write 도구의 파일 미리보기가 행을 건너뛰고 숨겨진 줄 수를 잘못 계산하던 현상 수정
+- 에이전트 채팅 탭에서 ↑ 키를 눌렀을 때 아직 전송 대기 중인 메시지를 불러와 다시 전송 시 중복으로 전송되던 현상 수정
+- 플러그인 또는 설정에 `agent`가 지정된 경우 재시작 후 Cowork 클라우드 세션에서 커넥터와 대부분의 도구가 유실되던 현상 수정. 이제 Cowork 클라우드 세션에서는 해당 설정을 무시합니다
+- `/clear` 또는 충돌 후를 포함하여 `--resume`, `--continue`, `/resume` 또는 `--session-id`로 복귀할 때 agent teams 세션에 빈 작업 목록이 표시되던 문제 및 `/branch`가 원본 세션의 목록에 작성되던 현상 수정
+- `! open /tmp/shot.png` 또는 `/review look at /tmp/shot.png`와 같이 이미지 파일이 언급된 텍스트를 붙여넣을 때 이미지가 첨부되면서 프롬프트에서 경로가 삭제되던 현상 수정
+- 프롬프트에 텍스트가 있어 해당 키가 카드가 아닌 프롬프트에 동작할 때도 피드백 초안 카드에 1/2/0 및 Esc 단축키가 표시되던 현상 수정
+- `"\"` 또는 `(\)`와 같이 따옴표나 괄호 안의 단독 백슬래시가 Claude의 응답에서 사라지던 현상 수정
+- `DISABLE_COMPACT`가 설정되어 있을 때 agent teammates가 기록을 압축하던 현상 수정
+- `DISABLE_COMPACT`가 설정되어 있을 때 되감기 메뉴에서 "Summarize from here" 및 "Summarize up to here"를 제공하던 현상 수정
+- 클라우드 또는 백그라운드 세션이 재시작될 때 완료된 `/code-review`나 서브에이전트에서 실행되는 다른 스킬이 재실행되던 현상 수정
+- 엔드포인트가 사고 진행 상황 업데이트를 전송하는 Google Vertex AI, Microsoft Foundry 및 Claude Platform on AWS에서 긴 숨김 사고 과정이 유휴 상태로 간주되어 잘리던 현상 수정
+- 아무것도 설치되지 않았을 때도 `/ide`가 JetBrains 플러그인을 설치했다고 표시하던 현상 수정
+- Claude Pro 및 Max 구독자가 구독을 사용할 수 없을 때 관리자에게 문의하라는 안내를 받던 현상 수정. 이제 결제 설정으로 안내합니다
+- 넓은 전체 화면 터미널에서 편집 후 표시할 내용이 없음에도 diff 창이 자동으로 열리던 현상 수정
+- 로그인 없이 작동하는 원격 서버에서 "Clear authentication" 수행 후 `/mcp`에 서버가 실패한 것으로 표시되던 현상 수정
+- Claude Code가 인증 정보를 전송하지 않는 원격 서버에 대해 `/mcp`에 "authenticated"로 표시되던 현상 수정
+- `--plugin-dir`의 최상위에 빈 `.mcp.json`이 있을 때 플러그인 폴더 전체가 단일 플러그인으로 로드되던 현상 수정
+- "What's contributing to your limits usage?" 아래에 큰 프롬프트 캐시 미스가 `/usage`에 표시되지 않던 현상 수정
+- 링크를 지원하는 터미널에서 연 후에도 백그라운드 세션에서 상태 표시줄 링크가 일반 텍스트로 유지되던 현상 수정
+- 대화에서 이후 메시지가 제거될 때 /rewind 확인 메시지에서 대화가 "will be forked"된다고 잘못 안내하던 현상 수정
+- 코드 복원 시 수동 편집 및 Bash 편집이 전혀 영향을 받지 않는다고 잘못 안내하던 /rewind 경고 수정
+- 스크린 리더 모드에서 Escape로 취소한 피드백이 플랜 승인 시 전송되던 현상 수정
+- API에서 재시도하지 않도록 표시한 요청을 Claude Code가 재시도하여 턴이 몇 분 동안 지연되거나 무인 재시도 모드(`CLAUDE_CODE_RETRY_WATCHDOG`)에서 무한정 지연될 수 있던 현상 수정
+- Linux: `--plugin-dir` 폴더가 추가 디렉터리이기도 하고 `permissions.blockReadsOutsideWorkingDirectories`가 켜져 있을 때 샌드박스된 Bash 명령이 `bwrap: Can't create file` 오류로 실패하던 현상 수정
+- Self-hosted runner: 속도 제한(HTTP 429 또는 종료 코드 75를 반환하는 git 래퍼)으로 인해 추가된 읽기 전용 저장소가 차단될 때 세션 시작에 실패하던 현상 수정. 이제 해당 저장소 없이 세션이 시작됩니다
+- 마지막 확인 후 1시간 이내에 실행 시 두 개의 네트워크 요청을 건너뛰어 Pro 및 Max 계정의 시작 시간 개선
+- 압축된 클라우드 세션이 마지막 압축 지점부터 로드되어 요약된 메시지가 로컬 복사본에 포함되지 않을 때 경고하도록 `/teleport` 및 `claude --teleport` 개선
+- 백그라운드 세션 프로세스 종료 시 표시되는 메시지 개선: 더 이상 이루어지지 않을 재시작을 예고하지 않으며, 세션 재개 방법을 안내합니다
+- 여러 뷰를 가진 아티팩트 개선: Claude가 이제 링크의 `#name`에 따라 각 뷰를 라우팅하며, 뷰 전환 시 주소창이 변경되지 않는다고 안내하지 않습니다
+- 타임아웃에 도달한 셸 명령 개선: 이제 결과에 지금까지의 출력이 표시되고 명령이 백그라운드에서 계속 실행 중임을 안내합니다
+- 압축 기능 개선: 모델의 응답에 요약이 포함되지 않은 경우, Claude Code가 대화를 교체하기 전에 일반적으로 한 번 더 요약을 요청합니다
+- Artifact 도구의 페이지 및 문서 선택 개선: 설명 자료와 시각적 또는 대화형 작업은 아티팩트 페이지로 생성되며, 문서는 지속적으로 편집하거나 공유하는 용도로 사용됩니다
+- `claude --model opus`와 같이 옵션과 해당 값만을 인수로 사용하는 실행에 대한 시작 시간 개선
+- "Connection dropped" API 오류 개선: 가장 먼저 확인할 위치(사용 중인 프록시 또는 게이트웨이, 또는 VPN이나 방화벽)를 안내합니다(Anthropic API 전용이며, Bedrock, Vertex 및 Foundry는 변경 없음)
+- 스크린 리더 모드 개선: /permissions에서 규칙을 삭제하면 즉시 "Deleted allow rule …"이라고 안내합니다
+- 붙여넣은 로그인 코드가 거부되었을 때 표시되는 메시지 개선: 코드가 만료되었거나 이미 사용되었을 수 있음을 알리고 다시 로그인하도록 안내합니다
+- Slack 커넥터 전송 기능 개선: Claude가 명시적으로 지정되지 않은 채널에 메시지를 보내기 전에 해당 채널의 토픽에서 게시 규칙을 확인합니다
+- 스크린 리더 모드 개선: Claude의 질문이 화살표나 기호 없이 "Questions: Color (answered), Pages" 형식으로 나열됩니다
+- 대화형 터미널의 `ultrathink`가 Anthropic API를 통해 Opus 5.5, Sonnet 5.5, Haiku 5.5 및 Fable 5.1에서 해당 턴을 xhigh 노력 수준으로 실행하도록 변경. Claude가 작업 중일 때 입력하면 해당 턴의 남은 작업 수준을 높입니다
+- `ultrathink` 무지개 효과가 해당 키워드가 노력 수준을 높일 수 있는 곳에서만 나타나고, 단어가 따옴표로 묶여 있거나 파일 경로의 일부인 경우에는 나타나지 않도록 변경
+- 에이전트 뷰의 Ctrl+D 동작을 프롬프트와 동일하게 변경: 빈 입력 상태에서 두 번 누르면 종료됩니다
+- `--output-format json` 및 `stream-json` 출력에서 문자열 내부의 DEL, C1 제어 문자 및 유니코드 형식 문자를 `\uXXXX` 이스케이프로 작성하도록 변경. 파싱된 값은 동일하게 유지됩니다
+- 접미사가 효과가 없는 모델에서 모델 이름 및 ID의 `[1m]` 접미사와 라벨을 제거하도록 변경. 해당 접미사는 계속 지원됩니다
+- 설정 파일의 권한 규칙에 대한 시작 경고가 규칙이 변경되기 전까지 사용자당 한 번만 표시되도록 변경
+- `/code-review`가 Claude에게 노력 수준을 먼저 설정하고 요청이 있을 때만 max를 사용하도록 지시하도록 변경
+- 설정 파일 및 mod의 `$.env.set`에 있는 `DISABLE_COMPACT`가 압축을 끌 수만 있고 다시 켤 수는 없도록 변경
+- Bedrock, Mantle, Vertex 및 Foundry 환경의 Claude Code가 downloads.claude.ai의 서명된 파일에서 모델 설정을 로드하도록 변경. 이를 비활성화하려면 CLAUDE_CODE_MODEL_CATALOG=off로 설정하세요
+- 기능 플래그 조회가 꺼진 상태에서 `CLAUDE_CODE_SYNC_SKILLS`를 설정한 세션이 해당 기기의 다른 세션에서 조회한 최대 10분 전의 claude.ai 스킬 목록을 재사용하도록 변경
+- 전체 화면 목록의 스크롤바 화살표 및 바 클릭이 마우스 버튼을 놓을 때 동작하도록 변경하여, 마우스를 놓기 전에 스크롤바 밖으로 이동하면 클릭이 취소되도록 함
+- `claude purge`가 Anthropic에 저장된 데이터는 제외하고 이 컴퓨터의 데이터만 삭제한다고 안내하도록 변경
+- [VSCode] 라이트, 다크 및 고대비 다크 테마에서 Claude 응답의 코드 블록에 구문 강조 추가
+- [VSCode] 실행 시간이 긴 UserPromptSubmit 훅에 대해 "Running UserPromptSubmit hooks" 스피너 상태 및 스크린 리더 안내 추가
+- [VSCode] VS Code 또는 JetBrains 패널에서 전송된 커스텀 스킬 및 커스텀 슬래시 명령에서 일반 메시지에 포함되는 열려 있는 파일이나 선택된 줄이 누락되던 현상 수정 (anthropics/claude-code#102799)
+- [VSCode] macOS 및 Linux에서 로그인 셸이 PATH를 읽기 위해 시작 파일을 실행하는 동안 확장 호스트가 멈추던 현상 수정
+- [VSCode] 도구 결과에서 이미지를 클릭하거나 미리보기를 닫을 때 편집기 탭에서 결과 텍스트도 함께 열리던 현상 수정
+- [VSCode] Send 버튼으로 메시지를 보낸 후에도 음성 받아쓰기가 계속 녹음되던 현상 수정. Enter 키를 누를 때와 마찬가지로 이제 전송 시 받아쓰기가 먼저 중지됩니다
+- [VSCode] VS Code의 원격 분석 설정이 꺼져 있을 때 확장이 `DISABLE_TELEMETRY`가 설정된 상태로 Claude Code 세션을 시작하도록 변경하여, 사용 지표나 오류 보고서를 전송하지 않고 기능 플래그도 조회하지 않도록 함
+- [VSCode] 세션 목록 사이드바가 시작 시점이 아닌 Web 탭이 처음 열릴 때 Web 세션을 로드하도록 변경
+- [Cloud sessions] 소유자가 조직을 떠났다가 다시 합류한 후 Anthropic 호스팅 환경의 루틴이 잠긴 상태로 유지되던 현상 수정. 이제 소유자가 이를 다시 활성화할 수 있습니다
+- [Cloud sessions] 편집 대화상자가 이미 닫힌 경우 루틴 API 토큰 삭제 또는 재생성 실패 시 아무것도 표시되지 않던 현상 수정. 이제 오류 토스트가 표시됩니다
+- [Cloud sessions] 관리자 대화상자를 포함한 클라우드 환경 대화상자에서 중복된 이름을 허용하던 현상 수정. 이제 목록에 있는 다른 환경이 이미 사용 중인 이름은 거부됩니다
+- [Claude Tag] Claude가 Slack 채널에서 연결된 각 스킬을 얼마나 자주 실행하는지와 어떤 스킬이 사용되지 않는지 보여주는 Skills 뷰를 Claude Tag 분석에 추가하고, 관리자 설정에 Usage 링크를 추가
+- [Claude Tag] 새 세션에서 실행되는 Claude Tag 루틴 개선: 보고할 내용이 없는 실행은 채널에 불필요한 메시지를 게시하지 않고 종료될 수 있도록 함
+- [Claude Tag] 본인의 Slack 계정에서 볼 수 있는 비공개 Slack 채널에 대해 Claude Tag 관리자 설정에서 # 대신 자물쇠 모양이 표시되도록 변경
+- [Code Review] 자동 재시도 시에도 모델이 변경 사항을 분석할 수 없을 때 추가 자동 리뷰가 시작되지 않음을 안내하도록 Code Review의 체크 런 개선
+- [Code Review] Code Review 안정성 개선: 일시적인 서버 장애로 인해 세션 시작에 실패한 리뷰는 이제 자동으로 한 번 재시도되며, 체크 런에 해당 내용이 표시됩니다
+
 ## 2.1.310 (2026-10-23)
 
 - Bedrock, Vertex, Foundry 및 원격 측정이나 비필수 트래픽이 비활성화된 환경에 Monitor 도구 및 플러그인 모니터 추가. 해당 환경에서 장시간 포그라운드 sleep도 차단됨
