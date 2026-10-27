@@ -2,6 +2,48 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.312 (2026-10-27)
+
+- Ajout de `oidc.user_id_claim` à la passerelle des applications Claude, pour identifier les utilisateurs via une revendication id_token autre que `sub`, comme l'`oid` de Microsoft Entra ID
+- Ajout du clic pour envoyer : en plein écran, cliquer sur l'indication « to send now » sous un message en file d'attente l'envoie immédiatement, tout comme son raccourci clavier
+- Correction des paramètres gérés et de la politique d'organisation qui n'étaient pas récupérés pour le reste de la session après une connexion depuis l'extension VS Code
+- Correction d'un problème où Claude écrasait un très grand fichier CLAUDE.md, fichier de règles ou fichier inclus avec @ dans un sous-répertoire après n'en avoir vu que le début ; Write demande désormais à Claude de tout lire ou de modifier sur place
+- Correction des compétences par répertoire et `paths:` introuvables après un `cd` Bash plus profond dans un dépôt git
+- Correction d'un cas rare où la première réponse après la reprise d'une session dans le terminal pouvait être manquante lors de la reprise suivante
+- Correction d'une commande au nom invalide empêchant le chargement de toutes les commandes, ce qui pouvait laisser `claude -p` sans aucune sortie
+- Correction de l'outil Read qui échouait parfois sur des pages PDF avec « pdftoppm failed: Could not write image » lorsque le nettoyage des anciens fichiers de session s'exécutait en même temps
+- Correction du spinner, des valeurs OpenTelemetry `effort` et des transcriptions qui affichaient un nouveau niveau d'effort sélectionné pendant une tâche avant que le modèle ne l'applique ; ils affichent désormais le niveau effectif
+- Correction de l'avertissement de cache de `/model` et `/effort` indiquant que la relecture attend votre prochain message ; une modification effectuée pendant que Claude travaille peut la déclencher plus tôt
+- Correction de certaines sessions apparaissant comme étant en attente d'une action de votre part alors que le dernier message ne mentionnait ces éléments qu'en milieu de phrase
+- Correction de la vue agent qui restaurait le texte saisi lors du lancement suivant après avoir été effacé avec Ctrl+C juste avant de quitter
+- Correction de la vue agent qui se rouvrait en mode shell après avoir quitté avec Ctrl+D depuis une saisie `!` vide
+- Correction en mode vim des commandes `d`, `c` et `y` associées à un compteur `gj` ou `gk` supérieur au nombre de lignes restantes supprimant ou copiant du texte ; comme dans Vim, elles ne font désormais que déplacer le curseur
+- Correction de `/verify` qui affichait une longue description destinée à Claude dans `/help` et le menu de commandes `/` au lieu d'une description courte
+- Amélioration de l'indicateur d'effort du prompt : une modification effectuée en cours de tâche indique désormais qu'elle peut attendre votre prochain message, et la note disparaît lorsqu'elle ne s'applique plus
+- Amélioration des erreurs WebFetch dans les sessions cloud : un hôte non résolu est désormais expliqué comme pouvant être hors des domaines réseau autorisés, afin que Claude indique l'hôte à autoriser
+- Modification de Bedrock, Vertex, Foundry et Mantle pour utiliser le prompt système court pour les noms de modèles non reconnus par Claude Code, comme les noms de déploiements personnalisés et les ARN de profils d'inférence, même lorsqu'ils sont basés sur Sonnet ou Haiku ; définissez `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` pour conserver le prompt complet
+- Modification des basculements automatiques de modèle après un message signalé pour couvrir également les noms de modèles non reconnus par Claude Code, tels que les noms de déploiements personnalisés ; définissez `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` pour les désactiver
+- Modification des messages de limite d'utilisation pour nommer la fenêtre de 5 heures « 5-hour limit » au lieu de « session limit »
+- Modification des sessions cloud démarrées depuis le CLI pour obtenir leurs noms et noms de branches depuis le serveur
+- Modification des hooks de prompt et d'agent pour s'exécuter au maximum à 24 simultanément par session, sous-agents inclus, plus au maximum 12 ayant attendu plus longtemps que le timeout de leur événement ; un `timeout` inférieur à 1 seconde compte désormais pour 1 seconde
+- Modification du paramètre `autoCompactWindow` d'un sous-agent pour réduire la fenêtre définie par `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, alors qu'il n'avait aucun effet auparavant ; il n'augmente toujours jamais cette fenêtre
+- Modification de `mcp_server.name` dans OpenTelemetry pour rapporter le nom réel des serveurs MCP distants à URL fixe déclarés par les plugins de la marketplace officielle d'Anthropic, au lieu de `custom`
+- Modification de Claude Code pour cesser d'envoyer l'événement OpenTelemetry `claude_code.safety_event`
+- [VSCode] Correction des sessions se terminant sur un simple code de sortie lorsque les paramètres de votre organisation ne pouvaient pas être chargés ou étaient refusés au démarrage ; l'onglet indique désormais la raison et propose Retry ou Sign in again
+- [VSCode] Modification des réinitialisations de limite d'utilisation pour afficher une heure précise (« Resets at 3:10 PM ») et indiquer « 5-hour limit »
+- [Cloud sessions] Ajout d'un niveau d'effort au sélecteur de modèle lors de la création ou de la modification d'une routine s'exécutant dans le cloud
+- [Cloud sessions] Ajout d'un éditeur Bash avec coloration syntaxique, numéros de ligne et un bouton Copy dans la zone de script de configuration des paramètres d'environnement cloud
+- [Cloud sessions] Amélioration de l'étape affichée lorsque Claude ajoute un dépôt à une session cloud : son ouverture affiche désormais un court tableau de ce qui s'est passé au lieu de JSON brut
+- [Cloud sessions] Correction d'un problème où le renvoi d'un message inchangé après un échec d'envoi dans une session cloud l'exécutait parfois deux fois
+- [Cloud sessions] Correction de l'échec de création d'un environnement cloud affichant son erreur uniquement sous forme de toast en dehors de la boîte de dialogue ouverte ; elle apparaît désormais à l'intérieur du dialogue
+- [Cloud sessions] Correction de l'option Edit dans le menu d'une routine sur la page Routines qui redirigeait vers la page de la routine sans ouvrir sa boîte de dialogue d'édition
+- [Remote Control] Correction d'une session Remote Control non archivée apparaissant comme active jusqu'à ce qu'un ordinateur se reconnecte ; elle apparaît désormais comme inactive
+- [Claude Tag] Amélioration de la notification de nouvelle tentative de Claude Tag dans Slack pour préciser le modèle utilisé ou indiquer que les limites de débit ont été atteintes, au lieu d'une erreur d'API générique
+- [Claude Tag] Correction du commutateur activé/désactivé et des paramètres d'agent d'un canal Claude Tag qui basculaient vers les valeurs par défaut de l'espace de travail lorsqu'un ancien canal Slack privé devient public et reçoit un nouvel identifiant
+- [Claude Tag] Correction de Claude dans Slack qui ne répondait pas dans les canaux dont l'environnement a un accès réseau défini sur None
+- [Claude Tag] Correction de Claude dans Slack publiant parfois un fichier dans le mauvais fil de discussion lorsqu'il répondait dans un autre fil du même canal
+- [Code Review] Correction de Code Review qui analysait un commit obsolète, ou aucun, lorsque GitHub transmettait un événement de push en retard ; il analyse désormais le commit actuel de la pull request
+
 ## 2.1.311 (2026-10-26)
 
 - Ajout de `--hold-idle-file` et `--max-hold-min` à `self-hosted-runner`, afin de maintenir une session inactive pendant que votre hôte signale des processus laissés en cours d'exécution

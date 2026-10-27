@@ -2,6 +2,48 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.312 (2026-10-27)
+
+- 在 Claude 应用网关中新增 `oidc.user_id_claim`，用于通过除 `sub` 以外的 id_token 声明（如 Microsoft Entra ID 的 `oid`）来标识用户
+- 新增点击发送功能：在全屏模式下，点击排队消息下方的 "to send now" 提示即可像使用快捷键一样立即发送
+- 修复从 VS Code 扩展登录后，会话后续无法获取托管设置和组织策略的问题
+- 修复 Claude 在仅读取子目录中超大 CLAUDE.md、规则文件或 @ 包含文件的开头部分后将其覆盖的问题；Write 现在会提示 Claude 完整读取或进行就地编辑
+- 修复在 Bash 中 `cd` 深入 git 仓库后，无法找到目录级及 `paths:` skills 的问题
+- 修复在终端恢复会话后，首次回复在下次恢复会话时极少数情况下可能丢失的问题
+- 修复因包含无效名称的命令导致所有命令停止加载、进而可能使 `claude -p` 无输出的问题
+- 修复在旧会话文件清理并发运行时，Read 工具在处理 PDF 页面时偶现 "pdftoppm failed: Could not write image" 错误的问题
+- 修复任务执行期间，加载动画、OpenTelemetry `effort` 数值和转录文本在模型应用新选择的 effort 等级前就提前显示该等级的问题；现在它们将显示当前生效的等级
+- 修复 `/model` 和 `/effort` 缓存警告提示重新读取需等待下一条消息的问题；在 Claude 工作时所做的更改现在可以更快触发重新读取
+- 修复当最后一条消息仅在句中提及等待用户事项时，部分会话仍显示为等待用户响应的问题
+- 修复退出前通过 Ctrl+C 清空输入文本后，agent view 在下次启动时仍会恢复该文本的问题
+- 修复在空白 `!` 输入下通过 Ctrl+D 退出后，agent view 重新打开时仍处于 shell 模式的问题
+- 修复 vim 模式下 `d`、`c` 和 `y` 配合超出剩余行数的 `gj` 或 `gk` 计数时会删除或复制文本的问题；现与 Vim 保持一致，仅移动光标
+- 修复 `/verify` 在 `/help` 和 `/` 命令菜单中显示供 Claude 读取的长描述而非简短描述的问题
+- 优化提示词的 effort 指示器：任务中途所做的更改现在会提示可能需要等待下一条消息生效，并在不再适用时自动清除该提示
+- 优化云端会话中的 WebFetch 错误提示：无法解析的主机现在会解释为可能不在允许的网络域名范围内，以便 Claude 指明需要加入白名单的主机
+- 更改 Bedrock、Vertex、Foundry 和 Mantle 的行为：对于 Claude Code 无法识别的模型名称（如自定义部署名称和推理配置文件 ARN），即使其后端指向 Sonnet 或 Haiku，也改用更简短的系统提示词；设置 `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` 可保留完整提示词
+- 更改触发标记消息后的自动模型切换逻辑，使其同样覆盖 Claude Code 无法识别的模型名称（如自定义部署名称）；设置 `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` 可禁用此功能
+- 更改用量限制提示信息，将 5 小时窗口的表述由 "session limit" 改为 "5-hour limit"
+- 更改从 CLI 启动的云端会话，使其会话名称和分支名称均从服务器端获取
+- 更改 prompt 和 agent 钩子的并发限制：每个会话（包含子 agent）最多同时运行 24 个，外加最多 12 个等待时间已超过事件超时的钩子；小于 1 秒的 `timeout` 现在计为 1 秒
+- 更改子 agent 的 `autoCompactWindow`，使其可以调小 `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 设置的窗口值（此前无效）；该配置仍无法调大该窗口值
+- 更改 OpenTelemetry `mcp_server.name`，对来自官方 Anthropic marketplace 插件所声明的固定 URL 远程 MCP 服务器，上报其实际名称而非 `custom`
+- 更改 Claude Code，停止发送 `claude_code.safety_event` OpenTelemetry 事件
+- [VSCode] 修复启动时若组织设置无法加载或被拒绝，会话仅以裸退出代码退出的问题；标签页现在会说明原因并提供 Retry 或 Sign in again 选项
+- [VSCode] 更改用量限制重置提示，显示具体时间（"Resets at 3:10 PM"）并将文案改为 "5-hour limit"
+- [Cloud sessions] 在创建或编辑运行于云端的 routine 时，于模型选择器中新增 effort 等级选项
+- [Cloud sessions] 在云端环境设置的 setup script 输入框中新增支持语法高亮、行号和 Copy 按钮的 Bash 编辑器
+- [Cloud sessions] 优化 Claude 向云端会话添加仓库时显示的步骤：展开后将显示操作摘要表格，而非原始 JSON
+- [Cloud sessions] 修复在云端会话中发送失败后重新发送未更改的消息时，有时会执行两次的问题
+- [Cloud sessions] 修复云端环境创建失败时错误信息仅在打开的对话框外以 toast 显示的问题；现在会直接显示在对话框内
+- [Cloud sessions] 修复在 Routines 页面中点击 routine 菜单中的 Edit 时直接跳转至该 routine 页面而未打开编辑对话框的问题
+- [Remote Control] 修复未归档的 Remote Control 会话在计算机重新连接前一直显示为 working 的问题；现在会正确显示为 idle
+- [Claude Tag] 优化 Slack 中 Claude Tag 的重试通知：明确指出所使用的模型名称或提示达到速率限制，而非仅显示通用的 API 错误
+- [Claude Tag] 修复当原有的私有 Slack 频道转为公开并获得新 ID 时，Claude Tag 频道的开关和 agent 设置会回退为工作区默认值的问题
+- [Claude Tag] 修复 Slack 中的 Claude 在网络访问权限设为 None 的环境频道中不回复的问题
+- [Claude Tag] 修复 Slack 中的 Claude 在同一频道的另一个 thread 中回复时，有时会将文件发送到错误 thread 的问题
+- [Code Review] 修复当 GitHub 推送 push 事件延迟时，Code Review 审查过时 commit 甚至未进行审查的问题；现在将审查 pull request 的当前 commit
+
 ## 2.1.311 (2026-10-26)
 
 - 在 `self-hosted-runner` 中新增 `--hold-idle-file` 和 `--max-hold-min`，以便在主机报告仍有残留运行进程时保持空闲会话
