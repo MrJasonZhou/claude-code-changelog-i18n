@@ -2,6 +2,128 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.314 (2026-10-30)
+
+- Se añadió `permissions.blockWritesOutsideWorkingDirectories`: Write, Edit y NotebookEdit rechazan rutas fuera de los directorios de trabajo en cualquier modo de permisos
+- Se añadió una lista opcional `groups` a los upstreams de Claude apps gateway: solo los desarrolladores en los grupos de IdP listados se envían a ese upstream, también durante la conmutación por error
+- Se añadió `guardrail_trace` a los upstreams de Bedrock en Claude apps gateway, para registrar qué filtro de guardrail de Amazon Bedrock se activó en una solicitud, sin el texto coincidente
+- Se añadió compactación por inactividad a VS Code y a la pestaña Code de Claude Desktop: se resume una conversación inactiva de más de 200K tokens, y el resumen se utiliza en tu siguiente mensaje si la caché de prompts ha expirado
+- Se corrigieron las sesiones que fallaban turno tras turno con "Invalid effort level" cuando el administrador de una organización limita el esfuerzo de un modelo: Claude Code ahora reduce el esfuerzo, reintenta e indica qué nivel utiliza
+- Se corrigió que `claude -p` saliera con código 0 y sin salida cuando fallaba el inicio; ahora imprime el error y sale con código 1
+- Se corrigieron las sesiones de Bedrock con muchas imágenes que fallaban en cada turno y en `/compact` con "400 Input is too long." en lugar de eliminar las imágenes más antiguas y compactar
+- Se corrigieron las sesiones de Microsoft Foundry que fallaban cuando el recurso no tenía un despliegue para el modelo predeterminado Sonnet, Opus o Haiku: Claude Code ahora recurre a un modelo anterior de esa familia
+- Se corrigieron las solicitudes rechazadas repetidamente detrás de una gateway que no acepta bloques `tool_reference` de tool search: la solicitud se reenvía una vez sin tool search y la sesión lo recuerda
+- Se corrigieron las conexiones TLS que fallaban con `UNABLE_TO_GET_ISSUER_CERT` cuando el almacén de certificados del sistema contiene un certificado raíz renovado con firma cruzada con su predecesor
+- Se corrigieron los servidores MCP que también funcionan sin iniciar sesión y mostraban "needs authentication" después de que su inicio de sesión guardado dejara de funcionar; ahora se usan con la sesión cerrada
+- Se corrigió que `claude mcp logout` informara éxito cuando no se eliminaba el inicio de sesión de MCP, por ejemplo, mientras el llavero de macOS estaba bloqueado a través de SSH
+- Se corrigieron las renovaciones de inicio de sesión adicionales cuando varias sesiones comparten un inicio de sesión de perfil de Anthropic y el bloqueo de credenciales está ocupado
+- Se corrigió que `claude ultrareview` y `claude remote-control` hicieran la pregunta de confianza del espacio de trabajo en un trabajo de CI con terminal; con `CI` configurado, ahora rechazan de inmediato una carpeta no confiable
+- Se corrigió que la configuración de confianza TLS de un administrador en los ajustes gestionados no se aplicara en las sesiones de Claude Desktop
+- Se corrigió que se rechazara el cambio de modelo en máquinas con ajustes gestionados de plugins cuando uno de tus propios plugins `--plugin-dir` o `--plugin-url` tenía un manifiesto roto o no se podía descargar
+- Se corrigió que la oferta de actualización de modelo de Bedrock y Vertex reapareciera en cada inicio cuando los ajustes gestionados fijan el modelo
+- Se corrigió que `forceRemoteSettingsRefresh` configurado solo en ajustes gestionados remotos dejara de aplicarse una vez expirada la copia almacenada, lo que permitía iniciar sesiones sin directiva cuando no se podía contactar con el servidor
+- Se corrigió que "Continue automatically at usage limit" continuara más de tres veces sin una instrucción de tu parte cuando una tarea se reiniciaba entre esperas (un check-in de /goal, una tarea en segundo plano o programada)
+- Se corrigieron las sesiones en la nube y en segundo plano iniciadas con Ultracode que volvían a activarlo en su siguiente inicio tras haber sido desactivado
+- Se corrigió que la última respuesta dañada y sus prompts de reintento permanecieran en la conversación después de que Claude se diera por vencido con una llamada a herramienta que no se pudo parsear
+- Se corrigió que un hook PreCompact con una salida muy grande hiciera que la compactación fallara o se repitiera; la salida de cada hook ahora se trunca a 10.000 caracteres
+- Se corrigió que la actualización de diffs en segundo plano bloqueara brevemente el índice del repositorio, lo que podía hacer que un comando git ejecutado al mismo tiempo fallara con "Unable to create '.git/index.lock': File exists"
+- Se corrigió que las tablas de markdown alternaran entre diseños en cuadrícula y apilados en filas parcialmente escritas durante el streaming, y que las tablas largas recurrieran a pipes sin procesar
+- Se corrigió que el selector de /resume mostrara el texto de CLAUDE.md o CLAUDE.local.md como título de la sesión cuando la sesión solo ejecutaba comandos slash
+- Se corrigió que `/btw` respondiera desde la conversación principal cuando se ejecutaba desde la transcripción abierta de un subagente
+- Se corrigió que pegar una imagen por SSH a una máquina Linux no hiciera nada de forma silenciosa; el prompt ahora indica copiar el archivo y pegar su ruta
+- Se corrigieron las sesiones de `claude remote-control` que no se iniciaban cuando el servicio de sesiones iba lento por un momento: el registro del worker ahora se reintenta con esperas crecientes
+- Se corrigieron los cambios de modelo mediante Remote Control que tardaban más de 8 segundos y recibían un error "still pending" en lugar del resultado final
+- Se corrigió la descripción del ajuste `sandbox.excludedCommands` que indicaba que los comandos listados siempre se ejecutan fuera del sandbox; ahora aclara que cada comando en una llamada debe coincidir con una entrada
+- Se corrigió que las llamadas de shell y MCP bloqueadas por el auto mode, una regla de denegación o un hook PreToolUse, o que no se ejecutaron por otra razón, se mostraran como si se hubieran ejecutado en un grupo de herramientas colapsado
+- Se corrigió que las protecciones del sandbox no se aplicaran a un worktree al que se accedía mediante `claude -p --resume` o `--continue`
+- Se corrigió que los hooks que coinciden con Bash no se ejecutaran en comandos de shell iniciados por la herramienta Monitor; dichos hooks pueden bloquear o preguntar, pero no aprobar ni reescribir esos comandos
+- Se corrigió que un archivo de configuración excluido con `--setting-sources` siguiera proporcionando algunos ajustes, como las reglas de auto mode y los consentimientos de permisos guardados
+- Se corrigió que el auto mode reportara una llamada como bloqueada y la listara en `/permissions` cuando su comprobación de seguridad no emitía un veredicto
+- Se corrigió que un upstream de Vertex en Claude apps gateway se quedara colgado durante minutos cuando un endpoint de tokens de Google aceptaba la conexión y nunca respondía
+- Se corrigió la advertencia de inicio de Claude apps gateway para una clave obsoleta de Claude Desktop que aún servía tal cual estaba escrita diciendo "stops being accepted" tras la fecha límite de la clave
+- Se corrigió que `/upgrade` abriera el navegador e iniciara un nuevo inicio de sesión para planes facturados a través de App Store o Google Play; ahora indica dónde cambiar el plan
+- Se corrigió que `--resume`, y rebobinar más allá de un cambio a otro modelo tras un rechazo, cambiaran a un modelo diferente una sesión que usaba un nombre de modelo no reconocido por Claude Code
+- Se corrigieron las solicitudes que fallaban cuando una gateway o proveedor cloud rechazaba una de las cabeceras beta de Claude Code por nombre: la solicitud se reenvía sin ella
+- Se corrigió que los IDs de modelos escritos con un punto detrás de una gateway LLM, como `claude-opus-4.8`, se trataran como un modelo más antiguo con ventana de contexto, límite de salida, esfuerzo, modo thinking y coste incorrectos
+- Se corrigió que los clientes de Remote Control mostraran una fila huérfana "Compacted (ctrl+o to see full summary)" después de /compact
+- Se corrigió que el consejo de sesiones en la nube y el aviso de inactividad de Remote Control se mostraran cuando la directiva de una organización desactiva esas funciones
+- Se corrigió que una sesión en la nube de claude.ai reanudada hiciera una llamada al modelo no solicitada cuando el worker anterior se detenía justo después de recibir los archivos de un nuevo chat
+- Se corrigió que WebFetch en sesiones cloud de Cowork descartara silenciosamente el texto de un PDF a partir de los 100.000 caracteres; ahora indica cuánto quedó sin leer y desde dónde continuar leyendo
+- Se corrigió que a Claude solo se le informara que un comando fue rechazado tras detenerlo con Esc o Stop en una sesión cloud o en el IDE; ahora también se le notifica que el comando pudo haberse ejecutado
+- Se corrigió que las líneas en blanco al principio de un bloque de código desaparecieran cuando este abría una cita
+- Se corrigió que apareciera una línea en blanco encima de algunas filas `⎿` en la vista de transcripción (Ctrl+O)
+- Se corrigió que en el modo vim `dw`, `dW`, `yw` e `yW` continuaran más allá del final de la línea, y se hizo que `w` y `W` se detengan en líneas vacías
+- Se corrigió que x y Enter en el panel de agentes actuaran a veces sobre el agente incorrecto cuando otro agente se iniciaba o finalizaba
+- Se corrigió que el texto pegado y los archivos arrastrados se perdieran en el cuadro de diálogo de preguntas de Claude a menos que la fila "Other" tuviera el foco
+- Se corrigió que el texto pegado se perdiera al seleccionar una fila en el pie de página del prompt
+- Se corrigió que en el modo vim `p` sobre una selección de caracteres ignorara si el texto copiado era de líneas completas
+- Se corrigió que en el modo vim `aw` e `iw` incluyeran el salto de línea al final de una línea
+- Se corrigió que ↓ seleccionara elementos del pie de página ocultos por el menú de ayuda ?, la lista de comandos o una sugerencia de pegado
+- Se corrigió que pulsar Esc en el panel de un comando, como `/btw`, también interrumpiera al subagente cuya transcripción estaba abierta
+- Se corrigió que el encabezado de bienvenida en modo de pantalla completa mostrara el modelo de la sesión al ver un subagente o compañero de equipo que se ejecuta en un modelo diferente
+- Se corrigió que la transcripción a pantalla completa quedara a mitad de conversación tras usar "Restore conversation" en el menú de rebobinado mientras se estaba desplazado hacia arriba
+- Se corrigió un caso poco común en el que una sesión eliminada podía reaparecer en la lista de reanudación como una entrada casi vacía
+- Se corrigieron los prompts que contenían etiquetas como `<bash-stdout>` o `<local-command-stdout>` que no se confirmaban a un host local stream-json
+- Se corrigió que las sesiones se quedaran sin título cuando fallaba el primer prompt (por ejemplo, por un límite de uso) y la conversación continuaba después
+- Se corrigió que el observador de archivos de skills comprobara cada skill eliminada guardada en `~/.claude/skills/.trash`, lo que aumentaba la carga del sistema de archivos con cada eliminación
+- Se corrigió que el nombre de sesión de /rename desapareciera mientras Claude solicitaba permisos o una decisión sobre el plan, permitiendo que las sesiones paralelas sigan siendo identificables
+- Se corrigieron las sesiones en segundo plano que no se iniciaban y se reportaban como un binario daemon eliminado cuando el binario aún estaba en disco
+- Se corrigió que el consejo y el recordatorio de inactividad sobre notificaciones push aparecieran cuando los ajustes de push en `/config` estaban ocultos o tu organización había desactivado Remote Control
+- Se corrigió que `~/.claude/skills/.trash` y `~/.claude/plugins/.trash` crecieran sin límite: cada uno ahora almacena unas 1024 entradas, independientemente de lo que indique `cleanupPeriodDays`
+- Se corrigió que el diff de edición de Bash mostrara un archivo completo como modificado cuando un archivo CRLF bajo la conversión de fin de línea de git se volvía a guardar sin cambios o con solo una línea editada
+- Self-hosted runner: Se corrigió que una sesión inactiva se moviera a otro runner en lugar de pausarse cuando la solicitud del runner para pausarla perdía la conexión antes de que Anthropic respondiera
+- Se mejoró el uso de memoria en turnos largos de headless y SDK que ejecutan muchos subagentes: la sesión principal ya no retiene los resultados de las herramientas de cada subagente hasta que finalice el turno
+- Se mejoró el historial de prompts: Ctrl+R ahora busca coincidencias de texto dentro de las pastillas colapsadas de `[Pasted text]`
+- Se mejoró el prompt de subida de `/design-sync` para mostrar la carpeta, el proyecto y los archivos que subirá o eliminará
+- Se mejoró la pestaña de revisión de `/permissions`, ahora llamada Recently blocked: el pie de página indica qué hará Esc con las filas marcadas
+- Se mejoraron las llamadas bloqueadas de auto mode: los mensajes nombran el comando, indican que Claude puede reintentar y que auto mode comprobará de nuevo, y dirigen a `/permissions` para revisar
+- Se mejoraron las solicitudes de permisos: un motivo largo ocupa menos filas, evitando que el comando que se aprueba quede fuera de la pantalla en menos terminales
+- Se mejoró el error de sesión en la nube mostrado mientras se sigue reintentando una solicitud rechazada para tu inicio de sesión de claude.ai: ahora también sugiere `claude auth login`
+- Se mejoró el comportamiento de los inicios de sesión guardados de claude.ai, Team y Enterprise cuando MDM y los ajustes remotos difieren en la URL base o en `apiKeyHelper`
+- Se mejoró `/config` en agent view para explicar cómo evitar que agent view se abra de forma predeterminada
+- Se mejoraron los títulos automáticos de sesión: una sesión que comienza con una skill o un comando basado en prompt como `/security-review` ahora obtiene su título a partir de este en lugar de quedarse sin título
+- Se mejoraron la velocidad y el uso de memoria de `--resume` en transcripciones dañadas
+- Se mejoró la velocidad de `/context` en sesiones con diez mil o más herramientas MCP
+- Self-hosted runner: Se mejoró el error mostrado cuando la rama de una sesión no está en el remoto de git: ahora cubre ramas nunca enviadas, indica cómo solucionar cada caso y ya no sugiere reintentar
+- Se actualizó la skill `/claude-api`: su configuración de Datadog para el rastreo de API ahora envía la cabecera `dd-llmobs-enabled: true`, tal como hace Console, y sus instrucciones de instalación de `ant` eliminan el paso obsoleto de `xattr` en macOS
+- Se actualizó la skill integrada dataviz para aconsejar imprimir las etiquetas de los ticks del eje y completas por debajo de 10.000, y las horizontales completas por debajo de un millón donde quepan
+- Se actualizó la skill integrada dataviz para responder a solicitudes de gráficos de donut y circulares con barras clasificadas o una barra segmentada que imprime sus valores
+- Se modificaron las herramientas de archivos de Claude para que pregunten antes de editar la copia local de los ajustes gestionados por el servidor de tu organización, al igual que hacen con tus archivos de configuración
+- Se cambió `/ultrareview` para comprobar la confianza del espacio de trabajo antes de ejecutar git, tal como hace `claude ultrareview`
+- Se cambió la shell de la herramienta Bash para borrar cualquier alias o función `which` heredada y dejar de pasar funciones `which`/`unsetenv` exportadas a los comandos, de modo que `which` sea el comando del sistema o el comando integrado de zsh
+- Se cambió Recently blocked de `/permissions` para rechazar la aprobación de una llamada que no se pueda leer por completo, incluida una que el terminal sea demasiado corto para mostrar
+- Se cambió auto mode en las sesiones cloud de Cowork: la autorización de una llamada a herramienta MCP por parte de un hook ahora cuenta como ninguna respuesta, por lo que decide el clasificador o una solicitud de permisos
+- Se modificaron las condiciones `if` de los hooks como `Monitor(tail *)` para que coincidan con los comandos de shell de la herramienta Monitor, al igual que `Bash(tail *)` coincide con los de Bash
+- Se cambió la skill `claude-api` para solicitar leer el workflow de una ejecución de Managed Agents workflow antes de modificar el agente para mejorar esa ejecución
+- Se cambiaron las solicitudes marcadas para que reintenten en otro modelo, en lugar de terminar en un rechazo, cuando `ANTHROPIC_DEFAULT_OPUS_MODEL`, `availableModels` o `deniedModels` deja solo un modelo Opus anterior o ninguno
+- Se modificó la compactación por inactividad para que también se ejecute para suscriptores con la telemetría desactivada, y en Bedrock, Vertex, Foundry y LLM gateways una vez activada la caché de prompts de una hora
+- Se cambió `FORCE_HYPERLINK=false` (también `no` y `off`) para desactivar los hipervínculos en lugar de activarlos
+- macOS: Se cambió `git grep` en la mayoría de los comandos que Claude ejecuta para usar el locale C, a fin de evitar una fuga de memoria reportada en la biblioteca regex de macOS con archivos que no son UTF-8 válido
+- [VSCode] Se corrigió que "Clear authentication" para servidores MCP reportara éxito cuando no se podía eliminar el inicio de sesión guardado
+- [VSCode] Se corrigió la falta del spinner y del botón Stop mientras se ejecutan los hooks de un mensaje en cola
+- [VSCode] Se corrigió que los cambios de grupo de sesiones que no se pueden guardar, como una eliminación, fallaran silenciosamente; ahora aparece una notificación de error
+- [VSCode] Se corrigió que Cmd+F / Ctrl+F no abriera el widget de búsqueda en la pestaña de vista previa del plan
+- [VSCode] Se corrigió que el atajo de dictado por voz (Ctrl+D) no hiciera nada en distribuciones de teclado no latinas como ruso, griego o hebreo
+- [VSCode] Se corrigió que las tareas programadas guardadas de una sola vez que se omitieron se eliminaran sin preguntar cuando la extensión se abría sin un chat
+- [VSCode] Se cambió `CLAUDE_CODE_DISABLE_CFC_PROMPT` para evitar también que la extensión añada las instrucciones de Claude in Chrome a los mensajes de una sesión; las herramientas del navegador siguen disponibles
+- [Cloud sessions] Se añadió un botón Include completed a la página de Scheduled tasks cuando las tareas únicas finalizadas son las únicas ocultas, para que puedas mostrarlas sin abrir el menú Sort
+- [Cloud sessions] Se corrigió que los entornos autohospedados usados recientemente nunca aparecieran entre los entornos recientes en la tarjeta de nueva sesión
+- [Cloud sessions] Se corrigió que las sesiones en la nube reportaran cambios no confirmados en cada turno después de que Claude moviera una rama a un commit que había enviado desde otro worktree
+- [Cloud sessions] Se corrigió que el diálogo de detalles del entorno autohospedado en los ajustes de administración comprimiera su contenido fuera de la vista en ventanas muy bajas o con zoom alto; el diálogo ahora tiene scroll
+- [Cloud sessions] Se corrigió que el selector de modo de permisos permaneciera en Auto después de que una sesión en la nube o Remote Control en ejecución rechazara el cambio; ahora muestra el modo en uso y te avisa
+- [Cloud sessions] Se mejoraron las tareas programadas: las ejecuciones en la nube de Anthropic ahora cargan los plugins habilitados en tu cuenta de claude.ai
+- [Cloud sessions] Se mejoró Test connection para GitHub Enterprise en los ajustes de administración para conectarse también de la misma forma que las sesiones en la nube, y para advertirte cuando esa segunda prueba falla
+- [Cloud sessions] Se mejoraron las transcripciones de sesiones en la nube: una fila de renombrado ahora indica el nuevo título, y las listas de repositorios y entornos se muestran como una tabla en lugar de una sola línea de JSON
+- [Cloud sessions] Se cambiaron las sesiones en la nube desde las aplicaciones web, de escritorio y móviles para que se inicien incluso cuando un script de configuración termina con error, en lugar de no iniciarse
+- [Remote Control] Se corrigió que el botón de modo de permisos en sesiones de Remote Control mostrara el modo incorrecto hasta que escribías; mientras tu ordenador esté conectado, ahora muestra el modo real al abrirse
+- [Claude Tag] Se añadió un enlace descartable a la documentación de la API de Claude Tag en las pestañas Bundles y Channels de los ajustes de administración, para organizaciones Enterprise con Slack conectado
+- [Claude Tag] Se corrigió que `@Claude !restart` se diera por vencido tras una comprobación de espacio de trabajo fallida en canales compartidos entre espacios de trabajo de Enterprise Grid; ahora reintenta y luego te pide que lo ejecutes de nuevo
+- [Claude Tag] Se corrigió un segundo mensaje directo de confirmación y una nota de canal al conectar tu cuenta de Claude desde Slack dos veces desde el mismo enlace en cuestión de minutos
+- [Claude Tag] Se corrigió que los mensajes de seguimiento en Slack no mostraran signos de progreso mientras la sesión de Claude espera a un self-hosted runner; Claude ahora publica un aviso de espera en el hilo
+- [Claude Tag] Se corrigió que Claude a veces no respondiera a una mención en su propio hilo en canales de Slack Connect donde ambas organizaciones tienen instalado Claude
+- [Claude Tag] Se corrigió que Retry en las páginas de plugins y skills en los ajustes de administración de Claude Tag descartara los cambios de acceso no guardados tras una carga fallida; tus modificaciones ahora se mantienen
+- [Claude Tag] Se corrigió que el control de repositorios en los ajustes de administración de Claude Tag mostrara la misma acción dos veces; su menú ahora solo lista lo que el botón aún no hace
+
 ## 2.1.312 (2026-10-27)
 
 - Se agregó `oidc.user_id_claim` a la gateway de aplicaciones de Claude para identificar usuarios mediante un claim de id_token distinto de `sub`, como el `oid` de Microsoft Entra ID

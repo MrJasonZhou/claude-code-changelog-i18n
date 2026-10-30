@@ -2,6 +2,128 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.314 (2026-10-30)
+
+- `permissions.blockWritesOutsideWorkingDirectories` 추가: 모든 권한 모드에서 Write, Edit 및 NotebookEdit이 작업 디렉터리 외부의 경로를 거부합니다
+- Claude apps gateway 업스트림에 선택적 `groups` 목록 추가: 장애 조치(failover) 시에도 목록에 지정된 IdP 그룹의 개발자만 해당 업스트림으로 라우팅됩니다
+- 일치된 텍스트 없이 요청 시 트리거된 Amazon Bedrock 가드레일 필터를 기록할 수 있도록 Claude apps gateway Bedrock 업스트림에 `guardrail_trace` 추가
+- VS Code 및 Claude Desktop의 Code 탭에 유휴 압축 추가: 유휴 상태로 방치된 200K개 이상의 토큰 대화가 요약되며, 프롬프트 캐시가 만료된 경우 다음 메시지에서 해당 요약이 사용됩니다
+- 조직 관리자가 모델의 effort를 제한했을 때 세션이 매 턴마다 "Invalid effort level" 오류로 실패하던 문제 수정: 이제 Claude Code가 effort 수준을 낮춰 재시도하고 사용 중인 수준을 안내합니다
+- 시작이 실패했을 때 `claude -p`가 출력 없이 종료 코드 0으로 종료되던 문제 수정: 이제 오류를 출력하고 1로 종료됩니다
+- 이미지가 많은 Bedrock 세션에서 이전 이미지를 제거하고 압축하는 대신 매 턴 및 `/compact` 시 "400 Input is too long." 오류로 실패하던 문제 수정
+- 리소스에 기본 Sonnet, Opus 또는 Haiku 모델의 배포가 없을 때 Microsoft Foundry 세션이 실패하던 문제 수정: 이제 Claude Code가 해당 제품군의 이전 모델로 폴백합니다
+- 도구 검색의 `tool_reference` 블록을 허용하지 않는 게이트웨이 뒤에서 요청이 반복적으로 거부되던 문제 수정: 도구 검색 없이 요청을 한 번 다시 전송하며 세션이 이를 기억합니다
+- 시스템 인증서 저장소에 이전 루트 인증서와 교차 서명된 갱신 루트 인증서가 있을 때 TLS 연결이 `UNABLE_TO_GET_ISSUER_CERT`로 실패하던 문제 수정
+- 로그인 없이도 작동하는 MCP 서버에서 저장된 로그인이 작동하지 않게 된 후 "needs authentication"이 표시되던 문제 수정: 이제 로그아웃된 상태로 사용됩니다
+- SSH 환경에서 macOS 키체인이 잠겨 있는 등의 이유로 MCP 로그인이 제거되지 않았음에도 `claude mcp logout`이 성공으로 보고되던 문제 수정
+- 여러 세션이 Anthropic 프로필 로그인을 공유하고 자격 증명 잠금이 사용 중일 때 불필요한 로그인 갱신이 발생하던 문제 수정
+- 터미널이 있는 CI 작업에서 `claude ultrareview` 및 `claude remote-control`이 워크스페이스 신뢰 여부를 묻던 문제 수정: 이제 `CI`가 설정되어 있으면 신뢰할 수 없는 폴더를 즉시 거부합니다
+- 관리형 설정(managed settings)의 관리자 TLS 신뢰 설정이 Claude Desktop 세션에 적용되지 않던 문제 수정
+- 관리형 플러그인 설정이 적용된 머신에서 사용자의 `--plugin-dir` 또는 `--plugin-url` 플러그인 중 하나의 매니페스트가 손상되었거나 다운로드에 실패했을 때 모델 전환이 거부되던 문제 수정
+- 관리형 설정에서 모델을 고정했을 때 시작할 때마다 Bedrock 및 Vertex 모델 업그레이드 제안이 다시 표시되던 문제 수정
+- 원격 관리형 설정에만 지정된 `forceRemoteSettingsRefresh`가 저장된 복사본이 만료된 후 더 이상 적용되지 않아 서버에 연결할 수 없을 때 정책 없이 세션이 시작되던 문제 수정
+- 대기 시간 사이에 작업이 자체 재시작될 때(/goal 체크인, 백그라운드 또는 예약된 작업) 사용자 프롬프트 없이 "Continue automatically at usage limit"이 세 번 이상 계속 진행되던 문제 수정
+- Ultracode가 켜진 상태로 시작된 백그라운드 및 클라우드 세션을 끈 후에도 다음 시작 시 다시 켜지던 문제 수정
+- 파싱할 수 없는 도구 호출을 Claude가 포기한 후에도 마지막 손상된 응답과 재시도 프롬프트가 대화에 남아 있던 문제 수정
+- 출력이 매우 큰 PreCompact 훅으로 인해 압축이 실패하거나 반복되던 문제 수정: 이제 각 훅의 출력이 10,000자에서 잘립니다
+- 백그라운드 diff 새로고침이 저장소의 인덱스 잠금을 잠깐 획득하여 같은 순간에 실행된 git 명령이 "Unable to create '.git/index.lock': File exists"로 실패할 수 있던 문제 수정
+- 스트리밍 중 덜 입력된 행에서 마크다운 표가 그리드와 스택 레이아웃 사이를 왔다 갔다 하거나 긴 표가 원시 파이프(raw pipes) 형식으로 폴백되던 문제 수정
+- 세션에서 슬래시 명령어만 실행했을 때 /resume 선택기에 CLAUDE.md 또는 CLAUDE.local.md의 텍스트가 세션 제목으로 표시되던 문제 수정
+- 서브에이전트의 열린 트랜스크립트에서 질문했을 때 `/btw`가 메인 대화 맥락에서 답변하던 문제 수정
+- Linux 머신으로 SSH를 통해 이미지를 붙여넣을 때 아무 반응 없이 무시되던 문제 수정: 이제 프롬프트에 파일을 복사한 뒤 해당 경로를 붙여넣으라는 안내가 표시됩니다
+- 세션 서비스가 일시적으로 느려졌을 때 `claude remote-control` 세션 시작이 실패하던 문제 수정: 이제 대기 시간을 늘려가며 워커 등록을 재시도합니다
+- Remote Control을 통한 모델 전환이 8초 이상 걸릴 때 최종 결과 대신 "still pending" 오류가 반환되던 문제 수정
+- `sandbox.excludedCommands` 설정 설명에서 나열된 명령이 항상 샌드박스 외부에서 실행된다고 안내하던 문제 수정: 이제 호출에 포함된 모든 명령이 항목과 일치해야 한다고 명시합니다
+- 자동 모드, deny 규칙 또는 PreToolUse 훅에 의해 차단되었거나 실행되지 않은 셸 및 MCP 호출이 접힌 도구 그룹에서 실행된 것처럼 표시되던 문제 수정
+- `claude -p --resume` 또는 `--continue`로 진입한 워크트리에 샌드박스 보호가 적용되지 않던 문제 수정
+- Bash와 일치하는 훅이 Monitor 도구로 시작된 셸 명령에서 실행되지 않던 문제 수정: 이러한 훅은 해당 명령을 차단하거나 확인할 수는 있지만 승인하거나 재작성할 수는 없습니다
+- `--setting-sources`로 제외된 설정 파일이 자동 모드 규칙 및 저장된 권한 동의 등 일부 설정을 계속 제공하던 문제 수정
+- 안전성 검사에서 판정이 내려지지 않았을 때 자동 모드가 호출을 차단된 것으로 보고하고 `/permissions`에 나열하던 문제 수정
+- Google 토큰 엔드포인트가 연결을 수락한 후 응답하지 않을 때 Claude apps gateway Vertex 업스트림이 수 분 동안 멈추던 문제 수정
+- 여전히 제공 중인 지원 중단된 Claude Desktop 키에 대한 Claude apps gateway의 시작 경고가 키의 종료일 이후에도 "stops being accepted"라고 표시되던 문제 수정
+- App Store 또는 Google Play를 통해 결제되는 플랜의 경우 `/upgrade`가 브라우저를 열고 새로 로그인을 시작하던 문제 수정: 이제 플랜을 변경할 수 있는 위치를 안내합니다
+- 거부 후 다른 모델로 전환된 시점 이전으로 되감거나 `--resume`을 실행했을 때, Claude Code가 인식하지 못하는 모델 이름의 세션이 다른 모델로 변경되던 문제 수정
+- 게이트웨이나 클라우드 제공업체가 Claude Code의 베타 헤더 중 하나를 이름 기준으로 거부할 때 요청이 실패하던 문제 수정: 해당 헤더 없이 요청을 다시 전송합니다
+- LLM 게이트웨이 뒤에서 `claude-opus-4.8`과 같이 점(dot)이 포함된 모델 ID가 잘못된 컨텍스트 윈도우, 출력 제한, effort, 사고 모드(thinking mode) 및 비용을 가진 이전 모델로 취급되던 문제 수정
+- /compact 실행 후 Remote Control 클라이언트에 불필요한 "Compacted (ctrl+o to see full summary)" 행이 표시되던 문제 수정
+- 조직 정책으로 해당 기능을 비활성화했을 때도 클라우드 세션 팁 및 Remote Control 유휴 알림이 표시되던 문제 수정
+- 새 채팅의 파일을 수신한 직후 이전 워커가 중지되었을 때 재개된 claude.ai 클라우드 세션에서 요청하지 않은 모델 호출이 발생하던 문제 수정
+- Cowork 클라우드 세션의 WebFetch가 100,000자를 초과하는 PDF 텍스트를 알림 없이 누락하던 문제 수정: 이제 읽지 못한 양과 계속 읽을 수 있는 위치를 안내합니다
+- 클라우드 세션이나 IDE에서 사용자가 Esc 또는 Stop으로 명령을 중지했을 때 Claude에게 명령이 거부되었다는 내용만 전달되던 문제 수정: 이제 명령이 이미 실행되었을 수 있다는 점도 함께 전달됩니다
+- 코드 블록이 인용구를 시작할 때 코드 블록 상단의 빈 줄이 사라지던 문제 수정
+- 트랜스크립트 보기(Ctrl+O)에서 일부 `⎿` 행 위에 빈 줄이 나타나던 문제 수정
+- vim 모드에서 `dw`, `dW`, `yw`, `yW`가 줄 끝을 넘어 계속 진행되던 문제를 수정하고, `w` 및 `W`가 빈 줄에서 멈추도록 개선
+- 다른 에이전트가 시작되거나 종료될 때 에이전트 패널의 x 및 Enter가 잘못된 에이전트에 동작하던 문제 수정
+- "Other" 행에 포커스가 있지 않으면 Claude의 질문 대화 상자에서 붙여넣은 텍스트 및 드래그한 파일이 유실되던 문제 수정
+- 프롬프트 바닥글의 행이 선택되어 있을 때 붙여넣은 텍스트가 유실되던 문제 수정
+- vim 모드에서 문자 선택 영역에 `p`를 실행할 때 yank된 텍스트가 전체 줄 단위인지 여부를 무시하던 문제 수정
+- vim 모드에서 `aw` 및 `iw`가 줄 끝의 줄바꿈까지 포함하던 문제 수정
+- ? 도움말 메뉴, 명령어 목록 또는 붙여넣기 힌트에 가려진 바닥글 항목이 ↓로 선택되던 문제 수정
+- `/btw` 등 명령어 패널에서 Esc를 누르면 트랜스크립트가 열려 있는 서브에이전트까지 중단되던 문제 수정
+- 다른 모델에서 실행 중인 서브에이전트나 팀원을 보고 있을 때 전체 화면 모드의 시작 헤더에 세션 모델이 표시되던 문제 수정
+- 위로 스크롤한 상태에서 되감기 메뉴의 "Restore conversation"을 실행한 후 전체 화면 트랜스크립트가 대화 중간에 머물러 있던 문제 수정
+- 삭제된 세션이 재개 목록에 거의 비어 있는 항목으로 다시 나타날 수 있던 드문 문제 수정
+- `<bash-stdout>` 또는 `<local-command-stdout>`과 같은 태그가 포함된 프롬프트가 로컬 stream-json 호스트에 확인(acknowledge)되지 않던 문제 수정
+- 첫 번째 프롬프트가 실패(예: 사용량 제한)한 후 대화가 계속 진행되어도 세션 제목이 지정되지 않은 상태(untitled)로 유지되던 문제 수정
+- 스킬 파일 감시자(file watcher)가 `~/.claude/skills/.trash`에 보관된 삭제된 스킬을 모두 확인하여 삭제할 때마다 파일 시스템 부하가 증가하던 문제 수정
+- Claude가 권한이나 계획 결정을 요청하는 동안 /rename으로 설정한 세션 이름이 사라지던 문제를 수정하여, 나란히 배치된 세션을 식별할 수 있도록 유지
+- 바이너리가 여전히 디스크에 있음에도 시작에 실패한 백그라운드 세션이 삭제된 데몬 바이너리로 보고되던 문제 수정
+- `/config`의 푸시 설정이 숨겨져 있거나 조직에서 Remote Control을 비활성화했을 때 푸시 알림에 대한 팁과 유휴 알림이 표시되던 문제 수정
+- `~/.claude/skills/.trash` 및 `~/.claude/plugins/.trash`가 무제한으로 증가하던 문제 수정: 이제 `cleanupPeriodDays` 설정과 관계없이 각각 약 1024개의 항목을 보관합니다
+- git의 줄바꿈 변환이 적용된 CRLF 파일을 변경 없이 다시 저장하거나 한 줄만 편집했을 때 Bash edit diff에서 파일 전체가 변경된 것으로 표시되던 문제 수정
+- 자체 호스팅 러너(Self-hosted runner): Anthropic이 응답하기 전에 러너의 일시 중지 요청 연결이 끊겼을 때 유휴 세션이 일시 중지되지 않고 다른 러너로 이동하던 문제 수정
+- 여러 서브에이전트를 실행하는 긴 헤드리스 및 SDK 턴의 메모리 사용량 개선: 상위 세션이 턴이 끝날 때까지 각 서브에이전트의 도구 결과를 유지하지 않습니다
+- 프롬프트 기록 개선: 이제 Ctrl+R이 접힌 `[Pasted text]` 필(pill) 내부의 텍스트와 일치합니다
+- 업로드하거나 삭제할 폴더, 프로젝트 및 파일을 표시하도록 `/design-sync` 업로드 프롬프트 개선
+- `/permissions` 검토 탭(현재 명칭: Recently blocked) 개선: 바닥글에 표시된 행에 대해 Esc가 수행할 작업이 안내됩니다
+- 자동 모드의 차단된 호출 개선: 메시지에 명령 이름이 표시되고, Claude가 재시도할 수 있으며 자동 모드가 다시 검사한다는 점을 알리고, 검토할 수 있도록 `/permissions`를 안내합니다
+- 권한 프롬프트 개선: 긴 이유 설명이 차지하는 행 수가 줄어들어, 승인 대상 명령이 터미널 화면 밖으로 밀려나는 현상이 줄어듭니다
+- 사용자의 claude.ai 로그인으로 거부된 요청이 재시도되는 동안 표시되는 클라우드 세션 오류 개선: 이제 `claude auth login`도 제안합니다
+- MDM과 원격 설정의 기본 URL 또는 `apiKeyHelper`가 서로 다를 때 저장된 claude.ai, Team 및 Enterprise 로그인의 동작 개선
+- 에이전트 뷰의 `/config`에서 에이전트 뷰가 기본으로 열리지 않도록 설정하는 방법 안내 추가
+- 세션 자동 제목 지정 개선: 스킬이나 `/security-review`와 같은 프롬프트 기반 명령으로 시작된 세션이 제목 없음 상태로 유지되지 않고 해당 명령에서 제목을 가져옵니다
+- 손상된 트랜스크립트에서 `--resume`의 속도 및 메모리 사용량 개선
+- 10,000개 이상의 MCP 도구가 있는 세션에서 `/context` 속도 개선
+- 자체 호스팅 러너(Self-hosted runner): 세션 브랜치가 git 원격 저장소에 없을 때 표시되는 오류 개선: 푸시된 적 없는 브랜치를 처리하고 각 상황별 해결 방법을 안내하며 더 이상 재시도를 권장하지 않습니다
+- `/claude-api` 스킬 업데이트: API 추적을 위한 Datadog 설정에서 Console과 동일하게 `dd-llmobs-enabled: true` 헤더를 전송하며, `ant` 설치 안내에서 오래된 macOS `xattr` 단계가 삭제되었습니다
+- 기본 제공되는 dataviz 스킬 업데이트: 10,000 미만의 y축 눈금 라벨은 전체를 표시하고, 가로 라벨은 공간이 허용하는 한 1,000,000 미만일 때 전체를 표시하도록 권장
+- 기본 제공되는 dataviz 스킬 업데이트: 도넛 및 파이 차트 요청에 대해 순위형 막대 차트나 값이 표시되는 분할 막대 차트로 응답하도록 변경
+- 사용자의 설정 파일과 마찬가지로 조직의 서버 관리형 설정의 로컬 사본을 편집하기 전에 확인을 요청하도록 Claude의 파일 도구 변경
+- `claude ultrareview`와 마찬가지로 git을 실행하기 전에 워크스페이스 신뢰 여부를 확인하도록 `/ultrareview` 변경
+- `which`가 시스템 명령 또는 zsh 내장 명령으로 동작하도록, 상속된 `which` 별칭(alias)이나 함수를 지우고 내보낸(exported) `which`/`unsetenv` 함수를 명령에 전달하지 않도록 Bash 도구의 셸 변경
+- 터미널 높이가 너무 낮아 표시되지 않는 경우를 포함하여, 전체 내용을 읽을 수 없는 호출의 승인을 거부하도록 `/permissions`의 Recently blocked 변경
+- Cowork 클라우드 세션의 자동 모드 변경: 훅의 MCP 도구 호출 허용(allow)이 무응답으로 처리되어 분류기(classifier)나 권한 프롬프트가 결정을 내립니다
+- `Bash(tail *)`가 Bash의 명령과 일치하는 것처럼 `Monitor(tail *)`와 같은 훅 `if` 조건이 Monitor 도구의 셸 명령과 일치하도록 변경
+- 실행을 개선하기 위해 에이전트를 수정하기 전 Managed Agents 워크플로 실행의 워크플로를 읽을 수 있도록 확인을 요청하게끔 `claude-api` 스킬 변경
+- `ANTHROPIC_DEFAULT_OPUS_MODEL`, `availableModels` 또는 `deniedModels`로 인해 이전 Opus 모델만 남거나 아무것도 남지 않았을 때, 플래그가 지정된 요청이 거부로 끝나지 않고 다른 모델로 재시도되도록 변경
+- 1시간 프롬프트 캐시가 켜지면 원격 측정(telemetry)이 비활성화된 구독자와 Bedrock, Vertex, Foundry 및 LLM 게이트웨이에서도 유휴 압축이 실행되도록 변경
+- `FORCE_HYPERLINK=false`(`no` 및 `off` 포함) 설정 시 하이퍼링크가 켜지는 대신 꺼지도록 변경
+- macOS: 유효하지 않은 UTF-8 파일에서 macOS의 정규식 라이브러리에 발생하는 메모리 누수 문제를 방지하기 위해 Claude가 실행하는 대부분의 명령에서 `git grep`이 C 로캘을 사용하도록 변경
+- [VSCode] 저장된 로그인을 제거할 수 없을 때 MCP 서버의 "Clear authentication"이 성공으로 보고되던 문제 수정
+- [VSCode] 큐에 있는 메시지의 훅이 실행되는 동안 스피너와 Stop 버튼이 표시되지 않던 문제 수정
+- [VSCode] 삭제 등 저장할 수 없는 세션 그룹 변경 사항이 알림 없이 실패하던 문제 수정: 이제 오류 알림이 표시됩니다
+- [VSCode] 계획 미리보기 탭에서 Cmd+F / Ctrl+F로 찾기 위젯이 열리지 않던 문제 수정
+- [VSCode] 러시아어, 그리스어, 히브리어 등 비라틴계 키보드 자판 배열에서 음성 받아쓰기 단축키(Ctrl+D)가 동작하지 않던 문제 수정
+- [VSCode] 채팅 없이 확장 프로그램이 열렸을 때 놓친 1회성 저장된 예약 작업이 확인 없이 삭제되던 문제 수정
+- [VSCode] 확장 프로그램이 세션 메시지에 Claude in Chrome 지침을 추가하지 않도록 `CLAUDE_CODE_DISABLE_CFC_PROMPT` 변경: 브라우저 도구는 계속 사용 가능합니다
+- [Cloud sessions] 완료된 1회성 작업만 숨겨져 있을 때 정렬 메뉴를 열지 않고도 표시할 수 있도록 Scheduled tasks 페이지에 Include completed 버튼 추가
+- [Cloud sessions] 최근에 사용한 자체 호스팅 환경이 새 세션 카드의 최근 환경 목록에 나타나지 않던 문제 수정
+- [Cloud sessions] Claude가 다른 워크트리에서 푸시한 커밋으로 브랜치를 이동한 후 클라우드 세션이 매 턴마다 커밋되지 않은 변경 사항을 보고하던 문제 수정
+- [Cloud sessions] 창 높이가 매우 낮거나 확대 배율이 높을 때 관리자 설정의 자체 호스팅 환경 세부 정보 대화 상자 내용이 화면 밖으로 밀려나던 문제 수정: 이제 대화 상자에 스크롤이 적용됩니다
+- [Cloud sessions] 실행 중인 클라우드 또는 Remote Control 세션이 전환을 거부한 후에도 권한 모드 선택기가 Auto로 유지되던 문제 수정: 이제 사용 중인 모드를 표시하고 안내합니다
+- [Cloud sessions] 예약된 작업 개선: 이제 Anthropic 클라우드 실행 시 사용자의 claude.ai 계정에서 활성화된 플러그인을 로드합니다
+- [Cloud sessions] 관리자 설정의 GitHub Enterprise용 Test connection 개선: 클라우드 세션과 동일한 방식으로도 연결을 시도하며, 해당 두 번째 테스트 실패 시 경고를 표시합니다
+- [Cloud sessions] 클라우드 세션 트랜스크립트 개선: 이름 변경 행에 새 제목이 표시되며, 저장소 및 환경 목록이 JSON 한 줄 대신 표 형식으로 표시됩니다
+- [Cloud sessions] 웹, 데스크톱 및 모바일 앱의 클라우드 세션이 설정 스크립트가 오류로 종료되더라도 시작 실패 처리되지 않고 계속 시작되도록 변경
+- [Remote Control] 텍스트를 입력하기 전까지 Remote Control 세션의 권한 모드 버튼에 잘못된 모드가 표시되던 문제 수정: 컴퓨터가 온라인 상태인 경우 이제 열릴 때 실제 모드가 표시됩니다
+- [Claude Tag] Slack이 연결된 Enterprise 조직을 위해 관리자 설정의 Bundles 및 Channels 탭에 닫을 수 있는 Claude Tag API 문서 링크 추가
+- [Claude Tag] Enterprise Grid 워크스페이스 간에 공유된 채널에서 `@Claude !restart`가 워크스페이스 확인이 한 번 실패한 후 중단되던 문제 수정: 이제 재시도한 후 다시 실행할 것을 요청합니다
+- [Claude Tag] 몇 분 내에 동일한 링크로 Slack에서 Claude 계정을 두 번 연결할 때 확인 DM과 채널 알림이 중복 전송되던 문제 수정
+- [Claude Tag] Claude 세션이 자체 호스팅 러너를 대기하는 동안 Slack의 후속 메시지에 진행 상태가 표시되지 않던 문제 수정: 이제 Claude가 스레드에 대기 안내를 게시합니다
+- [Claude Tag] 양쪽 조직 모두 Claude를 설치한 Slack Connect 채널에서 Claude가 자체 스레드의 태그에 응답하지 않던 간헐적 문제 수정
+- [Claude Tag] 로드 실패 후 Claude Tag 관리자 설정의 플러그인 및 스킬 페이지에서 Retry를 누르면 저장되지 않은 액세스 변경 사항이 삭제되던 문제 수정: 이제 편집 내용이 유지됩니다
+- [Claude Tag] Claude Tag 관리자 설정의 저장소 컨트롤에 동일한 작업이 두 번 표시되던 문제 수정: 이제 버튼에서 이미 수행하지 않는 작업만 메뉴에 나열됩니다
+
 ## 2.1.312 (2026-10-27)
 
 - Claude apps gateway에 `oidc.user_id_claim`을 추가하여, Microsoft Entra ID의 `oid`와 같이 `sub` 이외의 id_token 클레임으로 사용자를 식별할 수 있도록 지원
