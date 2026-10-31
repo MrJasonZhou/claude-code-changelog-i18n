@@ -2,6 +2,64 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.316 (2026-10-31)
+
+- `ultrathink` キーワードを無効化する `CLAUDE_CODE_DISABLE_ULTRATHINK` を追加
+- Claude apps gateway にグループ共有予算を追加：各メンバー固有の制限に加え、グループのメンバー間で共有される月間予算を設定可能（利用制限管理 API の `pooled_budget` で設定）
+- プライベート CA でループ状に相互認証するシステムクロス証明書が必要なサーバー向けに、それらの破棄を防ぐ `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` を追加
+- 他で明示的に指定されていない場合に、セッションの設定を継承するのではなくサブエージェントが実行される effort レベルを設定する `CLAUDE_CODE_SUBAGENT_EFFORT` を追加
+- Claude apps gateway に `managed.policy_mode: layered` を追加：最初のポリシーだけでなく、開発者に一致するすべてのポリシーが下位のポリシーにマージされて適用
+- Claude apps gateway の Bedrock アップストリームに `guardrail.input_tagging` を追加：Amazon Bedrock ガードレールのプロンプト攻撃フィルターに必要な入力タグでプロンプトをラップ（`all_messages_and_system` はシステムプロンプトにもタグを付与）
+- 2026年10月30日付けで Opus 4.8 の fast mode を非推奨化（2026年11月30日に削除予定）。削除後、Opus 4.8 での fast mode リクエストはエラーを返し、標準の Opus 4.8 へのフォールバックは行われません。高速化を維持するには Opus 5.5 へ移行してください
+- 認証情報の拒否やクラウドセッションのアーカイブなどにより Claude Code が自ら終了した際、macOS および Linux でシェルコマンドが実行されたまま残る問題を修正
+- Bash ツールのシェルにおいて、値に改行を含む bash エイリアス（Git Bash を除く）や名前にダッシュで始まる関数が文字化けまたは消失する問題を修正
+- `SHELLOPTS` がエクスポートされている場合、Bash ツールから起動された bash スクリプトが最初のコマンド実行後に停止する問題を修正
+- コマンドが型キャスト、`param`、`using`、または属性で始まる場合、PowerShell フックが終了コード 2 でブロックされない問題を修正
+- 圧縮されたレスポンスが途切れたり破損したりした際に、一部のネットワークリクエストがハングする問題を修正
+- Vertex AI および Amazon Bedrock 上の `sonnet`、`opus`、`haiku` において、アカウントやリージョンで最新モデルがまだ利用できない場合に、古いモデルに切り替わらずセッションの途中でエラーが表示される問題を修正
+- Claude apps gateway がリクエストに指定された各モデルを `availableModels`、`deniedModels`、`models` に対して照合していなかった問題を修正。ブロックされたモデルを指定したリクエストには、該当フィールド名を含む 400 エラーが返されるようになりました
+- 管理対象設定で Claude apps gateway が必須とされている環境において `claude auth login` の実行が拒否される問題を修正。ターミナル上で gateway へのサインインが表示されるようになりました
+- Read 許可ルールが適用されている場合に、`--restricted` セッションが作業ディレクトリ外のファイルをアップロードしてしまう問題を修正
+- 不可視文字を含むプロンプトの送信に 2 回の Enter 入力が必要だった問題を修正。通常のプロンプトは 1 回目の Enter でクリーンアップされて送信され、コマンドは引き続き確認待ちになります
+- 親サブエージェントのモデルを継承したサブエージェントが、バックグラウンドジョブやメッセージによって起動された際にメインモデルへ移行してしまう問題を修正
+- `"$defaults"` を含まない管理対象の `autoMode.allow` リストが、ホストアプリケーションの `--settings`、`/permissions` で追加された最初のルール、または `/auto-mode-setup` から組み込みの例外を再度取得してしまう問題を修正
+- サーバーが安全性の判定結果を返さず auto mode がターンを停止した際に、クラウドセッションおよびクラウドスケジュールタスクが失敗としてマークされない問題を修正
+- バックグラウンドエージェントが実行中の場合、`claude -p` のテキスト出力で auto mode がターンを停止した理由が表示されないことがある問題を修正
+- プロキシや LLM gateway の背後で実験的ベータ機能が無効化されている環境において、ホストアプリケーション（Claude Desktop など）から開始されたセッションで `CLAUDE_CODE_AUTO_MODE_SERVER=1` が無視される問題を修正
+- 認証情報名を持つ環境変数に `1` などのスイッチ値が設定されている場合、プラグイン MCP の `headersHelper` スクリプトが破損した `CLAUDE_PLUGIN_ROOT` とサーバー URL を受け取ってしまう問題を修正
+- SDK の `register_repo_root` 制御リクエストが、作業ディレクトリ外のディレクトリの CLAUDE.md を読み込まない問題を修正（`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` 使用時）
+- Artifact ツールが `self` レベルのアーティファクトデータベースアクセスルールに対して `?` を表示し、それらのルールを削除してしまう再公開を拒否する際にルールを引用して提示しない問題を修正
+- `/model <id>` で指定されたモデルがこのバージョンで認識されず、auto-compact が 200K コンテキストウィンドウを前提として動作する場合に警告が表示されない問題を修正
+- 「hold space to speak」のヒントが 1 セッション内で表示回数上限（3 回）を消費してしまう問題と、push-to-talk が未割り当ての場合に空のキーが表示される問題を修正
+- Windows 環境において、検索プロセスがタイムアウトで強制終了されても終了しきらず、Grep および Glob の処理が戻らない問題を修正
+- 会話の一部がまだ保存中である間に `/clear` または `/resume` が実行された場合、会話の再開時にプランが復元されないことがある稀な問題を修正
+- 幅の狭いターミナルにおいて、初回セットアップ時のセキュリティに関する注意事項やターミナル設定の説明から単語が脱落する問題を修正
+- Enterprise アンケートカードで、短い一時停止の後にキー入力された 1 または 0 が確定されてしまう問題を修正。入力した回答の確定には Enter が必要になりました
+- Self-hosted runner: Claude の処理中に送信されたメッセージが、セッションのプロセスが置換された後の Stop 以降に応答されてしまう問題を修正
+- Self-hosted runner: セッションが新しいマシンに移動した際、MCP サーバーのオン/オフ設定が失われることがある問題を修正
+- Windows: rc ファイルで errexit と pipefail が設定されており、winpty エイリアスのみが定義されているか何も定義されていない場合に、Git Bash において Bash ツールがエイリアスや関数を見失う問題を修正
+- Claude Desktop または Web の Code タブから開始される `/code-review` を改善：クラウドおよび `claude remote-control` セッションで、プレーンテキストのリストではなく指摘事項カードが表示されるようになりました
+- 大規模リポジトリにおける `/diff` を改善：通常、更新ごとのリポジトリ全体を対象とする git コマンドの実行が 1 回削減され、git の動作が遅い場合は更新間隔が広げられます
+- `/ultrareview`、クラウドセッション、またはクラウドエージェントが GitHub のリモートを見つけられない場合のメッセージを改善：https://github.com/new でリポジトリを作成するよう案内され、`/ultrareview` が `gh` でエラーになる `gh` コマンドを提案しなくなりました
+- 中間証明書を含めていないサーバーなど、考えられる原因とその対処法を明示するように SSL 証明書エラーの表示を改善
+- `"$defaults"` を含まない `autoMode.allow` リストが、スケジュールタスクのプロンプトに関する組み込みルールを削除しないように auto mode を変更
+- Team および Enterprise ログインにおけるサーバー管理設定の動作を変更：Anthropic API から取得した設定は承認プロンプトなしで適用されるようになり、検証に失敗した保存済みのコピーは拒否されます
+- [VSCode] ターミナル不要で、チャットパネルから Claude apps gateway にサインインできる機能を追加
+- [VSCode] `ultrathink` がターミナルと同様にチャットボックス内でレインボー表示され、そのターンを `xhigh` effort で実行するように変更
+- [VSCode] `opus[1m]` など、モデル設定に `[1m]` タグが付いている場合に Effort スライダー、Ultracode スイッチ、モデル名が表示されない問題を修正
+- [VSCode] 設定ファイルにエラーがある間、保存された `/btw` 補足質問履歴が早すぎるタイミングで削除される問題を修正
+- [VSCode] プランが「Yes, and manually approve edits」で承認された会話が、リロードや再起動後に Auto モードに戻ってしまう問題を修正
+- [Cloud sessions] クラウドセッションにフォームカードを追加：MCP サーバーが要求するフォームを表示せずにリクエストがキャンセルされる代わりに、フォームの入力または拒否が可能になりました
+- [Cloud sessions] 切り替え直したクラウドまたは Remote Control セッションがメッセージを最新化している間に表示される「Catching up…」の行を追加
+- [Cloud sessions] ネットワークシークレットの仕様を変更：Enterprise メンバーが自身のクラウド環境で閲覧だけでなく追加および削除を行えるようになりました
+- [Cloud sessions] クラウドセッションの Changes ペインを改善：リストから除外された項目に関する注記が、diff の上の行ではなくブランチ名の横のバッジとして表示されるようになりました
+- [Cloud sessions] Claude がディレクトリを変更した後に、クラウドセッションの Files ペインでのファイル検索がフォルダを ../.. パスとして表示する問題を修正。検索結果にはプロジェクトルートからのパスが表示されるようになりました
+- [Claude Tag] 作成した canvas が他のチャンネルやダイレクトメッセージにも共有された後、作成元の Slack チャンネルからその canvas の編集や追加を Claude が拒否する問題を修正
+- [Claude Tag] 両方の組織が Claude をインストールしており、Slack がもう一方の組織のアプリに返信を配信した場合に、Slack Connect スレッドでメンションのない返信に応答しなくなる問題を修正
+- [Claude Tag] Slack 内のクラウドスケジュールタスクのリアルタイムステータスチェックリストが未完了のまま残る問題を修正。実行中に投稿されたトップレベルのメッセージを実行自身が編集できるようになりました
+- [Claude Tag] Slack チャンネルの「Respond automatically」スイッチを、チャンネルの Configure ページおよび Claude Tag 管理設定内の「How Claude participates」選択肢に変更
+- [Code Review] Code Review のアナリティクスページに重要度別指摘事項カードを追加：対象期間の総指摘数、重要度別の積み上げ日次チャート、各重要度の件数を表示
+
 ## 2.1.314 (2026-10-30)
 
 - `permissions.blockWritesOutsideWorkingDirectories` を追加: すべてのパーミッションモードで、Write、Edit、NotebookEdit がワーキングディレクトリ外のパスを拒否するよう変更
