@@ -2,6 +2,93 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.318 (2026-11-03)
+
+- Adicionado um registro da sua resposta quando o Claude Code solicita a ativação dos mods que ele cria em uma sessão
+- Adicionado `assume_role` nos upstreams do `mantle` do gateway de apps do Claude, para uma role em outra conta da AWS e para atribuição de custos da AWS por desenvolvedor
+- Adicionada a opção `effort` ao `$.model.fork` de um mod, permitindo que uma tarefa secundária rápida rode com `low` independentemente do esforço que a sessão usa; o resultado informa o esforço enviado
+- Adicionada a data de expiração de um login salvo do claude.ai ao `claude auth status` (`loginExpiresAt`) e aos resultados JSON do `claude -p` (`credential_expires_at`)
+- Adicionado um aviso de uma linha no stderr à saída de texto do `claude -p`, a partir de 10 dias antes da expiração de um login salvo do claude.ai
+- Corrigido o `--continue` que às vezes perdia a conversa anterior após o esgotamento das tentativas de uma chamada de ferramenta malformada (regressão na 2.1.314)
+- Corrigidas sessões no macOS com muitos comandos Bash em execução que travavam enquanto o consumo de memória aumentava
+- Corrigidos prompts de permissão sendo respondidos por teclas digitadas logo após o envio de uma mensagem ou antes da exibição de um prompt lento
+- Corrigido o `/logout`, `claude auth logout` e `claude mcp remove` reportando sucesso, e alterações de confiança, consentimento ou configurações de MCP sendo descartadas silenciosamente quando o arquivo de configuração não podia ser atualizado em um diretório home compartilhado de rede
+- Corrigidos jobs saindo com `Not logged in` quando outro terminal ou host faz login novamente na mesma conta e organização no mesmo diretório home
+- Corrigido `claude mcp add` e `remove` gravando a configuração sem o seu lock: agora eles aguardam o lock ou saem com status 1, embora a gravação de outro job ainda possa substituir um servidor salvo
+- Corrigidos comandos `claude plugin` saindo antes que um refresh lento de token fosse salvo, o que poderia desconectar a sessão na próxima execução
+- Corrigido `claude plugin validate` aprovando um arquivo de marketplace com nome customizado que o `claude plugin marketplace add` rejeita
+- Corrigidos servidores MCP stdio que encerram durante a verificação de versão sendo verificados novamente a cada inicialização; um servidor que é encerrado em menos de 3s por conta própria agora também fica fixado no handshake legada por 7 dias
+- Corrigidas sessões sendo recusadas na inicialização por uma lista `allowedProviders` armazenada por outro login na mesma máquina
+- Corrigida a compactação por inatividade que substituía uma conversa por uma resposta que não era um resumo
+- Corrigido o aviso "Now using usage credits" reaparecendo aproximadamente a cada 30 segundos enquanto um subagente em segundo plano está em execução
+- Corrigidos slash commands customizados que falham, ou que apenas o Claude pode invocar, não exibindo nada em sessões do `claude -p` e do SDK
+- Corrigidas sessões do `claude -p` e do Agent SDK reportando sucesso quando um erro de API interrompia uma resposta enquanto um mod interceptava `turn.step`
+- Corrigida uma mensagem enviada logo após a troca de modelo continuando em execução após o Stop em sessões headless: o Stop agora a cancela ou interrompe como faria com uma mensagem na fila
+- Corrigida a transcrição de uma sessão excluída sendo recriada com seu último prompt quando uma sessão não interativa ociosa era encerrada
+- Corrigidos hosts de `claude remote-control`, o daemon em segundo plano e self-hosted runners falhando ao iniciar novas sessões (`spawn ENOENT`) após uma atualização ou limpeza de versão remover o binário de um processo ainda em execução
+- Corrigido um processo em execução do Claude Code pertencente a outro usuário (por exemplo, um deixado por `sudo claude`) sendo tratado como inativo pela limpeza de versão, o que poderia excluir seu binário
+- Corrigido o `/remote-control` mostrando uma sessão como disponível após uma falha de conexão
+- Corrigido o `/design revoke` reportando sucesso quando a requisição falhava com 404
+- Corrigido um comando de shell aprovado após a reinicialização de um self-hosted runner ou sessão na nuvem executando na pasta inicial da sessão, e não na pasta solicitada; se essa pasta não puder ser acessada, ele não é executado
+- Corrigido o Claude não sendo notificado quando uma ferramenta de conector aprovada ficava indisponível após a reinicialização de uma sessão na nuvem
+- Corrigidas sessões na nuvem sendo interrompidas no meio de um turno quando o serviço recusa uploads por vários minutos
+- Corrigidas variáveis que um hook `Setup` grava em `CLAUDE_ENV_FILE` não chegando à ferramenta Bash em algumas sessões na nuvem
+- Corrigido o app para iPhone mostrando o turno de uma sessão na nuvem como finalizado enquanto ele ainda estava em execução, após uma resposta ser interrompida em uma chamada de ferramenta ou uma imagem ou documento recusado ser removido
+- Corrigida uma sessão reiniciada reenviando uma mensagem que falhou com erro de API antes da mensagem mais nova que aguardava na fila
+- Corrigida uma sessão reiniciada descartando seu turno interrompido quando a reinicialização ocorria logo após o Claude ler uma imagem grande ou tentar novamente uma chamada de ferramenta
+- Corrigidas todas as conexões falhando quando o arquivo `NODE_EXTRA_CA_CERTS` está vazio, não é PEM ou começa com um certificado corrompido: certificados legíveis agora são usados, com um aviso no stderr
+- Corrigidos workflows reexecutando agentes finalizados ao serem retomados após atingir o limite de uso
+- Corrigido o `/mcp` em sessões na nuvem contando ferramentas que o modelo não pode usar; a linha de um servidor agora mostra quantas de suas ferramentas estão disponíveis
+- Corrigida uma notificação duplicada quando o Claude omitia o campo status de uma chamada PushNotification
+- Corrigido o erro para imagem grande demais em uma requisição com mais de 20 imagens informando sempre que o limite era 2000px; agora ele mostra o limite da API
+- Corrigido o tempo de execução nos detalhes do shell em segundo plano não atualizando enquanto o diálogo está aberto
+- Corrigido o hook `turn.step` de um mod fazendo com que uma resposta interrompida terminasse como sucesso em execuções headless
+- Corrigida a limpeza de retenção deixando um diretório home que só executa `claude -p` sem backup do `~/.claude.json`: agora é feito um novo backup antes de excluir o último válido
+- Corrigido o login salvo sendo substituído por um arquivo vazio quando um diretório home de rede não tem mais espaço para dados, mas ainda aceita novos arquivos
+- Corrigidos tokens do `setup-token` sendo recusados na inicialização em máquinas com `forceLoginOrgUUID`, quando o token pertence a uma organização permitida
+- Corrigidas inicializações não interativas substituindo um `~/.claude.json` que não é um JSON válido pelos padrões; a inicialização agora falha, informa como restaurar o arquivo e o mantém como está (anthropics/claude-code#87551)
+- Corrigido um `~/.claude.json` vazio sem backup sendo reportado como corrompido; o Claude Code agora inicia como faz quando o arquivo está ausente
+- Corrigido o comando de restauração exibido para um `~/.claude.json` danificado ou ausente apontando para um backup vazio ou truncado, ou falhando em um arquivo somente leitura
+- Corrigida a falha de login quando uma autenticação salva do claude.ai atinge o limite de tempo: agora isso é informado e, no `claude -p`, indica `claude auth login` e `claude setup-token`
+- Melhorada a forma como o `~/.claude.json`, arquivos de configuração e o login salvo sobrevivem a salvamentos em diretórios home compartilhados de rede: eles são menos frequentemente excluídos, esvaziados temporariamente ou substituídos por uma cópia quase vazia ou mais antiga
+- Melhoradas as sessões em sistemas de arquivos de rede para verificar novamente quando o arquivo de configuração é reportado incorretamente como ausente, reduzindo inicializações sem seus servidores MCP e pastas confiáveis
+- Melhorados os erros de ferramentas MCP: uma chamada feita antes do carregamento da ferramenta agora retorna seu input schema
+- Melhorada a confiabilidade de commits do git e criação de pull requests quando a ferramenta Bash executa o `/bin/bash` nativo do macOS
+- Melhorado "Ask your admin for more usage" no menu de limite de uso para enviar a solicitação em uma única etapa
+- Melhorada a velocidade com que sessões remotas se reconectam após uma pausa ou suspensão
+- Melhoradas as notificações You should know para dizer "try again" em vez de "press 2", que só funciona no terminal
+- Melhorada a confiabilidade da atualização automática: uma breve falha de rede durante a verificação de uma versão agora é repetida imediatamente em vez de aguardar a próxima verificação
+- Melhoradas execuções autônomas (`claude -p`, apps SDK) para não reescrever o `~/.claude.json` a cada execução quando nada nele foi alterado
+- Alterado o Claude Code para não mais instalar ou atualizar a extensão da IDE quando iniciado em um terminal de IDE; use `/ide` a partir de um terminal externo ou pela visualização de extensões do seu editor
+- Alterados subagentes para parar em vez de trocar de modelo quando "Switch models when a message is flagged" estiver definido como "Ask each time"
+- Alterados subagentes em segundo plano para mover um comando de shell para segundo plano após 3 minutos em todos os provedores, evitando que o cache de prompt expire durante a execução
+- Alterados os resumos de progresso de subagentes no Bedrock, Vertex, Foundry ou com telemetria desativada: com cache de prompt frio, agora é possível aguardar até 5 minutos pela resposta pendente do subagente
+- Alterado o conteúdo anexado por um mod em `prompt.submit` para permanecer no turno do usuário em vez de ser enviado como mensagem de sistema
+- Alteradas as entradas de URL em `deniedMcpServers` para também bloquear servidores fornecidos pela Anthropic cujo URL upstream corresponda, e conectores em sessões na nuvem e em self-hosted runners, onde a sessão recebe a própria URL do conector; caso contrário, bloqueie um conector pelo nome
+- Alteradas as telas de detalhes de regra de `/permissions`, regras integradas e confirmação de exclusão para usar o diálogo padrão; pressionar Ctrl+C duas vezes nelas agora volta ou cancela em vez de sair
+- Alterado `/claude-api managed-agents-onboard` para atribuir às ferramentas integradas de um novo agente, e às ferramentas MCP de um template de início rápido, a política de permissão `auto` ("Judge risky actions") por padrão, alinhando-se ao Claude Console; use "run without asking" para desativar
+- Removida a correção da versão 2.1.288 que mantinha o raciocínio anterior do modelo ao retomar uma conversa iniciada na 2.1.286 ou anterior; esse raciocínio agora pode ser descartado
+- Gateway: Adicionado um aviso de log quando o token de acesso do Google de um arquivo de credenciais de federação (`external_account`) está prestes a expirar
+- Gateway: Melhoradas as dicas de log sobre `listen.trusted_proxies`: agora elas indicam listar apenas proxies que adicionam eles mesmos o endereço de conexão ao `X-Forwarded-For`
+- Gateway: Melhorado o aviso quando o CountTokens da AWS falha no Amazon Bedrock: ele informa que o Claude Code, e não o gateway, faz a contagem após o erro 501, e aponta para o IAM apenas quando a AWS nega o acesso
+- Self-hosted runner: Adicionado `CLAUDE_RUNNER_SPAWN_REASON` ao ambiente do hook spawn-runner do orquestrador: motivo pelo qual a Anthropic enviou a solicitação (ex.: `runner_lost`, `resumed`); não definido quando nenhum for enviado
+- Self-hosted runner: Adicionado um aviso na inicialização quando `--release-idle-session-min` é o último argumento sem valor (continua ignorado) ou possui um valor composto apenas por espaços (continua interpretado como `0`)
+- Self-hosted runner: Alteradas as linhas de log do orquestrador: `ok session=…` agora é exibido em todos os níveis de log no stdout (antes apenas debug, stderr) com `reason=…` após `jti=…`, e `nack session=…` termina seus campos com `reason=…` após `retryable=…`; atualize scripts que correspondam a `retryable=true:` ou `retryable=false:`
+- Remote Control: Corrigido um "spawn error: ENOENT" enganoso quando a pasta de trabalho de uma sessão está ausente; o erro agora indica o nome da pasta
+- Remote Control: Melhorado o título com o qual uma bifurcação de um terminal fork é criada quando o app não define um: "Name (fork 2)"
+- [VSCode] Corrigida uma janela cujo login é recusado pelas configurações da organização iniciando um novo processo do Claude Code em segundo plano a cada minuto
+- [VSCode] Corrigida uma palavra longa no banner de erro do painel de chat empurrando seu botão de fechar para fora da visualização
+- [VSCode] Melhorada a tela de login para mostrar o que o Claude Code exibiu quando a verificação do status de login falha
+- [Cloud sessions] Adicionada a opção No repository: uma sessão na nuvem em um ambiente hospedado pela Anthropic agora pode iniciar sem selecionar um repositório
+- [Cloud sessions] Adicionados os nomes comuns do Chrome às sessões na nuvem, permitindo que ferramentas além do Playwright encontrem o Chromium integrado por meio de google-chrome e CHROME_PATH
+- [Cloud sessions] Adicionado o botão New session ao card exibido quando o ambiente de uma sessão na nuvem foi excluído, onde a caixa de mensagens fica oculta
+- [Cloud sessions] Corrigida a leitura de logs do GitHub Actions em sessões na nuvem: `gh run view --log` e requisições de log via `gh api` agora obtêm o log na maioria dos ambientes, em vez de um redirecionamento inacessível
+- [Cloud sessions] Melhoradas a maioria das mensagens de falha do Create PR em sessões na nuvem e no Remote Control: agora elas fornecem o motivo ou um link para o GitHub em vez de dizer Try again
+- [Cloud sessions] Alterados os resultados de busca de conectores para informar ao Claude que a busca abrange apenas parte do diretório de conectores
+- [Remote Control] Corrigidos checkouts lado a lado de um mesmo repositório aparentando ser idênticos nas linhas de Remote Control do menu de ambientes; cada um agora exibe o nome de sua própria pasta
+- [Claude Tag] Corrigidos o foco do teclado e anúncios de leitor de tela na configuração de admin do Claude Tag; pressionar Escape no formulário de conexão não fecha mais também o diálogo Add
+- [Code Review] Melhorada a página de analytics do Code Review para tentar novamente uma vez após falha de servidor ou rede e, em seguida, exibir um banner de Try again em vez de cards vazios
+
 ## 2.1.317 (2026-11-02)
 
 - Adicionado um aviso ao `/schedule` quando uma nova tarefa agendada na nuvem recebe conectores que você não solicitou, com instruções sobre como removê-los

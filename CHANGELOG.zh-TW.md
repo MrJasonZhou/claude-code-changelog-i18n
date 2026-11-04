@@ -2,6 +2,93 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.318 (2026-11-03)
+
+- 新增紀錄：當 Claude Code 詢問是否啟用其在 session 中編寫的 mods 時，會記錄你的回答
+- 在 Claude apps gateway 的 `mantle` upstream 新增 `assume_role` 支援，可用於另一個 AWS 帳號中的 role 以及依開發者歸屬 AWS 成本
+- 在 mod 的 `$.model.fork` 中新增 `effort` 選項，讓快速的旁支工作無論 session 使用何種 effort 都能以 `low` 執行；結果中會回報傳送的 effort
+- 在 `claude auth status`（`loginExpiresAt`）與 `claude -p` JSON 結果（`credential_expires_at`）中新增已儲存之 claude.ai 登入狀態的到期日期
+- 在 `claude -p` 的文字輸出中新增單行 stderr 警告，會在已儲存的 claude.ai 登入到期前 10 天開始顯示
+- 修正在格式錯誤的 tool call 重試耗盡後，`--continue` 有時會遺失先前對話的問題（2.1.314 中的 regression）
+- 修正 macOS session 在執行多個 Bash 命令時停滯且記憶體持續增加的問題
+- 修正權限提示會被送出訊息後立即輸入的按鍵、或在較慢顯示的提示出現前輸入的按鍵直接回應的問題
+- 修正當共用網路 home 目錄上的設定檔無法更新時，`/logout`、`claude auth logout` 與 `claude mcp remove` 回報成功，且信任、同意或 MCP 設定的變更在無任何提示下被捨棄的問題
+- 修正當另一個終端機或主機在相同的 home 目錄下重新登入相同的帳號與組織時，工作會以 `Not logged in` 退出的問題
+- 修正 `claude mcp add` 與 `remove` 在未取得 lock 的情況下寫入設定檔的問題：現在會等待 lock 或以 exit 1 結束，但另一個工作的儲存仍可能取代已儲存的 server
+- 修正 `claude plugin` 命令在耗時的 token refresh 儲存完成前就退出，導致下次執行時可能被登出的問題
+- 修正 `claude plugin validate` 驗證通過自訂名稱的 marketplace 檔案，但 `claude plugin marketplace add` 卻會拒絕該檔案的問題
+- 修正因 version probe 而退出的 stdio MCP server 會在每次啟動時被重複 probe 的問題；因自身原因在 3 秒內終止的 server 也會固定使用 legacy handshake 7 天
+- 修正 session 在啟動時被同台機器上另一個登入所儲存的 `allowedProviders` 清單拒絕的問題
+- 修正 idle compaction 將對話替換為非摘要內容回覆的問題
+- 修正在背景 subagent 執行時，「Now using usage credits」通知約每 30 秒重複出現一次的問題
+- 修正失敗或僅限 Claude 叫用的自訂 slash commands 在 `claude -p` 與 SDK session 中沒有任何輸出的問題
+- 修正當 mod 攔截（hook）`turn.step` 時，若 API 錯誤導致回覆中斷，`claude -p` 與 Agent SDK session 仍回報成功的問題
+- 修正 headless session 中在更換 model 後立即送出的訊息在按下 Stop 後仍繼續執行的問題：現在 Stop 會如同處理佇列中的訊息一樣將其取消或停止
+- 修正當閒置的非互動式 session 結束時，已刪除的 session transcript 會連同最後一個 prompt 被重新建立的問題
+- 修正更新或版本清理移除仍執行中行程的 binary 後，導致 `claude remote-control` host、背景 daemon 與 self-hosted runner 無法啟動新 session（`spawn ENOENT`）的問題
+- 修正屬於其他使用者的執行中 Claude Code 行程（例如由 `sudo claude` 遺留的行程）被版本清理視為已失效，導致其 binary 可能被刪除的問題
+- 修正連線失敗後 `/remote-control` 仍將 session 顯示為可用的問題
+- 修正請求失敗並回傳 404 時 `/design revoke` 仍回報成功的問題
+- 修正 self-hosted runner 或 cloud session 重啟後核准的 shell 命令在 session 啟動目錄而非被要求的目錄中執行的問題；若無法進入該目錄則不會執行
+- 修正 cloud session 重啟後，若已核准的 connector tool 無法使用，Claude 未收到通知的問題
+- 修正當服務拒絕上傳達數分鐘時，cloud session 在 turn 進行中被停止的問題
+- 修正某些 cloud session 中 `Setup` hook 寫入 `CLAUDE_ENV_FILE` 的變數無法傳遞至 Bash tool 的問題
+- 修正 iPhone app 在回覆於 tool call 被中斷或被拒絕的圖片/文件遭移除後，於 cloud session 仍在執行時卻顯示該 turn 已完成的問題
+- 修正重啟後的 session 會重新傳送因 API 錯誤而失敗的訊息，並排在後面等待的較新訊息之前的問題
+- 修正當重啟緊接著在 Claude 讀取大圖或重試 tool call 之後發生時，重啟後的 session 會丟棄被中斷之 turn 的問題
+- 修正當 `NODE_EXTRA_CA_CERTS` 檔案為空、非 PEM 格式或開頭為損壞的憑證時導致所有連線失敗的問題：現在會使用可讀取的憑證，並在 stderr 輸出警告
+- 修正在用量限制（usage limit）後恢復執行時，workflow 會重新執行已完成的 agent 的問題
+- 修正 cloud session 中的 `/mcp` 計算了 model 無法使用的 tool 的問題；現在 server 的該列會顯示其有多少個 tool 可用
+- 修正當 Claude 在 PushNotification 呼叫中省略 status 欄位時會產生重複通知的問題
+- 修正請求中包含超過 20 張圖片時，圖片過大的錯誤訊息總是顯示限制為 2000px 的問題；現在會顯示 API 的實際限制
+- 修正對話方塊開啟時，背景 shell 詳細資訊中的執行時間未更新的問題
+- 修正 headless 執行中，mod 的 `turn.step` hook 導致被停止的回覆以成功結束的問題
+- 修正 retention 清理導致只執行 `claude -p` 的 home 沒有任何 `~/.claude.json` 備份的問題：現在會在刪除最後一個良好備份前先建立新的備份
+- 修正當網路 home 目錄沒有剩餘資料空間但仍可建立新檔案時，已儲存的登入資訊會被空檔案取代的問題
+- 修正設定了 `forceLoginOrgUUID` 的機器上，來自 `setup-token` 且屬於允許組織的 token 在啟動時遭拒絕的問題
+- 修正非互動式啟動將非有效 JSON 的 `~/.claude.json` 替換為預設值的問題；現在啟動會失敗、說明如何還原該檔案，並保持原樣不變 (anthropics/claude-code#87551)
+- 修正沒有備份的空 `~/.claude.json` 會被回報為損壞的問題；Claude Code 現在會比照檔案遺失時的方式啟動
+- 修正為損壞或遺失的 `~/.claude.json` 所印出的還原命令指向空白或不完整的備份、或因唯讀檔案而失敗的問題
+- 修正已儲存的 claude.ai 登入達期限時的登入失敗問題：現在會明確說明原因，並在 `claude -p` 中提示使用 `claude auth login` 與 `claude setup-token`
+- 改善共用網路 home 目錄上儲存 `~/.claude.json`、設定檔與已儲存登入資訊的穩定性：減少被刪除、短暫變為空白或被近乎空白/較舊副本取代的情況
+- 改善網路檔案系統上的 session：在設定檔被誤報為遺失時會再次確認，以減少啟動時缺少 MCP server 與受信任資料夾的情況
+- 改善 MCP tool 錯誤訊息：在 tool 載入前進行呼叫時，現在會回傳其 input schema
+- 改善當 Bash tool 執行 macOS 內建的 `/bin/bash` 時，git commit 與建立 pull request 的可靠性
+- 改善用量限制選單中的「Ask your admin for more usage」，可單一步驟送出請求
+- 改善遠端 session 在暫停或休眠後的重新連線速度
+- 改善「You should know」提示（toast），改為顯示「try again」而非僅在終端機有效的「press 2」
+- 改善自動更新的可靠性：驗證 release 時若發生短暫網路失敗，現在會立即重試，而非等待下一次檢查
+- 改善無人值守執行（`claude -p`、SDK 應用程式）：在內容未變更時，不再於每次執行都重寫 `~/.claude.json`
+- 變更 Claude Code 行為：在 IDE 終端機中啟動時不再安裝或更新 IDE extension；請在外部終端機使用 `/ide` 或透過編輯器的 extensions 檢視進行操作
+- 變更 subagent 行為：當「Switch models when a message is flagged」設定為「Ask each time」時，會直接停止而非切換 model
+- 變更背景 subagent 行為：在所有 provider 上，shell 命令執行 3 分鐘後會移至背景，避免執行期間 prompt cache 到期
+- 變更在 Bedrock、Vertex、Foundry 或關閉 telemetry 時的 subagent 進度摘要：在 prompt cache 未命中（cold cache）時，最多可等待 5 分鐘以接收 subagent 的待處理回應
+- 變更 mod 在 `prompt.submit` 時附加的內容：將保留在 user turn 中，而不會作為 system message 送出
+- 變更 `deniedMcpServers` 的 URL 設定項目：現在也會封鎖 upstream URL 相符且由 Anthropic 提供的 server，以及 cloud session 和 self-hosted runner 上的 connector（當 session 取得 connector 自身的 URL 時）；否則請依名稱拒絕 connector
+- 變更 `/permissions` 規則詳細資訊、內建規則與刪除確認畫面以使用標準對話方塊；在此處按兩次 Ctrl+C 現在會返回或取消，而非直接結束程式
+- 變更 `/claude-api managed-agents-onboard` 行為：預設為新 agent 的內建 tool 以及 quickstart 範本的 MCP tool 提供 `auto` 權限政策（「Judge risky actions」），以符合 Claude Console 的行為；指定「run without asking」可退出此設定
+- 移除 2.1.288 中恢復 2.1.286 或更早版本開始之對話時保留 model 先前 thinking 的修正；該 thinking 現在可被捨棄
+- Gateway：在 federation（`external_account`）憑證檔案中的 Google access token 即將到期時新增 log 警告
+- Gateway：改善有關 `listen.trusted_proxies` 的 log 提示：現在提示僅列出本身會將連線位址加入 `X-Forwarded-For` 的 proxy
+- Gateway：改善 Amazon Bedrock 上 AWS CountTokens 失敗時的警告：說明在收到 501 後由 Claude Code（而非 gateway）進行計算，且僅在 AWS 拒絕存取時指向 IAM 問題
+- Self-hosted runner：在 orchestrator 的 spawn-runner hook 環境變數中新增 `CLAUDE_RUNNER_SPAWN_REASON`：表示 Anthropic 發送請求的原因（例如 `runner_lost`、`resumed`）；未發送原因時則為 unset
+- Self-hosted runner：當 `--release-idle-session-min` 為最後一個引數且未給值（仍會被忽略）或其值僅包含空格（仍會被視為 `0`）時新增啟動警告
+- Self-hosted runner：變更 orchestrator 的 log 格式：`ok session=…` 現在會在所有 log level 輸出至 stdout（原為僅限 debug、stderr），並在 `jti=…` 後面加上 `reason=…`；`nack session=…` 則在 `retryable=…` 後以 `reason=…` 結尾；請更新比對 `retryable=true:` 或 `retryable=false:` 的指令稿
+- Remote Control：修正 session 的工作資料夾遺失時顯示容易誤導的「spawn error: ENOENT」錯誤；現在錯誤訊息會指出該資料夾名稱
+- Remote Control：改善當應用程式未設定標題時，終端機 fork 的 fork 所建立的標題名稱：「Name (fork 2)」
+- [VSCode] 修正因組織設定拒絕登入的視窗每分鐘都在背景啟動一個新的 Claude Code 行程的問題
+- [VSCode] 修正聊天面板錯誤橫幅中的長單字將關閉按鈕擠出可見範圍的問題
+- [VSCode] 改善登入畫面：在登入狀態檢查失敗時顯示 Claude Code 所印出的內容
+- [Cloud sessions] 新增 No repository 選項：Anthropic 代管環境中的 cloud session 現在可以在不選擇 repository 的情況下啟動
+- [Cloud sessions] 在 cloud session 中新增常見的 Chrome 名稱，使 Playwright 以外的工具也能透過 google-chrome 與 CHROME_PATH 找到內建的 Chromium
+- [Cloud sessions] 當 cloud session 的環境已刪除且訊息輸入方塊隱藏時，在顯示的卡片中新增 New session 按鈕
+- [Cloud sessions] 修正 cloud session 中讀取 GitHub Actions log 的問題：在大多數環境中，`gh run view --log` 與 `gh api` log 請求現在可以取得 log，而非導向至無法連線的重新導向
+- [Cloud sessions] 改善 cloud 與 Remote Control session 中多數建立 PR 失敗的訊息：現在會提供原因或 GitHub 連結，而非僅顯示 Try again
+- [Cloud sessions] 變更 connector 搜尋結果：告知 Claude 搜尋範圍僅涵蓋 connector 目錄的一部分
+- [Remote Control] 修正同一 repository 的並行 checkout 在環境選單的 Remote Control 列中看起來完全相同的問題；現在各自會顯示自己的資料夾名稱
+- [Claude Tag] 修正 Claude Tag 管理設定中的鍵盤焦點與螢幕報讀功能；在連線表單中按 Escape 不再會同時關閉 Add 對話方塊
+- [Code Review] 改善 Code Review 分析頁面：在伺服器或網路失敗後會重試一次，若仍失敗則顯示 Try again 橫幅而非空白卡片
+
 ## 2.1.317 (2026-11-02)
 
 - 在 `/schedule` 中新增警告，當新的雲端排程任務取得未要求的連接器時會顯示警告，並說明如何移除它們

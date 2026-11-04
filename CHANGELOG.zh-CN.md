@@ -2,6 +2,93 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.318 (2026-11-03)
+
+- 新增了当 Claude Code 请求启用其在会话中编写的 mods 时记录你的回答的功能
+- 在 Claude 应用网关的 `mantle` 上游新增了 `assume_role` 支持，用于代入其他 AWS 账户中的角色以及按开发者归属 AWS 成本
+- 在 mod 的 `$.model.fork` 中新增了 `effort` 选项，以便无论当前会话使用何种 effort，快捷后台任务都能以 `low` 运行；结果会报告所发送的 effort
+- 在 `claude auth status`（`loginExpiresAt`）和 `claude -p` 的 JSON 结果（`credential_expires_at`）中新增了已保存 claude.ai 登录状态的过期日期
+- 在 `claude -p` 文本输出中新增了单行 stderr 警告，在已保存的 claude.ai 登录到期前 10 天开始显示
+- 修复了在格式错误的工具调用重试耗尽后，`--continue` 有时会丢失早期对话的问题（2.1.314 中的回归问题）
+- 修复了 macOS 会话在运行多个 Bash 命令时随着内存增长而卡死的问题
+- 修复了发送消息后紧接着按下的按键，或在响应较慢的提示出现前按下的按键误答权限提示的问题
+- 修复了当共享网络主目录上的配置文件无法更新时，`/logout`、`claude auth logout` 和 `claude mcp remove` 仍报告成功，且对信任、许可或 MCP 设置的更改被静默丢弃的问题
+- 修复了当另一个终端或主机在同一主目录下重新登录相同账户和组织时，任务会以 `Not logged in` 退出的问题
+- 修复了 `claude mcp add` 和 `remove` 在未获取锁的情况下写入配置的问题：现在它们会等待锁或以状态码 1 退出，不过另一个任务的保存操作仍可能替换已保存的服务器
+- 修复了 `claude plugin` 命令在较慢的 token 刷新保存之前就退出的问题，这可能导致下次运行时被登出
+- 修复了 `claude plugin validate` 会通过自定义命名的 marketplace 文件，而 `claude plugin marketplace add` 却会拒绝该文件的问题
+- 修复了在版本探测时退出的 stdio MCP 服务器在每次启动时都会被重新探测的问题；因自身原因在 3 秒内退出的服务器现在也会被固定使用旧版握手 7 天
+- 修复了会话在启动时被同一台机器上另一个登录所保存的 `allowedProviders` 列表拒绝的问题
+- 修复了空闲压缩会将对话替换为非摘要回复的问题
+- 修复了在后台 subagent 运行时，“Now using usage credits” 提示大约每 30 秒重复出现一次的问题
+- 修复了失败或仅允许 Claude 调用的自定义 slash 命令在 `claude -p` 和 SDK 会话中没有任何输出的问题
+- 修复了当 mod 挂钩 `turn.step` 且 API 错误中断回复时，`claude -p` 和 Agent SDK 会话仍报告成功的问题
+- 修复了在无头会话中切换模型后立即发送的消息在 Stop 后仍继续运行的问题：Stop 现在会像处理排队消息一样取消或停止该消息
+- 修复了当空闲的非交互式会话退出时，已删除的会话记录会带着最后一条 prompt 被重新创建的问题
+- 修复了在更新或版本清理删除了仍在运行的进程二进制文件后，`claude remote-control` 主机、后台守护进程和自托管 runner 启动新会话失败（`spawn ENOENT`）的问题
+- 修复了属于其他用户的运行中 Claude Code 进程（例如 `sudo claude` 遗留的进程）被版本清理视作已停止，从而可能删除其二进制文件的问题
+- 修复了 `/remote-control` 在连接失败后仍将会话显示为可用的问题
+- 修复了 `/design revoke` 在请求因 404 失败时仍报告成功的问题
+- 修复了自托管 runner 或云端会话重启后批准的 shell 命令会在会话初始目录而非发起请求的目录中运行的问题；如果无法进入该目录，则不会运行
+- 修复了云端会话重启后已批准的 connector 工具不可用时未通知 Claude 的问题
+- 修复了当服务拒绝上传长达数分钟时，云端会话会在轮次中途被停止的问题
+- 修复了在某些云端会话中，`Setup` 钩子写入 `CLAUDE_ENV_FILE` 的变量无法传递给 Bash 工具的问题
+- 修复了当响应在工具调用处中断或被拒绝的图像/文档被移除后，iPhone 应用在云端会话仍在运行时将其轮次显示为已完成的问题
+- 修复了重启的会话会重新发送因 API 错误而失败的消息，且排在等待处理的更新消息之前的问题
+- 修复了在 Claude 读取大图或重试工具调用后立即重启时，重启的会话会丢弃其中断轮次的问题
+- 修复了当 `NODE_EXTRA_CA_CERTS` 文件为空、非 PEM 格式或以损坏的证书开头时所有连接都会失败的问题：现在会使用可读取的证书，并在 stderr 上输出警告
+- 修复了工作流在达到用量限制后恢复运行时会重新运行已完成 agent 的问题
+- 修复了云端会话中的 `/mcp` 统计模型无法使用的工具的问题；服务器行现在会显示其有多少工具可用
+- 修复了 Claude 在 PushNotification 调用中省略 status 字段时出现重复通知的问题
+- 修复了在包含超过 20 张图像的请求中，图像过大的错误提示始终显示限制为 2000px 的问题；现在会显示 API 的实际限制
+- 修复了后台 shell 详情弹窗打开时运行时间不更新的问题
+- 修复了在无头运行中，mod 的 `turn.step` 钩子导致被停止的回复以成功状态结束的问题
+- 修复了保留期清理会导致仅运行 `claude -p` 的主目录下没有 `~/.claude.json` 备份的问题：现在会在删除最后一个完好备份前先创建一个新备份
+- 修复了当网络主目录没有剩余数据空间但仍允许创建新文件时，已保存的登录信息会被空文件替换的问题
+- 修复了在配置了 `forceLoginOrgUUID` 的机器上，即使来自 `setup-token` 的 token 属于允许的组织，在启动时也会被拒绝的问题
+- 修复了非交互式启动时会将非有效 JSON 的 `~/.claude.json` 替换为默认配置的问题；现在启动会失败并提示如何恢复该文件，同时保持原文件不变 (anthropics/claude-code#87551)
+- 修复了没有备份的空 `~/.claude.json` 会被报告为已损坏的问题；Claude Code 现在会像该文件缺失时一样正常启动
+- 修复了针对损坏或缺失的 `~/.claude.json` 所打印的恢复命令会指定空的或截断的备份，或在只读文件上执行失败的问题
+- 修复了当已保存的 claude.ai 登录达到时限时的登录失败问题：现在会明确提示该原因，并在 `claude -p` 中指出运行 `claude auth login` 和 `claude setup-token`
+- 改进了 `~/.claude.json`、设置文件及已保存的登录信息在共享网络主目录上的保存稳定性：减少了被删除、短暂清空或被近乎为空或较旧副本替换的情况
+- 改进了网络文件系统上的会话处理，在配置文件被误报为缺失时重新检查，从而减少启动时缺少 MCP 服务器和受信任文件夹的情况
+- 改进了 MCP 工具错误提示：在工具加载前发起的调用现在会返回其输入 schema
+- 改进了当 Bash 工具运行 macOS 内置的 `/bin/bash` 时 git commit 和 PR 创建的可靠性
+- 改进了用量限制菜单中的“Ask your admin for more usage”，现在可以一步发送请求
+- 改进了远程会话在暂停或休眠后重新连接的速度
+- 改进了 You should know 提示框，显示“try again”而不是仅在终端中有效的“press 2”
+- 改进了自动更新的可靠性：验证新版本时出现的短暂网络错误现在会立即重试，而无需等待下一次检查
+- 改进了无人值守运行（`claude -p`、SDK 应用），在内容未发生更改时不再于每次运行时重新写入 `~/.claude.json`
+- 变更：在 IDE 终端中启动时，Claude Code 不再安装或更新 IDE 扩展；请在外部终端使用 `/ide` 或通过编辑器的扩展视图进行安装
+- 变更：当“Switch models when a message is flagged”设置为“Ask each time”时，subagent 会停止而不是切换模型
+- 变更：后台 subagent 在所有 provider 上均会在 3 分钟后将 shell 命令移至后台，以避免 prompt 缓存在运行期间过期
+- 变更：在 Bedrock、Vertex、Foundry 或关闭遥测时的 subagent 进度摘要机制：在冷 prompt 缓存下，现在最多可等待 5 分钟以获取 subagent 的待处理响应
+- 变更：mod 在 `prompt.submit` 附加的内容现在保留在用户轮次中，而不是作为系统消息发出
+- 变更：`deniedMcpServers` 的 URL 条目现在也会阻止上游 URL 匹配的 Anthropic 官方服务器，以及云端会话和自托管 runner 中的 connector（此时会话会收到 connector 自身的 URL）；否则可通过名称拒绝 connector
+- 变更：`/permissions` 规则详情、内置规则和删除确认视图改用标准对话框；在其中按两次 Ctrl+C 现在会返回或取消，而不是直接退出
+- 变更：`/claude-api managed-agents-onboard` 默认赋予新 agent 的内置工具和快速入门模板的 MCP 工具 `auto` 权限策略（“Judge risky actions”），与 Claude Console 保持一致；如需停用请说明“run without asking”
+- 移除了 2.1.288 中在恢复 2.1.286 或更早版本发起的对话时保留模型早期思考过程的修复；该思考过程现在可以被丢弃
+- Gateway：新增了当联合认证（`external_account`）凭据文件中的 Google access token 即将过期时的日志警告
+- Gateway：改进了有关 `listen.trusted_proxies` 的日志提示：现在会指明仅列出自身会将连接地址添加到 `X-Forwarded-For` 的代理
+- Gateway：改进了 Amazon Bedrock 上 AWS CountTokens 失败时的警告：指明在 501 后由 Claude Code 而非网关进行统计，且仅在 AWS 拒绝访问时指向 IAM
+- Self-hosted runner：在编排器的 spawn-runner 钩子环境中新增了 `CLAUDE_RUNNER_SPAWN_REASON`：说明 Anthropic 发送请求的原因（例如 `runner_lost`、`resumed`）；未发送时则不设置
+- Self-hosted runner：新增了当 `--release-idle-session-min` 作为最后一个参数且没有值（仍会被忽略）或值全为空格（仍会被读作 `0`）时的启动警告
+- Self-hosted runner：更改了编排器的日志行格式：`ok session=…` 现在会在所有日志级别输出到 stdout（原先仅在 debug 级别输出到 stderr），并在 `jti=…` 后附加 `reason=…`；`nack session=…` 则在 `retryable=…` 后以 `reason=…` 结尾；请更新匹配 `retryable=true:` 或 `retryable=false:` 的脚本
+- Remote Control：修复了当会话的工作目录缺失时显示误导性“spawn error: ENOENT”的问题；该错误现在会指明具体目录名
+- Remote Control：改进了应用未设置标题时终端分支的分支所创建的默认标题：“Name (fork 2)”
+- [VSCode] 修复了被组织设置拒绝登录的窗口每分钟在后台启动一个新的 Claude Code 进程的问题
+- [VSCode] 修复了聊天面板错误横幅中的长单词将关闭按钮挤出可视区域的问题
+- [VSCode] 改进了登录界面，在登录状态检查失败时显示 Claude Code 输出的内容
+- [Cloud sessions] 新增了 No repository 选项：在 Anthropic 托管的环境中，云端会话现在可以在未选择代码仓库的情况下启动
+- [Cloud sessions] 在云端会话中添加了常见的 Chrome 名称，以便 Playwright 之外的工具可以通过 google-chrome 和 CHROME_PATH 找到内置的 Chromium
+- [Cloud sessions] 在云端会话环境被删除且输入框被隐藏时显示的卡片中新增了 New session 按钮
+- [Cloud sessions] 修复了云端会话中读取 GitHub Actions 日志的问题：在大多数环境中，`gh run view --log` 和 `gh api` 日志请求现在均可正常获取日志，而不再返回无法访问的重定向
+- [Cloud sessions] 改进了云端和 Remote Control 会话中大多数 Create PR 失败的提示信息：现在会给出原因或 GitHub 链接，而不仅提示 Try again
+- [Cloud sessions] 变更：connector 搜索结果现在会告知 Claude 该搜索仅覆盖 connector 目录的一部分
+- [Remote Control] 修复了环境菜单的 Remote Control 行中同一仓库的并排 checkout 看起来完全相同的问题；现在各自会显示其文件夹名称
+- [Claude Tag] 修复了 Claude Tag 管理员设置中的键盘焦点和屏幕阅读器朗读问题；在连接表单中按 Escape 键不再会同时关闭 Add 对话框
+- [Code Review] 改进了 Code Review 分析页面，在服务器或网络故障后重试一次，若仍失败则显示 Try again 横幅而非空白卡片
+
 ## 2.1.317 (2026-11-02)
 
 - 为 `/schedule` 添加了警告：当新建的云端定时任务获取了你未请求的连接器时进行提示，并说明如何移除它们
