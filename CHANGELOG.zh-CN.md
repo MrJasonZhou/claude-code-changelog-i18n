@@ -2,6 +2,155 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.319 (2026-11-06)
+
+- 修改了关闭遥测或功能标志时的 auto mode（包括在 LLM 网关后）：服务端无法检查的调用会被询问或拒绝，不再回退到内置分类器；设置 `CLAUDE_CODE_AUTO_MODE_SERVER=0` 可继续使用旧行为（Bedrock、Vertex 和 Foundry 保持不变）
+- 修改了 LLM 网关后的 auto mode：即使设置了 `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`，设置 `CLAUDE_CODE_AUTO_MODE_SERVER=1` 仍会开启服务端检查；如果托管配置设置了前者，则必须同时将其设为 `1`
+- 增加了在终端中对 MCP 任务的支持：当 MCP 服务端将工具调用作为任务运行时，Claude Code 会立即将其转入后台，并在任务完成时向 Claude 返回结果
+- 增加了 `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` 环境变量，使 Claude Code 在工具调用内等待 MCP 任务完成，而不是立即将其转入后台
+- 增加了 `permissions.denyInsteadOfPrompting` 设置：在终端会话、子代理（subagent）和 teammate 中，原本需要等待权限提示的工具调用将被直接拒绝并继续当前轮次
+- 增加了 `/claude-api latency-optimize`，用于排查 Claude API 代码中导致等待的瓶颈，并针对您的 eval 测试更快的设置
+- 增加了 `CLAUDE_CODE_DISABLE_FEATURE_FLAGS` 环境变量，在不关闭遥测的情况下停止拉取功能标志；所有标志随后使用内置默认值
+- 为位于 Claude 应用网关后且无支出限制的开发者在 `/usage` 中增加了今日、本周和本月的支出展示（需网关运行此版本或更高版本）
+- 在 Claude 应用网关中增加了 `admin.pooled_conflict_rule` 和 `admin.pooled_priority_order`，用于指定当开发者属于多个群组时优先扣除哪个共享群组预算
+- 在 Claude 应用网关中增加了可选的 `login_notice` 设置，在网关的浏览器验证页面和 Claude Code 的登录屏幕上显示管理员定义的消息
+- 在 Claude 应用网关中增加了 `CLAUDE_GATEWAY_LOG_FORMAT=json`：运行日志行将转换为包含 `severity`、`time` 和 `message` 的 JSON，方便从字段中读取日志级别的日志收集器
+- 增加了 Claude 应用网关的启动警告，用于处理某个策略按名称列出的自定义模型 ID 也被另一个策略的 `availableModels` 允许的情况
+- 为没有 `desktopHome` 但依赖 `coworkTabEnabled: false` 或 `chatSessionRetentionDays` 的策略在 Claude 应用网关中增加了启动警告，以提前应对 Claude Desktop 11 月 10 日的变更
+- 增加了当您的 claude.ai 登录失效且 Claude Code 继续使用 `ant auth login` 的凭据（会将用量计入您的 Claude Console 组织）时的警告
+- 增加了启动时的一行提示，用于在 Claude Code 使用 `ant auth login` 凭据的情况下指明被扣费的 Claude Console 组织
+- 在 `/tasks` 中增加了一行“Earlier in this session”以列出已结束的子代理，以便在其离开列表或重启后仍能重新打开并向其发送消息
+- 在云端会话的 `/loop` 确认信息中增加了一条提示，说明定时器会随其容器停止，并提供了在容器停止后依然存活的循环选项
+- 修复了使用较旧握手协议的 MCP 服务端连接失败或返回空结果的问题，原因是 Claude Code 声明了一个仅在较新服务端上使用的扩展
+- 修复了在执行 `--resume` 后，claude.ai 连接器上长时间运行的 MCP 工具调用有时永远不会报告其结果的问题
+- 修复了当 Claude Code 运行的目录中存在名为 `HEAD` 的文件或文件夹时，会话的 diff 无法在 claude.ai 和移动端应用中加载的问题
+- 修复了当 git 仓库顶层存在名为 `HEAD` 的文件或文件夹时，`/diff` 显示“Diff unavailable”的问题
+- 修复了在累计修改文件达到 64 轮或更多的会话中，`/diff` 面板打开后显示为空白的问题
+- 修复了以空格、制表符或换行符开头的斜杠命令被作为纯文本发送给 Claude 而非执行的问题
+- 修复了持续以 401 失败的请求在每次重试时刷新登录状态并导致其他会话出现 401 的问题
+- 修复了 `/context` 在后续每一轮中都向 Claude 发送完整可视化网格的问题；Claude 现在仅读取表格
+- 修复了在 auto mode 下因无可用安全检查导致操作被拒时 `claude -p` 仍以 0 退出的问题：文本和 JSON 输出现在均以 1 退出
+- 修复了在 Linux 上针对网络文件系统（NFS、SMB、Lustre 等）上的项目，Claude Code 启动时会列出所有项目文件的问题
+- 修复了当客户端紧接着发送模型变更和 auto mode 请求时，auto mode 被错误拒绝的问题
+- 修复了在服务端审查未能到达会话（例如在丢弃该审查的 LLM 网关后）时，`/status` 仍显示“Auto mode server: Enabled”的问题
+- 修复了在服务端拒绝为您所在的组织提供反馈后，Claude 起草的反馈、调查问卷和 `/feedback` 仍持续出现的问题
+- 修复了 Claude 在无法发送反馈的第三方网关上起草反馈的问题
+- 修复了权限规则或 `autoMode` 设置非常庞大时 auto mode 拒绝操作却不说明原因的问题：现在会进行说明，且除非设置了 `autoMode` 拒绝规则，否则会在终端中向您询问
+- 修复了 Bash 拒绝和询问规则遗漏包含带引号词语的命令的问题
+- 修复了子代理移交报告在非详细模式下展开时显示内部标记和来源注释的问题
+- 修复了附带提示词的 `claude -p --resume` 在其 MCP 服务端缺失时会丢失延迟工具调用的问题：该运行现在以 1 退出，保留该调用并拒绝后续输入
+- 修复了发送给 SDK 客户端的信息性消息中部分文本丢失的问题
+- 修复了磁盘满时 Agent SDK 宿主收到通用退出码错误而非失败运行本身的错误消息的问题
+- 修复了在 plan mode 下中断的轮次在会话以其他权限模式恢复时被 `CLAUDE_CODE_RESUME_INTERRUPTED_TURN` 重新运行的问题
+- 修复了在 Claude Code 写入配置文件后数秒内对该文件所做的编辑被忽略的问题
+- 修复了保留旧名称的配置文件在没有警告的情况下隐藏您的配置的问题：当主目录包含两个配置文件时，Claude Code 现在会在 stderr 上进行提示，并说明正在使用的是哪一个
+- 修复了在只读文件夹中保存或保存到绑定挂载文件（单会话保存）期间磁盘写满时，`~/.claude.json`、设置和已编辑文件最终变为空或被截断的问题
+- 修复了 Write 在无法读取要覆盖的文件时将该轮次作为拒绝终止的问题
+- 修复了几乎瞬间完成的后台 Bash 命令在报告为完成时丢失其输出的问题
+- 修复了 Bash 工具的变更文件 diff 遗漏命令在结束前刚写入的文件的问题
+- 修复了输错模型名称（例如 `opus-5-5`）时提示您更新 Claude Code 而不是推荐您预期的模型的问题
+- 修复了在权限提示处于打开状态时笔记本发生变化导致 `NotebookEdit` 修改错误单元格的问题
+- 修复了在 `/login` 成功界面按回车后出现约 0.5 秒卡顿的问题：该对话框现在会立即关闭，登录后的刷新将在后台运行
+- 修复了在屏幕阅读器模式下输入问题的“Other”答案时，Ctrl+G 无法打开外部编辑器的问题
+- 修复了当设置了 `CLAUDE_CODE_PROXY_RESOLVES_HOSTS` 且机器自身没有 DNS 时，Monitor 的 WebSocket 监视在代理后因“could not resolve”而失败的问题
+- 修复了 `claude plugin eval` 警告针对严禁调用的工具建议使用 `max: 0`（该条件永远无法满足）的问题
+- 修复了后台插件自动更新未安装更新后插件版本所新增依赖项的问题
+- 修复了在从代理视图打开的会话中，Cmd+点击无法在 tmux 上的 Ghostty 中打开链接的问题
+- 修复了 `.claude/skills` 中 mod 的热重载遗漏刚出现就被删除的文件以及遗漏其重新恢复的问题
+- 修复了在将代码恢复到 `/branch` 之前的检查点时 `/rewind` 失败并提示“No files were restored”的问题
+- 修复了 `/claude-api` skill 称 Console Web 设置不适用于 Managed Agents 会话的问题，并收紧了其凭据和权限示例
+- 修复了对包裹在普通 `timeout DURATION`（如 `timeout 30 rg foo`）中的只读命令弹出不必要权限提示的问题
+- 修复了 WebFetch 将 claude.ai 分享聊天链接描述为空白页面的问题；现在会提示无法读取分享的聊天，并建议直接粘贴对话
+- 修复了 Artifact 数据库调用被重新发送到没有数据库的构件的问题；错误信息现在会说明重新发布是否有帮助
+- 修复了保存到文件夹（`out_dir`）的构件数据库读取操作被拒绝的问题
+- 修复了详细的 Beta 跟踪未向需要客户端证书的收集器提供 `CLAUDE_CODE_CLIENT_CERT` 的问题
+- 修复了 OpenTelemetry 的 `claude_code.session.count` 指标将从未被认领的 Agent SDK `prewarm()` 进程计入的问题；预启动的进程现在仅在被认领时计入一次
+- 修复了 `/clear` 终止了持续运行的后台代理、teammate 和工作流的运行中命令，以及后台代理和 teammate 的前台子代理的问题
+- 修复了 Claude 应用网关登录已过期的终端发送被网关拒绝并记录为 `invalid_token` 的遥测和托管设置请求的问题
+- 修复了代理视图看似向等待权限提示的后台会话发送了回复的问题；回复现在会保留在输入框中，并提示打开该会话进行作答
+- 修复了代理视图在退出时删除了同一目录下另一个代理视图保存的草稿的问题
+- 修复了代理视图在因更新而自动重启后显示出另一个代理视图的输入文本的问题
+- 修复了代理视图预览截断较长的命令、结果和状态行且不显示省略号，并在等待批准的命令中丢失 `**`、反引号和标签的问题
+- 修复了在操作中途连接断开时 Chrome 中的 Claude 报告扩展未连接的问题；Claude 现在会在重复可能已执行的操作前先检查页面
+- 修复了在会话外部解除用量限制后，其他设备上的 Remote Control 会话仍显示“Limit reached”的问题
+- 修复了当 Claude 发送单个文件时，Claude iOS 应用中有时缺失文件卡片的问题
+- 修复了当服务端持续拒绝续期模型访问权限时自托管 runner 会话在没有任何说明的情况下失败的问题：runner 现在会更早重试并在会话中发布警告
+- 修复了云端会话中的 `/permissions` 仅回复其不可用的问题；现在会说明该会话的规则存放在何处以及如何修改它们
+- 修复了当会话迁移到新的 worker 时，云端会话丢失会话作用域的拒绝和询问权限规则（例如由 PermissionRequest 钩子添加的规则）的问题
+- 修复了在云端会话中输入三条消息而不是回答其问题时，该会话的 mod 热重载被关闭的问题
+- 修复了在 `/clear` 后继续运行的后台任务从 Web 版 Claude Code 的任务列表中消失，直到另一个任务启动或结束才重新出现的问题
+- 修复了隐藏命令出现在移动端和 Web 端云端会话的斜杠命令菜单中的问题
+- 修复了 `/rewind` 可能通过目录符号链接恢复或删除文件的问题
+- 修复了在 accept-edits 和 auto mode 下 `sed` 命令可能绕过权限检查的问题
+- 修复了在 LLM 网关后，当网关 URL 仅在托管设置中配置且无法获取服务端托管设置时，托管设置中的 `CLAUDE_CODE_AUTO_MODE_SERVER=1` 被忽略的问题
+- 修复了精心构造的环境变量前缀可使命令的一部分对权限检查隐藏的 Bash 权限绕过问题
+- 修复了在 Claude Desktop 中使用 claude.ai 连接器的终端名称（`mcp__claude_ai_Slack`）编写的拒绝和询问规则、钩子匹配器以及 `disallowedTools` 条目被忽略的问题（将在 Claude Desktop 包含此版本后生效）
+- 修复了创建 worktree 时的沙箱逃逸问题
+- 修复了自托管 runner 的问题：`--trust-workspace false` 现在还会阻止运行仓库设置文件和 skill 中的钩子
+- 修复了通过 shell 导出的 LLM 网关启动的空闲后台会话在更新后脱离该网关的问题
+- 修复了 `/status` 和 auto mode 计费通知中的帮助链接在折行时只能打开部分地址的问题
+- 修复了设置 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 时在 TLS 审查代理后证书错误持续存在的问题。设置该变量后，Claude Code 现在会在证书失败后与配置的 API 宿主建立 TLS 握手（如果设置了 http:// 代理则通过该代理），且不发送 API 请求
+- 修复了当首次运行的问题未获得回答（脚本、服务、批处理作业、Ctrl+C）时 `claude remote-control` 静默以状态 0 退出的问题；现在会说明原因并以 1 退出
+- 修复了 `claude remote-control` 在首次运行的问题上忽略后面没有换行符的管道输入 `y` 的问题；现在会被计为同意
+- 修复了在新名称无法保存到会话 transcript 时 `/rename` 仍报告直接成功的问题；现在会警告新名称可能无法持久保留
+- 修复了插件提供的 `subagentStatusLine` 命令中未替换 `${CLAUDE_PLUGIN_ROOT}` 的问题，该命令现在可以引用插件自身的脚本
+- 修复了 `claude plugin update` 和 `/plugin` 的“Update now”未安装新插件版本所新增依赖项的问题
+- 修复了在压缩后通知子代理等待既非由其启动也非由其接管的后台代理的完成通知的问题
+- 修复了后台代理的后续报告被静默丢失的问题：通知现在会说明已被拒绝以及如何请求获取它
+- 改进了 Windows 上的配置保存：Claude Code 会对其他程序打开的文件等待更长时间，因此保存期间被 kill 导致 `~/.claude.json` 变为空的可能性更小
+- 改进了 Chrome 中的 Claude 在短暂断开连接后的表现：在选择其他浏览器之前，它最多会等待 6 秒以待该会话自身的浏览器恢复
+- 改进了 Chrome 中的 Claude：最多 60,000 个字符的 `javascript_tool` 结果现在保留在对话中，而不是保存到文件
+- 改进了 `claude purge` 和旧会话清理逻辑，以重试未能完全删除的文件夹，并在仍无法删除时将其作为错误报告
+- 改进了 macOS 和 Windows 上针对工作目录外路径的拒绝提示：当该路径与目录内路径仅大小写不同时，消息会指出该拼写
+- 改进了浅灰色次要文本的对比度，例如提示、`/stats`、`/model` 和 `/sandbox` 中的详情以及被拒绝操作的消息
+- 改进了当更新针对不存在的文档以及服务暂停重复的被拒写入时的构件数据库错误提示
+- 改进了 Claude 应用网关关于上游调用失败的警告：每条警告现在都会指出具体的上游，而不仅仅是其提供商
+- 改进了 Claude 应用网关的支出限制错误：提示内容显示为“spend limit reached · resets Dec 1”，如果设置了 `admin.blocked_message` 则紧随其后显示
+- 改进了 `/model` 选择器：较旧的模型现在分组在“More models”行下，而不是直接列在当前模型之后
+- 改进了终端中的 `/context`，以保持 Claude 读取的表格短小：每个列表保留其最大的 10 行，按需加载的 MCP 工具在被调用前按每个服务端共享一行
+- 改进了云端会话中的 `/usage`：在无法显示套餐限制的情况下，现在会链接到 claude.ai 上的 Settings → Usage
+- [VSCode] 改进了移除插件市场的确认提示：现在会检查此时安装了该市场的哪些插件
+- 将终端中的 MCP 任务修改为无需获取功能标志即可工作（Bedrock、Vertex、Foundry、LLM 网关、`DISABLE_TELEMETRY`）；设置 `CLAUDE_CODE_DISABLE_MCP_TASKS=1` 可将其关闭
+- 修改了 auto mode，使项目的配置文件或插件无法在您已在项目外关闭服务端检查后将其重新开启
+- 修改了 Monitor 的 WebSocket 监视以对每个 Bash 命令遵循规则：拒绝规则会直接拒绝该命令，而在询问规则下，Monitor 上的允许、绕过模式或 auto mode 不再跳过提示
+- 修改了 `CLAUDE_CODE_PROXY_RESOLVES_HOSTS`，使配置文件无法在宿主管理网络的环境中设置它；请在进程环境中进行设置
+- 修改了会话中精确的 Bash 或 PowerShell 询问规则，当存在覆盖该命令的更广泛拒绝规则时，将被直接拒绝而非询问
+- 修改了 Bash 工具，在运行带有查找/显示集合之外参数的 `which` 时先请求权限
+- 修改了 `--add-dir` 目录，仅在接受了该目录自身的信任对话框后才注册插件市场
+- 修改了嵌套 skill 的加载逻辑：在开启 Bash 沙箱的情况下，起始文件夹下方 `.claude/skills` 文件夹中的 skill 仅在您从该处启动 Claude Code 或 `/cd` 到该处时才会加载
+- 修改了自主步调的 `/loop`，使其在一轮结束且未重新调度时直接终止，而不是调度一个兜底唤醒；设置 `CLAUDE_CODE_LOOP_KEEPALIVE=1` 可保留旧行为
+- 修改了 PostToolUse 钩子，使其在新消息中断当前轮次后，对完成的工具调用继续运行（最多 10 秒以完成执行）
+- 修改了安全防护机制阻止子代理后向 Claude 提示的内容：改为建议使用更窄的提示重试或告知您，而不是由 Claude 自身接手完成工作
+- 修改了云端会话在迁移到新 worker 时的行为：当无法保留全部拒绝和询问规则时，将丢弃会话作用域的允许规则，因此可能会再次向您询问
+- 修改了 TLS 审查代理后的自动证书修复：当仅设置了 `ALL_PROXY` 代理变量时不再运行。请将 `HTTPS_PROXY` 设置为代理的 http:// URL
+- 修改了构件数据库对他人可能写入的行的保存逻辑：每个文件会获得一个隐藏标记文件，现有未包含标记文件的文件（包括较早版本的导出文件）将保持原样并进行报告
+- 更新了 `/claude-api managed-agents-onboard` 模板以与 Claude Console 保持一致：移除了 Performance tuner，重命名了两个，并在提示词未用到网络搜索和抓取的五个模板中关闭了相应功能
+- 从 Claude Code 内置的 Claude in Chrome 工具中移除了 `shortcuts_list` 和 `shortcuts_execute`（用于列出和启动扩展中保存的快捷方式）
+- Gateway：针对将 AWS GovCloud 与其他上游混用的上游配置，以及网关环境中的 base URL 变量，增加了启动警告
+- Gateway：当托管设置在请求头中指定了网关不转发的 Amazon Bedrock guardrail，且没有 `bedrock` 上游设置 `guardrail` 时，在启动日志中增加了警告
+- Gateway：修复了当所有上游均为 Amazon Bedrock 时，Claude Desktop 提供的 Web 搜索工具总是失败的问题
+- Self-hosted runner：修复了使用 `--use-anthropic-git-proxy` 或 `--configure-git` 启动的 runner 在启动检查失败导致退出之前就已经注册的问题；现在会优先退出
+- Self-hosted runner：修改了 `CLAUDE_RUNNER_CHECKOUT_PATH`，使会话中的每个仓库都有独立的文件夹：会话中已被占用的文件夹名称末尾会追加 `-2`、`-3` 等
+- Self-hosted runner：移除了会话结束时对会话调试日志的上传；除非设置了 `--remove-session-state`，否则失败会话的日志将保留在 runner 宿主机上
+- [VSCode] 修复了超过 50,000 个字符的提示词被静默截断的问题：提示词现在会保留在聊天框中并附带提示，粘贴超出限制的内容将被拒绝并给出提示
+- [VSCode] 修复了点击调查问卷或“Report a problem”按钮会发送未完成提示词的问题
+- [VSCode] 修复了从扩展的 Web 标签页打开的云端会话会重新带回已被 `/clear`、重试或编辑输入提示词移除的轮次的问题
+- [VSCode] 修复了在扩展中重命名已删除会话时该会话的文件会重新出现的问题
+- [VSCode] 修复了窗口重新加载后 Claude 执行未经批准的计划的问题：在 plan mode 下中断的步骤在会话以其他权限模式恢复时会停止并显示提示
+- [VSCode] 改进了 Claude 应用网关后的“not signed in”提示：现在显示为错误样式并带有 Sign in 链接
+- [VSCode] 修改了 Claude 回复中指向 Claude 登录、连接器或 API 地址的链接，使其显示为带有地址的文本，而不是在浏览器中打开
+- [VSCode] 修复了拖入项的路径包含极长连续“/”字符时聊天面板可能卡死的问题
+- [VSCode] 修复了 `claude-vscode.toggleDictation` 命令同时在所有打开的 Claude 视图中启动听写的问题；现在仅在您当前使用的视图中生效，再次按下即可停止
+- [VSCode] 修复了当流式传输包含许多未闭合且长度逐个递减的 `$$` 数学公式块的回复时聊天面板变慢的问题
+- [VSCode] 改进了聊天面板针对大型工作区的诊断工具：忽略无问题的文件，返回紧凑的 JSON，并支持可选的最低严重级别筛选
+- [Cloud sessions] 修复了计划任务静默丢弃名为 memory 的连接器的问题：运行现在会保留它，挂载在该名称后附带简短后缀的路径下
+- [Cloud sessions] 修复了在云端会话中对等待中的消息点击 Send now 会终止运行中的后台代理的问题；它们现在会保持运行
+- [Cloud sessions] 改进了自托管环境上的安装停滞警告：其链接现在优先指向您组织的默认环境或具有活跃 runner 的环境，并显示其名称
+- [Code Review] 修改了解绑 GitHub 组织的操作，使其同时关闭 Code Review 中该组织的 All repositories 设置；重新绑定后该设置保持关闭，直到您手动重新开启
+- [Claude Tag] 修复了频道列表无法完全加载时 Claude Tag 设置会阻止启动的问题；管理员现在无需选择频道即可启动
+- [Claude Tag] 为连接了 Claude Tag 的 Enterprise 组织在 Models 管理页面增加了 Claude Tag 行，链接到管理其默认模型的位置
+- [Claude Tag] 修复了在 Claude Tag 管理员设置中保存 auto mode 允许规则会覆盖其他管理员修改的问题；保存操作现在会被拒绝并显示提示信息
+
 ## 2.1.318 (2026-11-03)
 
 - 新增了当 Claude Code 请求启用其在会话中编写的 mods 时记录你的回答的功能
