@@ -2,6 +2,127 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.321 (2026-11-09)
+
+- Claude Fable 5.2(`claude-fable-5-2`) 추가, 이제 기본 Fable 모델로 설정 — 1M 컨텍스트, Mtok당 $8/$40 및 Mtok당 $0.20 캐시 읽기 비용
+- `claude remote-control`에 `--settings <file>` 추가. 시작되는 모든 세션에 설정 파일을 적용하며, 파일이 변경되면 `claude remote-control`을 다시 시작할 때까지 새 세션이 시작되지 않음
+- 서버가 리다이렉트할 때 MCP OAuth 요청이 리프레시 토큰 등의 시크릿을 다른 호스트로 전송하던 문제 수정
+- 읽기 전용 Bash 명령어가 권한 확인 프롬프트 없이 샌드박스 외부에서 실행되던 문제 수정
+- Bash 권한 검사 시 잘못된 폴더 기준으로 파일 쓰기를 판단하여 프롬프트를 띄우지 않던 문제 수정
+- 디렉터리로 실행한 `cp` 또는 `mv`가 쓰는 파일에 거부 규칙 및 보호된 파일 프롬프트가 적용되지 않던 문제 수정
+- 플랜에 Fable이 포함된 Enterprise 시트에서 Fable로 전환한 후 "Draws from usage credits" 안내가 표시되던 문제 수정
+- 첫 번째 모델이 응답하기 전에 차단되었을 때 폴백 모델이 요청을 거부하거나 중단된 응답을 언급하던 문제 수정
+- Claude Code가 등록한 서버에 다시 로그인할 때마다 `claude mcp login`에서 SEP-2352 발급자 경고가 출력되던 문제 수정
+- 네트워크 경로(UNC 공유, WSL 폴더, `/net` 마운트)에서 셀을 지정하지 않고 호출했을 때 `NotebookEdit`가 노트북의 첫 번째 셀을 삭제하거나 덮어쓰던 문제 수정
+- 네트워크 경로(UNC 공유, WSL 폴더, `/net` 마운트)에서 Edit가 여러 일치 항목 중 첫 번째 항목만 수정하거나 빈 `old_string`으로 전체 파일을 덮어쓰거나 노트북을 텍스트로 편집하던 문제 수정
+- 새 세션이 auto 모드로 시작됨에도 `/config`에서 Manual이 기본 권한 모드로 표시되던 문제 수정. 이제 "Auto (default)"에서 Space 키를 누르면 Plan이 아닌 Don't Ask로 저장됨
+- Windows: 세션 작업 디렉터리의 드라이브 문자가 소문자일 때 첫 번째 셸 명령어 실행 후 `watchPaths`로 설정된 경로에 대해 `FileChanged` 훅이 중단되던 문제 수정
+- `--plugin-dir .` 및 `--plugin-dir ./builtin` 사용 시 Claude Code 내장 플러그인의 생성된 타입 파일이 `builtin` 폴더에 작성되던 문제 수정
+- 정확한 토큰 수를 알 수 없을 때 컨텍스트 사용량 추정치가 도구 정의를 과다 계산하던 문제 수정
+- 웹 및 모바일의 Remote Control에서 `/compact`가 두 번 표시되던 문제 수정
+- 플러그인 자동 업데이트 및 `/plugin` 마켓플레이스 업데이트 시 저장소의 워크트리나 폴더마다 플러그인을 다시 다운로드하던 문제 수정
+- Claude가 응답하기 전에 대화가 압축(compact)되었을 때 턴을 시작한 백그라운드 서브에이전트의 보고 내용이 auto 모드에서 유실되던 문제 수정
+- 워크트리 진입 후를 포함하여 `git stash` 등으로 인해 세션 도중 폴더가 제거되었다가 복원된 후에도 프로젝트 스킬, 명령어 및 에이전트가 누락된 상태로 유지되던 문제 수정
+- 백그라운드 명령어가 10분 후 중단됨에도 `claude -p`가 Claude에게 30분이 주어진다고 안내하던 문제 수정
+- 클라우드 세션의 `pkill`, `pgrep`, `pidwait`가 세션 자체의 부모 프로세스와 일치하던 문제 수정
+- 연결이 지연되는 프록시 환경에서 부모 프로세스가 종료된 후에도 Claude in Chrome 및 computer use 서버 프로세스가 계속 유지되던 문제 수정
+- 대용량 훅 출력 시 동일한 도구 호출에서 나온 다른 훅의 출력이 담긴 파일로 Claude를 안내하던 문제 수정
+- Claude Code를 임베드하는 앱에서 두 훅 모두 확인을 요청했을 때 다른 훅 대신 자체 PreToolUse 훅의 `ask` 사유를 가져오던 문제 수정
+- 다른 훅의 `defer`가 먼저 완료되었으나 처리될 수 없을 때 PreToolUse 훅의 `ask`가 유실되던 문제 수정
+- 권한 프롬프트 및 백그라운드 작업 시 드물게 발생하던 비정상 종료 수정
+- Claude가 워크트리에 진입한 후 SDK 및 데스크톱 세션 메뉴에서 프로젝트 스킬, 명령어, 에이전트가 사라지던 문제 수정
+- macOS에서 Claude Desktop이 `~/Applications`에 설치되어 있음에도 `/desktop` 실행 시 설치되지 않았다고 표시되던 문제 수정
+- 사전 시작된 프로세스에서 시작된 Claude Desktop 세션에서 OpenTelemetry 저장소 속성(`vcs.*`)이 누락되던 문제 수정
+- 페이지를 읽는 모델이 텍스트를 반환하지 않을 때 WebFetch가 "No response from model"을 페이지 콘텐츠로 Claude에 전달하던 문제 수정. 이제 호출이 명확한 오류와 함께 실패함
+- Claude Code 시작 중 시스템 시계가 이전 시간으로 돌아갔을 때 스크린 리더 모드에서 시작 프롬프트가 지연되던 문제 수정
+- 대화 상자가 닫힌 후 명령어 패널이 복원되지 않아 다음 화면 갱신 때까지 화면에 패널이나 프롬프트가 표시되지 않던 문제 수정
+- 데스크톱 앱에 동일한 이름의 MCP 서버 또는 확장 프로그램이 있을 때 Claude Desktop의 Code 탭 세션에서 첫 번째 메시지 후 프로젝트의 MCP 서버 연결이 끊어지던 문제 수정
+- 응답 도중 연결이 끊겼을 때 "API Error: EPROTO: The TLS handshake failed"와 함께 턴이 종료되던 문제 수정. 2.1.302 이전과 마찬가지로 부분 응답이 유지되거나 요청이 재시도됨
+- 대용량 파일에서 단일 라인을 반복해서 읽는 장기 세션에서의 높은 메모리 사용량 문제 수정
+- fast 서빙이 속도 제한, 과부하 또는 실패 상태일 때 fast mode에서 응답이 유실되거나 모델이 전환되거나 몇 분 동안 재시도하던 문제 수정. 이제 동일한 모델의 표준 속도를 먼저 시도함
+- 여러 백그라운드 에이전트가 대기 중인 상태에서 Claude가 중단된 후, 한 번의 요청에 의도보다 훨씬 많은 백그라운드 에이전트 보고서가 포함되던 문제 수정
+- Claude가 작업 중일 때 타이핑한 후 Claude Desktop Code 탭 세션에서 다른 세션으로 보내는 메시지가 일시 정지된 상태로 유지되던 문제 수정
+- `--verbose` 등의 플래그가 함께 입력되었을 때 `claude agents`에서 `agents` 앞에 작성된 `--permission-mode`, `--dangerously-skip-permissions`, `--model`, `--effort`, `--agent`가 무시되던 문제 수정
+- 앱이 로그인 토큰을 일시적으로 전달하지 못하여 연결이 유지되고 있음에도 데스크톱 앱에서 Remote Control이 "login expired"와 함께 꺼짐으로 표시되던 문제 수정
+- "Queue for later"로 전송된 Remote Control 메시지가 실행 중인 턴 중간에 Claude에게 전달되던 문제 수정
+- git status 실행이 실패했을 때 세션 시작 시 Claude에게 제공되는 git 상태가 clean으로 표시되던 문제 수정. 이제 unavailable로 표시됨
+- 변경 사항이 스테이징되지 않았음에도 세션 시작 시 Claude에게 제공되는 git 상태에서 목록의 첫 번째 파일이 staged로 표시되던 문제 수정
+- 클라우드 세션의 커넥터가 이름이 매우 긴 리소스를 나열할 때 멈춤 현상이나 메모리 부족 비정상 종료가 발생하던 문제 수정
+- 세션 기록이 업로드 중인 상태에서 연결이 완전히 종료되었음에도 Remote Control이 연결됨 상태로 표시되던 문제 수정
+- 에이전트 뷰에서 대화로 돌아올 때 스크린 리더 모드가 꺼지던 문제 수정
+- 스크린 리더 모드의 y/n 질문에서 질문이 열릴 때 입력된 텍스트 끝의 불필요한 "y"를 yes로 인식하던 문제 수정
+- 호스트가 허용되었음에도 네트워크 프록시가 연결하지 못했을 때 클라우드 세션에서 Claude에게 해당 호스트가 허용되지 않았을 가능성이 높다고 전달하던 문제 수정
+- 도구를 로드하는 도중 다시 연결되었거나 세션 디렉터리가 변경되었을 때 MCP 서버가 도구 없이 연결됨으로 표시되던 문제 수정
+- Claude가 여러 명령어를 한 번에 전송하고 이전 명령어가 폴더를 변경했을 때 Bash 명령어가 잘못된 폴더에서 실행되던 문제 수정
+- 업로드 시 프록시로부터 HTTP 507을 수신했을 때 클라우드 및 Remote Control 세션에서 Claude가 보낸 파일이 즉시 실패하던 문제 수정. 이제 업로드가 한 번 더 재시도됨
+- 트랜스크립트를 읽는 도중 메모리가 부족할 때 새 메시지가 저장되지 않고 `claude -p`, SDK 및 VS Code 세션이 멈추던 문제 수정
+- 네트워크에서 연결은 수락하지만 TLS 핸드셰이크에 응답하지 않을 때 로그인, 토큰 갱신, 로그아웃이 무한정 대기하던 문제 수정
+- 전송된 파일 이름에 텍스트 방향 문자나 제어 문자가 숨겨져 있을 때 Claude 앱에서 다른 이름으로 표시되던 문제 수정. 이제 Claude가 해당 파일의 전송을 거부함
+- 모델이 도구 호출로 응답한 후에도 서브에이전트 진행 요약이 요청을 끝까지 실행하던 문제 수정
+- 경로를 직접 입력한 동일 명령어가 확인 없이 실행됨에도 `grep -r foo "$PWD/src"`와 같은 Bash 읽기 명령어가 권한 확인을 요청하던 문제 수정
+- 관리형 MCP 서버의 `oauth.omitResource`와 같이 `desktop` 설정에 게이트웨이보다 최신 필드가 포함되어 있을 때 Claude apps 게이트웨이 시작이 거부되던 문제 수정. 이제 경고를 표시하고 정상 처리함
+- `.zshrc`에 `KSH_OPTION_PRINT`가 설정된 zsh 사용자 환경에서 Bash 명령어 결과가 빈 값으로 반환되던 문제 수정
+- macOS: 유효한 MDM 프로필을 읽는 속도가 느릴 때 시작 시 "Unable to read managed policy settings"가 발생하던 문제 수정. 이제 읽기를 한 번 재시도하며, 타임아웃은 타임아웃으로 보고됨
+- 아무것도 입력되지 않은 상태에서 업데이트를 위해 재시작될 때 에이전트 뷰가 다른 에이전트 뷰에 저장된 입력 텍스트를 지우던 문제 수정
+- `UserPromptSubmit` 훅이 재생된 권한 답변을 차단했을 때 재시작 후 원격 세션이 응답하지 않던 문제 수정. 해당 재생 시 이러한 훅은 더 이상 실행되지 않음
+- 터미널 입력이 종료되었을 때 `claude remote-control`의 최초 실행 질문에서 Enter 없이 입력된 `y`를 수락하던 문제 수정
+- 정책에 `code:` 규칙이 없는 Claude apps 게이트웨이 뒤에서 Claude Desktop이 지출 한도 경고를 표시하지 않던 문제 수정
+- 이전보다 짧아진 도구 결과가 화면 상단 밖으로 스크롤되었을 때 일부 플러그인이 포함된 전체 화면 세션이 오류로 종료되던 문제 수정
+- 모델이 도구 호출로 응답했을 때 프롬프트 추천 기능이 추가 API 요청을 생성하던 문제 수정
+- 응답 크기가 16 MiB를 초과할 때 stdio 및 HTTP MCP 서버의 `PreToolUse` `mcp_tool` 훅이 건너뛰어지던 문제 수정. 이제 해당 도구 호출이 거부됨
+- 일부 글꼴에서 공백으로 렌더링되는 바뭄(Bamum) 문자가 포함된 스킬 및 명령어 이름이 허용되던 문제 수정. 이제 거부됨
+- Linux 환경의 `claude -p`에서 용량이 꽉 찬 NFS 내보내기나 모두 소진된 NFS 할당량으로 인해 트랜스크립트 라인이 유실되었을 때 오류 없이 종료 코드 0으로 종료되던 문제 수정. 이제 오류를 출력하고 텍스트 및 json 출력에서 1로 종료됨
+- 아무도 Stop을 누르지 않았음에도 서비스가 클라우드 세션을 중단했을 때 백그라운드 에이전트가 사용자에 의해 중단된 것으로 보고되고 재개가 거부되던 문제 수정
+- 권한 프롬프트가 열려 있는 동안 노트북이 변경되는 등 편집이 실패했음에도 NotebookEdit가 훅과 텔레메트리에 성공으로 보고하던 문제 수정
+- 저장된 MCP 로그인 레코드가 null일 때 시작 시 빈 화면이 나타나거나 응답이 없고, `claude mcp list` 출력이 비어 있던 문제 수정
+- 아티팩트의 데이터베이스 컬렉션이 너무 커서 정렬할 수 없을 때 Artifact 도구가 Claude에게 필터를 추가하라고 안내하던 문제 수정. 이제 컬렉션을 페이지별로 읽어 결과를 정렬하라고 안내함
+- Claude의 첫 응답 전에 재시작되었을 때 재시작된 클라우드 세션에서 대용량 이미지가 포함된 메시지가 유실되던 문제 수정
+- 재시작된 클라우드 세션에서 메인 대화로 전달된 서브에이전트의 메시지에 응답하지 않던 문제 수정
+- 실행 중인 워크플로를 중지하거나 일시 정지했을 때 Claude에게 전달되지 않던 문제 수정. 이제 Claude가 워크플로가 계속 실행 중이라고 말하지 않음
+- `/model` 선택기 개선: "More models"가 다른 모든 항목 아래에 번호 없는 행으로 배치되며, 이전 모델들이 다른 항목의 번호 변경 없이 그 아래에 열림
+- Gateway: 사용량이 많은 복제본(replica)에서의 지출 한도 로직 개선. 이제 검사를 덜 건너뛰고 지출을 더 빠르게 기록함
+- Claude Code 및 `/device` 페이지에서의 Claude apps 게이트웨이 로그인 한도 메시지 개선: 게이트웨이 자체 로그에는 계속 기록되지만, 게이트웨이 설정 이름을 더 이상 노출하지 않음
+- `claude install` 및 설치 스크립트 개선: 완료 시간이 2~4초 단축됨
+- 프로세스가 비정상 종료된 Remote Control 세션이 새 메시지를 수신할 수 있게 되는 시간 개선
+- Windows: 보조 프로세스를 실행하지 않고 PATH에서 프로그램을 찾아 시작 및 첫 명령어 실행 시간 개선
+- 헤드리스 세션, 데스크톱 앱 및 VS Code에서의 auto 모드 개선: 터미널에서와 마찬가지로 함께 대기 중인 백그라운드 서브에이전트들의 보고가 한 번의 모델 호출로 처리됨
+- 워크트리를 설정하지 못한 `claude --bg --worktree` 세션에 대한 에이전트 뷰 행 개선: 이제 내부 태그나 마지막 200자가 아닌 처음부터 오류 내용을 표시함
+- 아티팩트가 다른 조직에 있을 때 표시되는 메시지 개선: 사용자의 조직 중 하나인 경우에만 `/login`이 제안되며, 계정 이전 후 사본이 어디에 있을 수 있는지 Claude가 안내함
+- 단일 요청 허용량보다 많은 이미지가 포함된 세션 개선: 누락된 이미지를 이전에 본 적이 있는지 Claude에게 전달하며, 변경되지 않은 이미지의 반복 읽기를 제한함
+- 응답하지 않은 최초 실행 질문에 대한 `claude remote-control`의 메시지 개선: 이제 각각 다음에 수행할 작업을 안내함
+- 신뢰할 수 있는 TLS 인증서를 더 빠르게 로드하여 시작 시간 개선
+- 사용자 이름이나 비밀번호 없이 게이트웨이 주소를 표시하도록 Claude apps 게이트웨이 오류 메시지 개선
+- Claude apps 게이트웨이의 지출 한도 오류 개선: 이제 재설정 시간이 "resets 4pm (America/Los_Angeles)"와 같이 로컬 시간으로 표시됨
+- Windows: 매 실행마다 어떤 git.exe를 실행할지 확인하지 않도록 하여 표준 Git for Windows 설치 환경에서의 시작 시간 개선
+- 세션 피드백 메시지와 `allowedProviders` 설정 설명에 Pro 및 Max와 함께 Ultra를 명시하고, `forceLoginMethod` 설명이 모든 유료 Claude 플랜을 포함하도록 업데이트
+- 번들된 dataviz 스킬을 업데이트하여 각각 고유 한도가 있는 여러 비율에 대해 항목당 한 행씩 미터 목록을 제안하도록 함
+- "Upgrade to Max" 옵션 문구를 "Upgrade to Max or Ultra"로 업데이트
+- Claude가 작성한 mod가 관리형 `allowUnsandboxedCommands: false` 또는 `allowManagedDomainsOnly` 설정이 있더라도 auto 및 bypass 모드에서는 확인 없이 켜지도록 변경하고, `dontAsk` 모드에서는 로드되지 않도록 변경
+- mod 자체의 도구 호출(`$.tool.call`, `$.mcp.call`)이 사용자 정의 ask 규칙 아래나 `dontAsk` 및 `-p` 실행 환경에서도 권한 프롬프트를 띄우지 않도록 변경(거부 규칙 및 조직 정책은 계속 적용됨)
+- 저장된 Fable 5.1 모델 선택이 `fable`로 이전되도록 변경: Pro 및 Max 플랜은 즉시 적용되며, Team 및 Enterprise 플랜은 조직에서 허용한 후 적용됨. 되돌리려면 `/model claude-fable-5-1` 사용
+- 현재 모델이 fast mode를 지원할 때 `/fast`, `/config`, `/model`의 fast mode 라벨에 해당 모델 이름이 표시되도록 변경하고, VS Code 행에서 "(Opus only)" 제거
+- 중첩 스킬 로딩 방식 변경: Claude가 해당 위치의 파일에 대해 작업할 때 `~/.claude/plugins` 내부의 `.claude/skills` 폴더가 더 이상 로드되지 않음
+- Self-hosted runner: 세션 종료 또는 일시 정지, 작업 지시 대체 등 필요하지 않아 서버에서 거부된 온디맨드 러너가 1 대신 0으로 종료되도록 변경
+- Windows: Claude Code가 git 등 자체 시작하는 프로그램을 찾는 방식을 변경하여 상대 경로 및 UNC PATH 항목과 네트워크 공유 링크를 건너뛰고, 설정에서 변경된 PATH를 반영하도록 수정
+- 비대화형 세션의 OpenTelemetry 훅 이벤트에서 Bash 및 PowerShell 호출 후 두 개의 내장 훅이 `num_hooks` 및 `num_success`에서 제외되도록 변경
+- 사용자가 다시 입력할 때까지 Claude Desktop Code 탭 세션이 다른 세션으로 보낼 수 있는 메시지 수를 10개에서 20개로 변경
+- `claude -p` 및 SDK 세션의 `AskUserQuestion`에서 문서화되지 않은 `afkTimeoutMs` 입력 필드를 설정하는 호스트의 권한 응답을 거부하도록 변경
+- 관리형 `extraKnownMarketplaces` 동작 변경: 선언된 이름은 다른 소스에서 추가할 수 없고, 다른 곳의 항목은 숨겨지며, 선언된 마켓플레이스에 나열된 플러그인은 해당 마켓플레이스에서 재설치됨
+- Claude 데스크톱 앱의 Code 탭 등 Claude Code를 실행하는 앱이 제공하는 Claude in Chrome 도구가 조직의 Claude in Chrome 정책을 따르도록 변경
+- Claude apps 게이트웨이의 `policy_mode: layered` 변경: 관리형 MCP 서버가 `match: {}`를 포함해 일치하는 모든 정책에 걸쳐 합산되므로, 이미 이를 사용 중인 게이트웨이는 업그레이드 후 더 많은 서비스를 제공함
+- Gateway: Bedrock, Vertex, Foundry 업스트림이 게이트웨이 환경의 `ANTHROPIC_*_BASE_URL` 변수를 무시하도록 변경. 다른 엔드포인트를 사용하려면 업스트림에 `base_url`을 설정
+- 헤드리스 세션에서 파일 변경 시 `.claude/skills`의 mod를 다시 로드하도록 변경. 이를 끄려면 `CLAUDE_CODE_PLUGIN_DIR_WATCH=0`으로 설정
+- 사이버 보호 조치(cyber safeguard) 차단 시 표시되는 Cyber Verification Program 문구를 claude.ai와 동일한 문구로 변경
+- Cowork 클라우드 세션 변경: PostToolUse 훅이 더 이상 AskUserQuestion에 대한 답변이나 ExitPlanMode 결과의 계획을 대체할 수 없으며, Claude는 원본을 읽음
+- `/bin/cp`와 같이 경로로 지정된 `cp` 및 `mv`도 일반 `cp` 및 `mv`와 동일한 경로 검사를 받도록 변경
+- 1,000자가 넘는 명령어의 경우 백그라운드 명령어 알림 및 TaskStop 결과에 명령어의 시작과 끝 부분만 Claude에게 표시하여 컨텍스트를 절약하도록 변경
+- 아티팩트 디자인 가이드에서 Inter 및 Space Grotesk를 권장 기본 서체로 다루도록 변경
+- 계정 이메일 검사에서 사용자의 이메일을 포함하고 User-Agent를 지정하는 셸 명령어만 확인 없이 거부하도록 변경하여, 다른 명령어와 예약된 실행이 해당 프롬프트에서 멈추지 않도록 함
+- Remote Control 세션이 시작된 폴더를 유지하도록 변경: 연결된 클라이언트가 세션을 다른 폴더로 이동할 수 없음
+- 선언되지 않은 소스로부터의 관리형 `extraKnownMarketplaces` 인수(take-over) 동작 변경: 저장된 데이터는 `cleanupPeriodDays` 동안 따로 보관되며, 옵션과 시크릿은 `claude plugin restore-set-aside`를 실행할 때까지 보관됨
+- [VSCode] 인증 토큰과 API 키가 모두 설정된 경우 터미널의 시작 경고와 일치하도록 프롬프트 상자 위에 경고 추가
+- [VSCode] 숨겨진 문자가 포함된 이름이 표시되던 플러그인의 권한 요청 문제 수정: 이제 "a plugin"으로 표시됨
+
 ## 2.1.319 (2026-11-06)
 
 - LLM 게이트웨이 환경을 포함하여 텔레메트리 또는 기능 플래그가 비활성화된 경우의 auto mode 변경: 서버에서 확인할 수 없는 호출은 내장 분류기로 폴백되지 않고 확인 메시지를 표시하거나 거부됨. 계속 사용하려면 `CLAUDE_CODE_AUTO_MODE_SERVER=0`으로 설정(Bedrock, Vertex, Foundry는 변경 사항 없음)
