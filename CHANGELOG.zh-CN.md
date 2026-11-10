@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.322 (2026-11-10)
+
+- 在 Vertex 的 global、us 和 eu 区域新增快速模式，若 Vertex 拒绝则回退到标准速度
+
 ## 2.1.321 (2026-11-09)
 
 - 新增 Claude Fable 5.2 (`claude-fable-5-2`)，现已成为默认的 Fable 模型 —— 1M 上下文，每 Mtok 价格为 $8/$40，缓存读取费用为 $0.20/Mtok

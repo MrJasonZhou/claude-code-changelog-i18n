@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.322 (2026-11-10)
+
+- 在 global、us 及 eu 區域的 Vertex 新增 fast mode，若 Vertex 拒絕則回退至標準速度
+
 ## 2.1.321 (2026-11-09)
 
 - 新增 Claude Fable 5.2（`claude-fable-5-2`），現為預設的 Fable 模型 — 1M context，每 Mtok 為 $8/$40，快取讀取為 $0.20/Mtok

@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.322 (2026-11-10)
+
+- Vertex의 global, us, eu 리전에 fast mode를 추가했으며, Vertex에서 이를 거부할 경우 standard speed로 대체 작동하도록 구현
+
 ## 2.1.321 (2026-11-09)
 
 - Claude Fable 5.2(`claude-fable-5-2`) 추가, 이제 기본 Fable 모델로 설정 — 1M 컨텍스트, Mtok당 $8/$40 및 Mtok당 $0.20 캐시 읽기 비용

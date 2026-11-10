@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.322 (2026-11-10)
+
+- Adicionado modo rápido no Vertex nas regiões global, us e eu, com fallback para a velocidade padrão se o Vertex recusar
+
 ## 2.1.321 (2026-11-09)
 
 - Adicionado Claude Fable 5.2 (`claude-fable-5-2`), agora o modelo Fable padrão — contexto de 1M, $8/$40 por Mtok com leituras de cache a $0.20/Mtok

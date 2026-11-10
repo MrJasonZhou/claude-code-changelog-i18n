@@ -2,6 +2,10 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.322 (2026-11-10)
+
+- global、us、eu リージョンの Vertex で fast mode を追加（Vertex に拒否された場合は標準速度にフォールバック）
+
 ## 2.1.321 (2026-11-09)
 
 - Claude Fable 5.2（`claude-fable-5-2`）を追加。デフォルトの Fable モデルとなり、1M コンテキスト、1M トークンあたり $8/$40（キャッシュ読み取りは $0.20/Mtok）に対応
