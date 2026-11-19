@@ -2,6 +2,139 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.329 (2026-11-19)
+
+- 폴더의 hooks가 선언된 위치를 표시하는 신뢰 확인 대화상자 경고 추가
+- 관리형 설정의 hooks 로드 실패 시 Claude Desktop 및 기타 비대화형 호스트의 대화창에 경고 표시 추가
+- `/tasks`에 현재 세션의 예약된 작업, `/loop` 웨이크업, 목표 및 현재 대화의 포크 추가 (확인 후 x 키로 중지 가능)
+- `/mcp`의 서버 페이지에 연결을 거부한 원격 HTTP MCP 서버의 JSON-RPC 에러 메시지를 표시하는 "Server message" 행 추가
+- `/status`에 자동 업데이트가 지원되지 않는 관리형 마켓플레이스 목록과 그 이유를 표시하는 "Marketplace auto-update" 행 추가
+- OpenTelemetry 이벤트 및 메트릭이 활성화된 상태에서 Code Mode를 켤 수 있도록 지원 추가 (코드의 각 도구 호출이 이벤트를 전송하며, 트레이싱 활성화 시에는 계속 비활성화됨)
+- 네트워크 지연이나 파일 잠금으로 인해 `~/.claude.json`을 읽을 수 없을 때 저장 과정에서 기본값으로 초기화되던 문제 수정
+- macOS에서 Claude Code가 Keychain을 읽을 수는 있지만 저장할 수 없을 때 로그아웃이 반복되던 문제 수정 (해당 세션은 만료 시 사유를 표시하며 중지되고, 다른 세션은 로그인 상태 유지)
+- `/terminal-setup` 실행 시 블록 주석 주변의 VS Code 설정 또는 단축키 파일이 손상되거나, keybindings.json에 닫히지 않은 문자열이 있을 때 Shift+Enter 바인딩이 유실되면서도 성공으로 보고되던 문제 수정
+- IDE diff를 통해 수락된 파일이 마지막 줄 바꿈 없이 저장되던 문제 및 VS Code에서 diff를 저장하여 수정을 수락했을 때 바이트 순서 표식(BOM)이 유실되던 문제 수정
+- `/teleport`에서 클라우드 세션을 선택하면 열려 있던 대화가 대체되던 문제 수정 (`/clear`처럼 새 세션으로 시작되며, `/resume`으로 이전 대화 복원 가능)
+- `/usage-credits`에서 브라우저를 연 후 Pro 및 Max 사용자에게 재로그인을 요청하던 문제와, 브라우저가 열리지 않고 사용 크레딧 부족으로 작업이 중지될 때 8초 후 링크가 사라지던 문제 수정
+- 사용 크레딧이 소진되었거나 월간 한도에 도달했을 때 `/usage`에서 크레딧이 꺼져 있다고 표시되던 문제 및 해당 한도로 인해 크레딧 기반 모델이 차단될 때 `/model`에서 Pro 및 Max 사용자에게 이를 알리지 않던 문제 수정
+- 지출 한도 메뉴에서 현재 지출액이 월간 한도로 표시되고 좁은 창에서 포인터 아래로 행이 줄 바꿈되던 문제 수정
+- 출력을 끝없이 생성하는 상태 표시줄 스크립트로 인해 프롬프트가 멈추고 수 기가바이트의 메모리를 소모하던 문제 수정
+- --resume 선택 창, 신뢰 확인 대화상자 또는 기타 설정 화면이 대기 중인 상태에서 관리형 설정을 승인한 후 화면이 빈 채로 멈추던 문제 수정
+- `/model`에서 Default 행에 이미 저장된 모델이 표시되어 있음에도 Default를 선택하면 조직 기본 모델로 대체되던 문제 수정
+- 토큰 갱신 중 MCP 서버 인증을 삭제했음에도 서버가 다시 로그인되던 문제 수정
+- 느린 재연결 후 멈추던 백그라운드 MCP 작업 수정 (이전 프로토콜 버전으로 남아있는 경우 Claude Code가 대부분의 HTTP MCP 서버를 자동으로 재연결함)
+- MCP 서버나 웹사이트에서 `application/octet-stream`으로 전송한 PDF, 이미지 및 `.docx`, `.xlsx`, `.pptx` 파일이 .bin으로 저장되어 Claude가 PDF와 이미지를 읽지 못하던 문제 수정
+- `/code-review <pr number>`가 알림 없이 풀 리퀘스트 대신 체크아웃된 브랜치를 리뷰하던 문제 수정 (이제 `gh pr diff`로 풀 리퀘스트를 읽어오며, 불가능한 경우 알림을 표시함)
+- 대부분의 모델에서 `/code-review`가 존재하지 않는 `~/.claude/CLAUDE.md`를 찾느라 권한 프롬프트에서 멈추던 문제 수정
+- Self-hosted runner: `--push-outcome-on-release` 사용 시 git 호스트에서 세션 브랜치가 간혹 삭제되던 문제 수정
+- Esc를 누른 후 Code Mode가 스크립트의 완료된 수정 사항과 중지된 명령을 숨기고 종료 시 유실하던 문제 수정
+- Code Mode의 무한 루프가 시스템 메모리를 가득 채우던 문제 수정 (이제 제한에 도달하면 중지됨)
+- 백그라운드 에이전트가 재개되는 도중에 중지되었음에도 계속 실행되던 문제 수정
+- 백그라운드 셸 명령이 종료될 때까지 이전 대화에 사용된 메모리를 점유하던 문제 수정
+- Claude Desktop, IDE 또는 SDK에서 실행되는 세션에서 요약(compaction) 또는 `/clear` 이후에도 Remote Control이 이전 대화의 메모리를 점유하던 문제 수정
+- Bedrock 환경의 Claude Desktop 세션에서 멈춘 AWS credential_process 또는 로그인 호출을 대기하는 동안 Stop으로 요청이 종료되지 않던 문제 수정
+- Opus 4.8 및 Opus 5에서 Claude가 첫 번째 시도에 파일을 전송하지 못하던 간헐적 문제 수정
+- 도구 검색이 활성화된 세션에서 연결된 MCP 서버의 도구를 로드할 수 없음을 Claude에 알리지 않아 도구가 없는 서버로 인식하던 문제 수정
+- 서비스의 클라이언트 등록이 만료(HTTP 410 Gone)되었을 때 `claude mcp login` 및 `/mcp`에서 해당 서비스가 Claude Code의 로그인을 지원하지 않는다고 표시하던 문제 수정
+- macOS에서 세션이 실행 중인 동안 claude.ai 동기화 플러그인 hooks가 "Plugin directory does not exist" 오류와 함께 실패하던 또 다른 경우 수정
+- 작업 디렉터리 외부나 자기 자신을 가리키는 심볼릭 링크를 `rm`할 때 auto mode에서 수동 승인을 요청하던 문제 수정
+- Linux에서 `/sandbox`가 `allowUnixSockets` 항목을 허용된 것으로 표시하던 문제 수정 (해당 환경에서는 소켓이 열리지 않으며, `/sandbox`에 관련 내용이 표시됨)
+- `/install-github-app`에서 잘못 입력한 코드를 지우기 위해 Esc를 두 번 누르면 로그인이 종료되던 문제 수정
+- Remote Control: 재시작 후 앱에는 선택한 effort 수준이 표시되지만 세션은 초기 effort 수준으로 되돌아가던 문제 수정 (Ultracode에서 시작된 세션은 아직 미적용)
+- 헤드리스 세션에서 `reload_plugins` 실행 후 또는 계정의 플러그인 목록에서 제거된 후에도 삭제된 플러그인의 MCP 서버가 연결 상태로 유지되던 문제 수정
+- 동일한 주소의 플러그인이나 MCP 서버 연결이 실패했을 때 Claude Docs 커넥터의 도구가 사라지고, 에러 메시지에서 잘못하여 `/login`을 제안하던 문제 수정
+- `--add-dir`에 작업 디렉터리를 지정하거나 Claude Code가 홈 폴더에서 시작할 때 새로운 skills, commands 또는 agents 폴더를 인식하지 못하던 문제 수정
+- 사전 웜업된 프로세스에서 시작된 세션이 프로젝트의 `.claude/settings.json`에 있는 `autoCompactWindow` 설정을 무시하던 문제 수정
+- settings.json에서 제거된 후에도 실행 중인 세션에서 `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`가 계속 적용되던 문제 수정
+- agent teams에서 이름이 지정된 팀원에 대해 Agent 도구의 `effort` 파라미터가 무시되던 문제 수정
+- `/auto-mode-setup`이 추천할 규칙을 프로젝트에서 검사할 때 최근 auto mode 거부 내역을 무시하던 문제 수정 (이제 거부 내역을 바탕으로 allow 규칙을 제안할 수 있으며 저장 전 검토 가능)
+- 자체 `.claude/settings.local.json`을 읽을 수 없거나 형식이 잘못된 하위 폴더 또는 워크트리에서 권한 규칙이나 디렉터리를 추가한 후 "Couldn't save this change" 경고가 잘못 표시되던 문제 수정
+- 요청 실패 후 클라우드 세션이 Claude에게 네트워크 프록시 확인을 실행하도록 지시하여 auto mode에서 차단되던 문제 수정
+- 모델 변경 직후 전송된 메시지가 대기 중인 상태에서 헤드리스 rewind 및 fork가 진행되던 문제 수정
+- 클라우드 세션 재시작 중 백그라운드 작업이 중지되었을 때 Claude에 알림이 가지 않던 문제 수정
+- 서버가 업로드를 거부했음에도 Team 및 Enterprise 플랜에서 `/team-onboarding`이 가이드가 공유된 것으로 보고하던 문제 수정
+- 전체 화면에서 프롬프트의 패널과 질문이 잘리거나, 세로 길이가 짧은 창에서 `/help`, 히스토리 검색, 백그라운드 작업 목록의 행 또는 제목이 누락되고, 대화상자에서 표가 줄 바꿈되던 문제 수정
+- 세션 종료 시 중단되었던 편집, 질문, 계획에 대해 재개된 세션에서 "Rejected" 또는 "Declined"로 표시되던 문제 수정
+- 서버 에러 후 `/passes`에 잘못된 패스 수가 표시되거나, 남은 게스트 패스가 없음에도 공유 시 사용 크레딧을 제공하던 문제 수정
+- 다른 프로그램으로 파이프 연결 시 `claude --help` 출력이 잘리던 문제 수정
+- macOS 27의 Terminal.app에서 `/terminal-setup`이 "Use Option as Meta key"를 켜고 팁에서 Shift+Enter 대신 Option+Enter를 제안하던 문제 수정
+- Self-hosted runner: Anthropic 관리형 git을 통해 클론된 Git LFS 리포지토리에서 설정이 실패하던 문제 수정 (이제 포인터 파일로 세션이 시작되며 `git lfs pull`로 콘텐츠를 가져옴)
+- 자체 호스팅 환경의 세션이 SSH 호스트 별칭, GitHub SSH 인증서 또는 GHE.com SSH 사용자가 구성된 git 리모트에서 시작되지 않던 문제 수정 (해결되지 않은 별칭 에러 시 두 개의 git 명령 제공)
+- self-hosted runner 세션의 원격 MCP 서버가 타임아웃 또는 네트워크 에러 후 도구가 없는 상태로 유지되거나 (https 환경에서) 연결이 끊기던 문제 수정
+- Claude Code가 아직 시작 중인 상태에서 self-hosted runner 세션이 응답 중지 상태로 표시되던 문제 수정
+- Code Mode에서 코드가 읽은 모든 대용량 텍스트 파일을 메모리에 유지하고 백그라운드 서브에이전트가 깨어날 때마다 메모리가 증가하던 문제 수정
+- MCP 폼, MCP 링크 프롬프트 또는 항상 확인을 요청하는 프롬프트가 응답 대기 중일 때 Code Mode가 스크립트를 10분 제한 시간에서 중지하던 문제 수정
+- 2분이 초과된 대부분의 MCP 호출에서 Code Mode 스크립트가 "moved to the background" 메시지를 데이터로 수신하던 문제 수정 (이제 스크립트가 최대 10분까지 대기한 후 에러를 수신함)
+- 일부 도구만 나열된 mod가 Code Mode를 알림 없이 끄던 문제 수정 (해당 mod가 더 이상 Code Mode를 비활성화하지 않으므로, 필요한 경우 관리형 설정을 사용해야 함)
+- Claude가 대기 중인 스크립트에서 MCP 도구가 호출되었을 때 턴을 종료하라는 도구의 요청을 Code Mode가 무시하던 문제 수정
+- Code Mode 스크립트의 `let x;`가 이전 스크립트에서 `x`에 할당한 값을 그대로 유지하던 문제 수정
+- 파라미터가 필요 없는 도구에서 Code Mode 스크립트가 인자 없이 호출할 때 누락된 파라미터 에러로 실패하던 문제 수정
+- 도구가 4,096개 이상인 세션에서 Code Mode 스크립트가 `tools`를 통한 도구 접근 권한을 잃던 문제 수정
+- 대부분의 모델에서 medium 수준으로 실행된 리뷰에 대해 `/code-review` 결과 카드에 종종 "high"로 표시되던 문제 수정
+- 권한 프롬프트, 질문, `/model`, `/rewind`의 키 힌트가 `keybindings.json`을 무시하던 문제 수정
+- 실행 중인 세션에서 자동 스크롤, PR 상태 배지, auto-compact 경고 및 ultracode 태그가 이를 제어하는 `/config` 스위치를 따르지 않던 문제 수정
+- 사용자 지정 취소 키가 `/add-dir`, `/tui` 피드백 및 워크플로 저장 양식에서 작동하지 않던 문제 수정
+- 워크플로 저장 양식의 화살표 키가 뒤편의 워크플로 뷰 선택 항목을 이동시키던 문제 수정
+- 여러 설정을 변경한 후 `/config`에 아무것도 표시되지 않거나 "dismissed"로 표시되던 문제 수정
+- 줄 바꿈으로 끝나는 파일에 대해 Read 및 @-멘션에서 한 줄이 더 표시되던 문제 수정
+- `/status`에서 plan mode 시 opusplan과 haiku가 사용하는 모델명을 표시하지 않던 문제 수정
+- 잠금 해제가 도움이 되지 않는 macOS 샌드박스 내부에서 `claude doctor`가 Keychain 잠금 해제를 권장하던 문제 수정
+- 텍스트 복사 후 스크롤을 이동했을 때 "Jump to bottom" 알림이 숨겨진 채 유지되던 문제, 라벨 변경 시 아래 행이 공백으로 변하던 문제, 전체 화면에서 PageUp을 빠르게 누르면 너무 멀리 스크롤되던 문제 수정
+- 메모리가 부족할 때 화면 업데이트가 간헐적으로 건너뛰어지던 문제 수정
+- 스크롤백 시 긴 코드 블록에서 빈 줄이 유실되고 다른 줄이 중복 표시되던 문제 수정
+- 프롬프트 추천에 `_(no suggestion)_`과 같은 플레이스홀더 텍스트가 간헐적으로 표시되던 문제 수정
+- 파일이 정상임에도 재개 시 이전 메시지 안내 줄에서 손상된 파일 탓으로 표시하던 문제 수정
+- 프롬프트 텍스트에 여러 스타일을 지정하는 색상 코드가 포함되고 키워드나 명령이 강조 표시될 때 문자가 사라지던 문제 수정
+- `claude remote-control` 세션에서 `/rename` 및 `UserPromptSubmit` hook 제목이 claude.ai 및 모바일에 표시되지 않던 문제 수정
+- 브랜치에서 파일 이름을 변경한 후 수정한 경우 Remote Control diff에 해당 파일이 두 번 나열되던 문제 수정
+- 관리형 설정이 적용된 컴퓨터에서 이전 세션의 자동 정리 기능 개선
+- `/tui` 및 기타 인플레이스 재시작 시 로그인 갱신을 잠시 대기하도록 하여 의도치 않은 로그아웃 발생 가능성 개선
+- 많은 파일을 편집하는 장시간 세션 및 대규모 MCP 도구 결과가 많은 macOS/Linux 환경의 장시간 Claude Desktop 세션에서 메모리 사용량 개선
+- Windows: Claude Code 검색 프로그램 시작이 느린 PC에서 시작 속도 및 첫 번째 검색 성능 개선
+- 텔레메트리가 비활성화되었거나 Anthropic API 게이트웨이 뒤에 있거나 Microsoft Foundry 환경일 때 Claude의 질문에 대한 "yes" 같은 짧은 응답의 auto mode 처리 개선
+- 긴 턴 이후 및 스크린샷이나 대규모 도구 결과가 포함된 세션을 `--resume` 또는 `--continue`한 후 유휴 상태인 Claude Desktop 및 SDK 세션의 메모리 사용량 개선
+- Remote Control이 활성화된 Claude Desktop Code 세션에서 응답 후 다음 메시지를 받을 준비가 되는 속도 개선
+- 클라우드 세션 시작 시 다운로드에 실패한 플러그인을 재시도하도록 개선
+- Code Mode 개선: 스크립트가 수천 개의 도구 호출을 수행한 후 터미널이 멈추는 시간이 대폭 단축됨
+- Code Mode 개선: 서브에이전트 시작 후 Claude가 Code Mode 외부와 동일하게 대기 안내를 받도록 개선
+- macOS의 computer use 기능을 최신 안전 규칙으로 업데이트하여 일부 작업이 거부되고 일부 앱의 접근 권한이 축소됨
+- 저장된 예약 작업 변경: 새로 로그인한 세션의 경우 이전 버전에서 저장된 대부분의 작업을 다시 예약해야 함 (단, 기존 세션을 `--resume`할 경우 계속 실행됨)
+- 대부분의 모델에서 대상이 지정되지 않은 `/code-review`가 기본 브랜치와 전체 브랜치를 비교 검토하도록 변경하고, 다중 커밋 브랜치에서 diff가 유실되던 문제 수정
+- 대규모 리포지토리에서 대부분의 요청 대기 시간을 줄이기 위해 auto mode가 `git status`를 덜 자주 실행하도록 변경 (변경 사항을 취소하는 git 명령은 작업 트리가 확인될 때까지 차단될 수 있음)
+- `/code-review <pr number> --fix` 및 풀 리퀘스트 URL이 제공된 `/code-review` 실행 시 `gh pr diff`가 거부되거나 실패하면 리뷰를 진행하지 않고 중지하도록 변경
+- Claude가 응답 중인 상태에서 종료하는 경우가 아니라면, 'Exit and stop tasks'가 현재 세션의 예약된 작업을 종료하여 재개 시 다시 실행되지 않도록 변경
+- 일부 팀원 창이 /bin/sh를 통해 시작되도록 변경되어 셸 시작 파일을 읽지 않을 수 있음
+- macOS의 computer use에서 30초 후에도 완료되지 않는 앱 실행을 중단하도록 변경
+- Gateway: `access_control.allow_cidrs`가 비어 있을 때 표시되던 시작 경고를 매 시작 시 텍스트 로그에 박스로 둘러싸인 안내문으로 표시하도록 변경 (게이트웨이를 공용 인터넷에 노출하지 마십시오)
+- Self-hosted runner: 동일한 owner/name에 대한 보조 호스트 이름의 클론이 기본 폴더의 `_repos/clones/<host>/` 하위에 저장되도록 변경 (기존 클론은 이동되지 않음)
+- Self-hosted runner: 주소 경로에 특수 문자가 포함된 리포지토리는 새 폴더에 새로 클론되도록 변경 (이전 경로를 지정하는 규칙 및 볼륨은 적용이 중단되며 이전 클론은 유지됨)
+- Self-hosted runner: `--capacity 1` 환경에서 `--repository-folder`가 기본 폴더 내의 대부분의 폴더를 사용할 수 있도록 변경 (1을 초과하면 시작이 차단됨); 다른 리포지토리의 세션과 겹치는 경우 거부됨
+- Code Mode에서 오류가 발생한 PreToolUse hook이 Code Mode 외부와 마찬가지로 스크립트의 도구 호출을 더 이상 거부하지 않도록 변경 (반드시 거부해야 하는 명령, HTTP 또는 MCP 도구 hook에는 `"onFailure": "block"` 설정 필요)
+- Code Mode에서 수 기가바이트의 메모리를 사용할 수 있는 256 MiB 초과 줄 범위 읽기를 거부하도록 변경하고, 매우 긴 줄을 읽을 때 타임아웃이 발생하던 문제 수정
+- 텔레메트리, 비필수 트래픽 또는 기능 플래그가 비활성화된 상태에서도 Code Mode가 시작될 수 있도록 변경 (관리자가 관리형 설정에서 비활성 상태 유지 가능)
+- 자체 `log`, `preview` 또는 `sleep`을 선언하는 스크립트를 이전에는 거부했으나 실행하도록 Code Mode 변경
+- macOS 로그인 갱신 시 `Claude Code-write-check` 항목으로 Keychain을 테스트하도록 변경
+- `/tasks` 헤더 및 바닥글의 백그라운드 작업 카운트를 셸, 모니터, MCP 호출, 에이전트, 워크플로, 예약 작업을 모두 포함하는 단일 숫자로 변경
+- Stop 및 SubagentStop hooks의 `background_tasks`에서 Monitor 스크립트가 `shell`이 아닌 `monitor`로 표시되도록 변경
+- 2.1.326의 `max_tokens` 에러에 명시된 한도로 자동 재시도하던 기능 제거 (지원 출력 토큰 수가 적은 모델을 사용하는 게이트웨이 환경에서는 `CLAUDE_CODE_MAX_OUTPUT_TOKENS`를 해당 한도로 설정)
+- [VSCode] 신뢰 프롬프트를 거부한 후 메시지 상자 위에 Review trust가 포함된 줄을 추가하여 창을 다시 로드하지 않고도 프롬프트를 다시 띄울 수 있도록 개선
+- [VSCode] 확장 프로그램의 토큰 갱신에 로그인 서버가 응답하는 데 10~30초가 소요될 때 모든 창과 터미널에서 Claude Code 로그아웃이 발생하던 문제 수정
+- [VSCode] 입력기(IME) 조합 중에 입력된 키로 인해 권한 프롬프트 포커스가 이동하거나 거부되고, 메뉴 행이 실행되거나 대화상자가 닫히던 문제 수정 (anthropics/claude-code#106358)
+- [VSCode] Bash, Edit, Write 및 기타 내장 도구의 권한 프롬프트에서 안전 검사가 확인을 요청하는 이유가 표시되지 않던 문제 수정
+- [VSCode] 작성 중이던 계획 댓글이 유실되거나 다른 구절로 이동하고, 입력기(IME)의 Enter 키로 인해 댓글이 전송되거나 세션 이름 변경이 완료되거나 @-멘션된 파일이 선택되던 문제 수정
+- [VSCode] 사용 크레딧 사용 중일 때 한도 배너에 표시되지 않던 문제 및 세션 설문조사가 해당 배너와 사용 크레딧 카드를 가리던 문제 수정
+- [VSCode] Account & Usage 대화상자가 열려 있는 동안 도착한 권한 요청을 대화상자가 닫힐 때까지 스크린 리더가 읽지 못하던 문제 수정
+- [VSCode] 터미널 Claude Code 세션 연결이 끊긴 후에도 동작하지 않는 Accept 버튼과 함께 제안된 수정 diff 탭이 열린 채로 유지되던 문제 수정
+- [VSCode] 짧은 도구 입력 및 출력이 패널 가장자리에서 잘려 나머지를 읽을 수 없던 문제(이제 에디터 탭에서 열림) 및 텍스트 선택을 위한 드래그 시에도 새 탭이 열리던 문제 수정
+- [VSCode] 메시지 상자에서 입력기(IME) 조합 중인 텍스트 위에 Up 키로 인해 이전 메시지가 덮어씌워지던 문제 수정 (anthropics/claude-code#101294)
+- [VSCode] VS Code 1.103~1.139 또는 플로팅 채팅 창에서 파일 탐색기 폴더를 채팅창에 드롭했을 때 아무것도 입력되지 않던 문제 및 드롭 하이라이트가 잘못된 "Hold Shift" 힌트와 함께 사라지던 문제 수정
+- [VSCode] 권한 프롬프트의 버튼이 활성화되면서 스크롤 중이던 세부 정보에서 키보드 포커스가 벗어나던 문제 수정
+- [VSCode] `claudeCode.lockEditorGroups`가 꺼져 있을 때 Claude 탭의 파일 링크가 다른 에디터 그룹에서 열리던 문제 수정 (anthropics/claude-code#108884)
+- [VSCode] 물결표 하나로 작성된 범위(`3~5 … 7~10`)에서 물결표가 사라지고 그 사이 텍스트가 취소선으로 표시되던 문제 수정 (이제 `~~text~~` 형식만 취소선으로 처리됨)
+- [VSCode] 음성 받아쓰기 에러가 좁은 열로 줄 바꿈되던 문제, 질문 카드가 대기 중일 때 스피너가 계속 돌던 문제 및 실패한 UTF-16 명령 출력의 각 글자 뒤에 NUL 기호가 표시되던 문제 수정
+- [VSCode] 권한 프롬프트에서 Down 키를 눌렀을 때 Yes로 돌아가지 않고 마지막 항목에서 멈추도록 변경
+- [VSCode] 기본 색상 이외의 숨겨진 문자 및 제어 시퀀스를 기호로 표시하도록 명령 출력을 변경하여 페르시아어, 크메르어, 라오어, 싱할라어, 말라얄람어 텍스트가 깨지거나 순서가 어긋나 보일 수 있음
+
 ## 2.1.328 (2026-11-18)
 
 - Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry 및 Claude apps gateway의 Claude Opus 4.6 및 Sonnet 4.6에 auto mode 추가. 권한 모드가 지정되지 않은 대화형 세션은 해당 모드로 시작됨
