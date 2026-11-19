@@ -2,6 +2,153 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.328 (2026-11-18)
+
+- Ajout du mode auto pour Claude Opus 4.6 et Sonnet 4.6 sur Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry et Claude apps gateway ; les sessions interactives sans mode de permission démarrent désormais dans ce mode
+- Ajout de `"onFailure": "block"` pour les hooks `mcp_tool`, tout comme pour les hooks de commande et HTTP : un hook dont l'appel échoue bloque l'action
+- Ajout d'un avertissement lorsqu'un message provenant d'une session ignorant les invites de permission risque d'être retenu et ignoré par une session cloud
+- Ajout d'une notification dans `/status` et `claude doctor` lorsqu'un exportateur OpenTelemetry n'a pas d'endpoint et que ses données risquent d'être perdues
+- Ajout de `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME`, qui permet à un hôte d'empêcher `claude -p --resume` et `--continue` d'exécuter un appel d'outil différé par un hook
+- Ajout de la prise en charge pour les applications intégrant Claude Code d'activer l'option `allowManagedModsOnly` du plugin de stratégie ; les paramètres managés d'un administrateur restent prioritaires
+- Ajout d'un avertissement au démarrage sur Claude apps gateway lorsque le `maxEffortLevel` d'une stratégie n'est pas un niveau d'effort valide
+- Self-hosted runner : Ajout de `--repository-folder` pour nommer le dossier que les sessions utilisent pour un dépôt avec `--capacity 1`, à la place de son chemin sous le dossier de base, qui ne peut pas être un lien symbolique
+- Self-hosted runner : Ajout d'un avertissement au démarrage lorsque le settings.json de l'hôte définit un mode de permission par défaut que les sessions ignorent
+- Self-hosted runner : Ajout de `--hook-label` à `claude self-hosted-runner orchestrator`, pour transmettre les labels de session choisis au hook `spawn-runner`
+- Self-hosted runner : Ajout de `--metadata key=value` à `claude --environment`, pour étiqueter une session pour le hook `spawn-runner`
+- Self-hosted runner : Ajout de `claude_code_self_hosted_orchestrator_session_queue_wait_by_reason_seconds` au `/metrics` de l'orchestrateur, afin de distinguer l'attente d'une session rouverte de celle d'une nouvelle session
+- Self-hosted runner : Ajout d'une métrique d'orchestrateur, `claude_code_self_hosted_orchestrator_sessions_given_up_total`, qui compte par cause la fréquence à laquelle Anthropic a renoncé à démarrer un runner pour une session
+- Correction des commandes Bash dans zsh s'interrompant avec une erreur « not found » sur un mot commençant par `=`, tel que `echo ====` ou `[ a == b ]` ; `=cmd` ne s'étend plus au chemin d'une commande
+- Correction de la compaction automatique qui réutilisait l'ancien prompt système de la session au lieu de le reconstruire comme le fait `/compact`
+- Correction du gel du rendu Markdown sur certaines entrées très longues ou malformées
+- Correction de rares gels d'écran
+- Correction de la touche Esc souvent perdue lors d'une invite de permission ou d'une question en cas de frappe immédiate ; dans les terminaux envoyant Alt sous forme d'Esc suivi d'une touche, une touche Alt ou Option non utilisée refuse désormais la demande
+- Correction d'un collage ou d'une réponse de terminal saisi(e) dans le prompt lorsqu'une connexion lente le coupait en deux
+- Correction de l'enregistrement d'une tâche planifiée qui effaçait les autres tâches enregistrées du projet lorsque le fichier de tâches planifiées était illisible, chez les fournisseurs tiers ou avec la télémétrie ou les feature flags désactivés
+- Correction de la suppression d'une tâche planifiée contenant une faute de frappe dans le fichier de tâches planifiées du projet lors de la sauvegarde suivante de ce fichier
+- Correction d'un cas où une session cloud reprise pouvait perdre son résumé de compaction ou ses messages récents lorsqu'un message était enregistré tardivement
+- Correction du décompte de tokens sur le spinner et pour les sous-agents qui comptait deux fois une réponse réessayée, omettait les réponses non streamées et restait figé pendant que Claude réfléchit
+- Correction de l'erreur affichée lorsque les crédits d'utilisation s'épuisent en cours de réponse, qui mentionnait une limite de débit (rate limit)
+- Correction du mode auto qui échouait à chaque tour en dehors de Claude Desktop lorsque `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` était défini derrière une passerelle rejetant les versions bêta, sur Bedrock, Agent Platform, Foundry ou Claude apps gateway
+- Correction de `CLAUDE_STREAM_IDLE_TIMEOUT_MS` qui ne prolongeait pas la limite de connexion de 5 minutes sur les passerelles, les URL de base personnalisées et les fournisseurs cloud
+- Correction de certaines sessions Claude Desktop chez des fournisseurs tiers, autres que les tâches planifiées, qui se terminaient définitivement avec « Prompt is too long » après de volumineux résultats d'outils ; les plus volumineux sont désormais exclus
+- Correction des outils MCP dont le schéma d'entrée commence par `anyOf`, `oneOf` ou `allOf` qui disparaissaient chez les fournisseurs tiers ou avec la télémétrie ou les feature flags désactivés
+- Correction d'un outil MCP au schéma d'entrée invalide faisant échouer les requêtes chez les fournisseurs tiers ou avec la télémétrie ou les feature flags désactivés ; l'outil est désormais exclu et Claude est informé de la raison
+- Correction de la désactivation de l'effort pour le modèle d'un sous-agent pour toute la session si Bedrock, Google Cloud's Agent Platform ou Foundry refusait le paramètre d'effort de son résumé de progression (régression dans 2.1.327)
+- Correction de Code Mode qui interrompait un script lorsqu'une invite de permission hors mode auto ou bypass, une approbation de plan ou une question restait ouverte pendant dix minutes
+- Correction des scripts Code Mode en modes auto et bypass-permissions qui échouaient à appeler un serveur MCP connecté pendant l'exécution du script précédent
+- Correction des scripts Code Mode qui ne s'exécutaient pas en arrière-plan en mode auto ou bypass permissions dans une session sélectionnée via le sélecteur `claude --resume`
+- Correction de la perte par Code Mode d'un skill chargé, du contexte d'un hook ou d'une note saisie lors d'une approbation de permission lors de la reprise d'une session où une réponse exécutait plusieurs scripts
+- Correction de Claude qui n'était pas averti qu'un script Code Mode avait été interrompu lorsque la session était reprise depuis le sélecteur ou dans un mode demandant une permission
+- Correction de Code Mode qui utilisait silencieusement `undefined` pour les variables de premier niveau qu'un script précédent ayant échoué n'avait jamais définies
+- Correction des scripts Code Mode qui n'étaient pas avertis lorsque la sortie longue d'une commande en échec était tronquée
+- Correction de Code Mode qui rejetait les scripts valides commençant par un bloc `{`
+- Correction de Code Mode qui rejetait les scripts utilisant à la fois un `await` et un `return` de premier niveau
+- Correction d'un petit fichier mentionné avec @ qui n'était pas joint dans Code Mode après qu'un script l'a lu ou modifié
+- Correction de Code Mode qui proposait `write()` et `edit()` à des sous-agents en lecture seule incapables de les appeler
+- Correction de Claude démarrant un tour de lui-même dans Code Mode lorsque la touche Esc était suivie d'une commande telle que `/model`
+- Correction de Claude dans Code Mode qui n'était pas averti de n'exécuter des workflows que sur demande explicite, ou de la taille de workflow définie dans `/config`
+- Correction de Remote Control qui répétait le même message de déconnexion et invitait à réessayer une session incapable de se reconnecter
+- Correction d'une invite de permission en attente qui était perdue, et de sa réponse ignorée, lorsqu'une session distante redémarrait pendant que le service était lent
+- Correction des sessions cloud reprenant une conversation effacée après un retour en arrière suivi de `/clear`
+- Correction d'une session distante perdant les appels d'outils et résultats d'un tour lorsque son runner ou worker était perdu après le nouvel essai d'un flux de modèle interrompu
+- Correction des sessions cloud et Remote Control venant de démarrer, ou contenant un @ dans leur titre, inaccessibles via la messagerie inter-sessions depuis une session avec Remote Control activé
+- Correction de Claude qui était informé que les sessions cloud ne peuvent jamais répondre ; il apprend désormais quand une réponse peut arriver et comment obtenir le résultat autrement
+- Correction de `/diff`, du volet Changes des sessions Remote Control et du diff à côté d'une édition qui omettaient les modifications commitées après qu'une commande s'est déplacée dans un autre dépôt
+- Correction de Remote Control qui n'affichait pas les agents d'un workflow en cours d'exécution lorsqu'une session lancée par une extension IDE ou une autre application SDK était ouverte plus d'une heure après la dernière progression du workflow
+- Remote Control : Correction d'une session Desktop ou VS Code inactive apparaissant comme en cours d'exécution après l'activation de Remote Control
+- Correction du modèle indiquant que les agents en arrière-plan tournaient toujours après qu'une interruption SDK les a arrêtés
+- Correction de Send now dans l'application de bureau et les hôtes SDK qui indiquait à Claude qu'une recherche web interrompue n'avait donné aucun résultat
+- Correction de Cmd+lettre qui s'insérait dans le prompt dans les terminaux signalant la touche Cmd
+- Correction de Ctrl+clic qui ouvrait un lien deux fois dans GNOME Terminal, des boutons latéraux de la souris agissant comme des clics, et du premier cran de molette dans la direction opposée ignoré après une pause, en mode plein écran
+- Correction de Shift+Enter dans Konsole hors tmux et ssh, et des raccourcis Alt sur les dispositions de clavier non latines dans les terminaux prenant en charge le protocole de clavier kitty
+- Linux : Correction du gel du collage dans d'autres applications lorsque Claude Code est suspendu avec Ctrl+Z, avec `xclip` ou `wl-copy` installé
+- Linux : Correction de Ctrl+V qui ne récupérait pas l'image du presse-papiers, collait une ancienne image ou se bloquait
+- Correction du texte copié en mode plein écran qui incluait la barre de citation, perdait des espaces lors des retours à la ligne lorsqu'un glissement défilait vers le haut, ou omettait des mots sous la pastille « Jump to bottom »
+- Correction du chemin d'une image collé dans une commande `!` qui devenait une pièce jointe
+- Correction de Ctrl+C qui n'affichait aucun avertissement de sortie pendant que la liste des raccourcis `?` était ouverte
+- Correction de la recherche Ctrl+R en mode plein écran et de l'éditeur de couleurs `/theme` sélectionnant la mauvaise ligne lorsque des touches arrivaient simultanément, et des frappes de touches ignorées à cet endroit ainsi que dans la recherche de `/config` et `/plugin`
+- Correction de couleurs incorrectes ou manquantes dans GNU screen
+- Correction de nombreuses notifications d'arrière-plan empiétant sur la bordure supérieure des boîtes de dialogue ouvertes en mode plein écran
+- Correction d'un message adressé à un agent en arrière-plan affichant un long chemin de fichier au lieu d'une image collée
+- Correction de `/goal` qui supprimait le hook Stop d'un skill, ou se terminait prématurément sur le résultat d'un autre hook, lorsque les deux avaient le même libellé
+- Correction de `/bug` qui affichait « cancelled » après l'envoi du rapport
+- Correction de la touche Esc qui ne fermait pas la question de partage de transcription pour les utilisateurs Pro et Max
+- Correction de `/hooks` qui perdait la position lors d'un retour en arrière
+- Correction de `/export` qui écrivait un fichier nommé `.txt` lorsque le nom était laissé vide
+- Correction de `/terminal-setup` dans Zed qui remplaçait un fichier `keymap.json` lié par un lien symbolique par un fichier standard
+- Correction de `/install-github-app` qui ajoutait un workflow de revue de code lorsqu'il lui était demandé de mettre à jour le fichier de workflow existant
+- Correction de `/plugin` qui rouvrait un skill, ou fermait la page ouverte, lorsqu'une sauvegarde ou suppression lente se terminait après un retour en arrière
+- Correction de `/plugin` qui demandait de désinstaller le mauvais plugin, ou ignorait Esc, après avoir quitté un plugin alors qu'une modification était encore en cours d'exécution
+- Correction de la saisie et des touches fléchées qui ne fonctionnaient pas dans l'onglet Installed de `/plugin` après une recherche sans résultat ou un clic sur la rangée d'onglets
+- Correction du maintien de la touche Entrée dans `/plugin` qui désactivait plusieurs plugins installés
+- Correction du total de plugin dans `/usage` qui plafonnait à 2 000 tokens sur les modèles à contexte de 1M, et des estimations basses de tokens dans `/usage` et `/plugin` lorsqu'aucun modèle n'est sélectionné
+- Correction de la touche Esc à l'étape des clés d'accès Bedrock qui fermait `/login` au lieu de revenir en arrière
+- Correction de `/exit` et de Ctrl+D décrivant les tâches en cours différemment, et de `/exit` qui avertissait au sujet d'un workflow déjà arrêté
+- Correction de Claude qualifiant un artefact de privé après en avoir lu un dans un dossier partagé ou publié dans celui d'une autre organisation, et affirmant que seules les personnes désignées peuvent l'ouvrir alors que les membres de son dossier le peuvent aussi
+- Correction du toast d'un plugin affichant parfois le texte d'un autre plugin
+- Correction d'un mod enregistré juste après le début d'un tour se rechargeant parfois en plein milieu du tour au lieu de la fin de celui-ci
+- Correction d'une entrée `OTEL_RESOURCE_ATTRIBUTES` malformée qui supprimait les autres labels de la variable des points de métriques, événements et spans. Désormais, seule cette entrée est ignorée
+- Correction des hooks d'agent s'exécutant au-delà de leur délai d'expiration lors de la compaction après le rejet d'une requête jugée trop volumineuse
+- Correction d'un crash au démarrage lorsque `FORCE_COLOR` est défini sur un nombre négatif
+- Correction d'un crash lors du masquage des secrets lorsque la machine est presque à court de mémoire
+- Correction du bac à sable Bash sous Linux qui renommait `.git/HEAD` après chaque commande lorsque le nom de branche n'était pas un UTF-8 valide
+- Self-hosted runner : Correction de l'arrêt de toutes les sessions en cours d'exécution lorsqu'un proxy ou filtre web répondait à un sondage avec HTTP 200 et un corps tel que `{}` ; le runner réessaie désormais ce sondage
+- Self-hosted runner : Correction de la suppression des objets ou refs d'un clone conservé, ainsi que des commits existant uniquement localement, après une erreur de disque temporaire ; ce démarrage échoue désormais à la place
+- Correction des self-hosted runners qui s'arrêtaient lorsque leur token expirait sur un hôte dont l'horloge retardait ou avait été reculée
+- Self-hosted runner : Correction des sessions avec un git managé par Anthropic qui perdaient l'accès git à GitHub après qu'un script ou hook de la session a réexécuté `claude`
+- Correction des self-hosted runners avec un git managé par Anthropic incapables d'effectuer un fetch ou un push lorsque la configuration git de la machine définit `http.proactiveAuth`
+- Self-hosted runner : Correction d'un runner qui se fermait sans notifier le serveur lors d'un échec d'initialisation après s'être enregistré ; il se désenregistre désormais avec un motif, et un runner à la demande signale l'échec du démarrage
+- Self-hosted runner : Correction de l'archivage ou de la remise en file d'attente d'une session sans effet pendant qu'elle attendait qu'une autre session prépare le même dépôt (`--capacity` supérieur à 1)
+- Self-hosted runner : Correction d'une session avec un `.claude.json` corrompu échouant à chaque démarrage ultérieur sous `--trust-workspace false` ; elle démarre désormais avec les valeurs par défaut, avec les serveurs MCP désactivés
+- Self-hosted runner : Correction du message d'échec de démarrage qui perdait les explications de l'échec lorsqu'un hook checkout ou git affichait une sortie volumineuse
+- Correction du self-hosted runner ignorant son hook post-session lorsqu'un disque se bloquait pendant quelques secondes ; sur un disque inactif, la fin d'une session peut prendre 25 secondes supplémentaires par défaut
+- Correction des self-hosted runners : une session qui reprend dans un nouveau répertoire de configuration Claude ne perd plus sa liste de tâches
+- Correction de Claude qui n'était pas informé lorsqu'une session auto-hébergée démarrait sans l'un de ses dépôts, et pourquoi
+- Self-hosted runner : Correction de `--correlation-id` de `claude --environment` qui n'atteignait pas le hook `spawn-runner`
+- Correction du conseil de rotation des clés de l'assistant de configuration du self-hosted runner, qui avertit désormais que la révocation d'une clé interrompt les sessions s'exécutant avec celle-ci
+- Amélioration des sessions `claude -p` et SDK pour récupérer en arrière-plan les plugins managed-settings possédant leur propre dépôt git, en vue d'une session ultérieure
+- Amélioration du délai de chargement des plugins managed-settings issus d'une marketplace git sur une nouvelle machine dans les sessions `claude -p`, SDK et Claude Desktop ; une exécution courte peut se terminer jusqu'à 30 secondes plus tard
+- Amélioration du temps nécessaire pour reprendre les sessions volumineuses
+- Amélioration de l'utilisation de la mémoire lors de la reprise d'une session contenant de nombreuses images
+- Amélioration de l'utilisation de la mémoire et du temps de réponse dans les sessions longues du SDK et de l'application de bureau exécutant des commandes ou des outils lents
+- Amélioration de la vitesse de Code Mode dans les modes auto et bypass-permissions en supprimant une pause de 0,75 seconde après la plupart des scripts
+- Amélioration de la mise en cache des prompts pour les nouvelles sessions Code Mode disposant de serveurs MCP, et Claude est désormais averti lorsqu'un serveur est en cours de connexion et lorsque la liste des serveurs change
+- Amélioration de la consommation de tokens de Code Mode grâce à des descriptions d'outils plus courtes
+- Amélioration de Code Mode pour afficher la commande qu'un script exécute, ainsi que sa sortie, pendant son exécution
+- Amélioration des modifications dans Code Mode : une modification qui ne change rien n'interrompt plus le script, et Claude est informé de l'endroit où une modification échouée correspond ou se rapproche le plus
+- Amélioration de Code Mode : Claude est désormais informé des appels d'outils qui étaient encore en cours d'exécution lorsqu'un script a échoué
+- Amélioration de la façon dont Claude démarre les serveurs de développement dans les modes auto et bypass de Code Mode : Claude est invité à les exécuter en tant que tâches d'arrière-plan visibles dans `/tasks`
+- Windows : Amélioration de Code Mode en informant Claude que les commandes shell des scripts s'exécutent dans Git Bash et que les alias PowerShell prévalent sur les fonctions portant le même nom
+- Amélioration du lancement simultané de plusieurs coéquipiers in-process : nettement moins d'échecs désormais avec « Lock file is already being held »
+- Amélioration de la boîte de dialogue d'approbation de l'utilisation de l'ordinateur (computer use) : elle affiche désormais le niveau d'accès de chaque application et des avertissements plus clairs
+- Amélioration de la messagerie inter-sessions : Claude explique désormais que Remote Control est désactivé lorsqu'une session cloud ou un autre ordinateur n'est pas listé
+- Amélioration de la sortie texte de `claude -p` pour indiquer sur stderr lorsqu'un message provenant d'une autre session est retenu ou ignoré, et comment l'autoriser
+- Amélioration des réponses de Claude quant aux personnes autorisées à ouvrir un artefact publié : Claude est désormais invité à revérifier l'artefact plutôt que de répéter la réponse de la dernière publication
+- Amélioration des sessions reprises sur les self-hosted runners : Claude vérifie désormais si son travail précédent est toujours présent et indique ce qui manque
+- Modification du mode plan et des invites Bash pour Opus 4.6 et Sonnet 4.6 chez les fournisseurs tiers afin d'utiliser et de proposer le mode auto, comme sur les modèles plus récents ; `disableAutoMode` désactive les deux
+- Modification de Code Mode pour ne plus exécuter les hooks UserPromptSubmit, y compris managés, sur la sortie des scripts ; pour caviarder cette sortie, utilisez un hook PostToolUse avec `updatedToolOutput`
+- Modification de `/code-review` sur la plupart des modèles pour ne signaler que les bugs et les violations de CLAUDE.md ; exécutez `/simplify` pour le nettoyage lié à la réutilisation, la simplification et l'efficacité
+- Modification de `/code-review` pour marquer chaque constatation Important, Pre-existing ou Nit sur la plupart des modèles, et terminer chaque résumé par une suggestion de correctif ; une revue sans problème indique désormais « Code review found no issues. »
+- Modification des entrées `deniedMcpServers` de la forme `claude.ai <name>` pour s'appliquer également à ce connecteur dans les sessions cloud et de self-hosted runners
+- Modification des hooks managés `PostToolUse` pour ne plus se déclencher pour les appels refusés avant leur exécution : aucune entrée de log, réécriture, blocage ou arrêt à ce stade ; `PostToolBatch` reçoit la plupart d'entre eux, non marqués comme refusés
+- Modification de `/bug` pour demander Yes ou No avant l'envoi, évitant ainsi que des appuis répétés sur Entrée n'envoient un rapport ou n'ouvrent GitHub
+- Modification des sous-agents dans `claude -p`, l'Agent SDK, l'application de bureau et VS Code pour qu'ils attendent par défaut leurs propres sous-agents lorsque `CLAUDE_CODE_FORK_SUBAGENT=0` est défini
+- Modification de `claude -p` avec `CLAUDE_CODE_FORK_SUBAGENT=0` pour imputer un sous-agent d'arrière-plan et ceux qu'il attend à une seule période d'attente de 10 minutes ; augmentez `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` pour des chaînes plus longues
+- Modification d'une commande shell réécrite par un hook PermissionRequest en une commande exclue du bac à sable pour s'exécuter en dehors du bac à sable
+- Modification de l'écran d'accueil de Claude in Chrome et de `/chrome` pour préciser que Claude Code demande confirmation avant que Claude n'agisse sur un site, sauf si votre mode de permission ou une règle dans `/permissions` y répond
+- Modification des sessions Claude Desktop et Agent SDK chez des fournisseurs tiers ou avec la télémétrie ou les feature flags désactivés pour terminer le tour lorsqu'elles sont fermées avec une question en attente, plutôt que de continuer sans réponse
+- Modification du texte collé pour être signalé à Claude comme collé, chez les fournisseurs tiers ou avec la télémétrie ou les feature flags désactivés
+- Modification des résumés de progression des sous-agents dans les sessions de terminal sur l'API Anthropic pour être rédigés par le modèle rapide et léger par défaut à partir de notes courtes, y compris avec la télémétrie désactivée, consommant beaucoup moins de tokens
+- Modification de la façon dont un échec de démarrage du bac à sable est signalé, sauf si `sandbox.failIfUnavailable` est défini : la commande Bash isolée suivante est refusée en indiquant que le bac à sable est désactivé pour la session
+- Modification de `/list-agents` pour n'afficher sa liste qu'à vous seul ; Claude liste lui-même les sessions au besoin
+- Self-hosted runner : Modification de la commande intégrée `gh api` pour être désactivée par défaut lorsque les paramètres protègent les outils GitHub de Claude par leur nom ; `--use-anthropic-gh true` l'active
+- Self-hosted runner : Modification d'une instance `claude` exécutée par un script wrapper avant que le `claude` de la session ne soit prêt, ou après sa fin, pour ne pas disposer du git managé par Anthropic
+- Self-hosted runner : Modification de `CLAUDE_RUNNER_SESSION_UUID` et `CLAUDE_CODE_REMOTE_SESSION_UUID` pour qu'ils soient tous deux définis pour la session ainsi que pour ses hooks `checkout`, `post-session` et `spawn-runner`
+- Modification des self-hosted runners avec `--capacity 1` pour refuser une session plus tôt lorsque le chemin du dépôt vers lequel elle pousse est un lien symbolique
+- [VSCode] Ajout d'une notification lorsqu'un message provenant d'une autre session est retenu, avec un lien vers le fichier de paramètres permettant de l'autoriser
+- [VSCode] Correction de l'invite de permission qui tronquait son bouton No, son champ de réponse ou son titre lorsque le panneau est bas ou qu'une commande, URL ou description est longue
+- [VSCode] Correction des appels d'outils échoués ou bloqués n'affichant aucune raison ou une raison tronquée, et de Glob et Grep comptabilisant une erreur comme un résultat
+
 ## 2.1.327 (2026-11-17)
 
 - Ajout d'une confirmation avant que `/install-github-app` ne modifie un dépôt

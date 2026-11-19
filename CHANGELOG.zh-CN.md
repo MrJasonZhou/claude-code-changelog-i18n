@@ -2,6 +2,153 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.328 (2026-11-18)
+
+- 为 Amazon Bedrock、Google Cloud's Agent Platform、Microsoft Foundry 和 Claude apps gateway 上的 Claude Opus 4.6 及 Sonnet 4.6 新增 auto 模式；未指定权限模式的交互式会话将默认在此模式下启动
+- 为 `mcp_tool` hook 新增 `"onFailure": "block"`（与 command 和 HTTP hook 类似）：调用失败的 hook 将阻止该操作执行
+- 当来自跳过权限提示会话的消息可能被云端会话挂起并丢弃时，新增警告提示
+- 当 OpenTelemetry exporter 没有 endpoint 且数据可能丢失时，在 `/status` 和 `claude doctor` 中新增提示信息
+- 新增 `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME`，允许宿主阻止 `claude -p --resume` 和 `--continue` 执行被 hook 推迟的工具调用
+- 为内嵌 Claude Code 的应用新增开启 policy 插件的 `allowManagedModsOnly` 选项支持；管理员的托管设置依然优先生效
+- 当策略的 `maxEffortLevel` 不是有效的 effort level 时，在 Claude apps gateway 中新增启动警告
+- Self-hosted runner：新增 `--repository-folder`，用于在 `--capacity 1` 下指定会话用于仓库的文件夹名称，以替代 base 文件夹下的路径（该路径不能是符号链接）
+- Self-hosted runner：当宿主的 settings.json 设置了会被会话忽略的默认权限模式时，新增启动警告
+- Self-hosted runner：在 `claude self-hosted-runner orchestrator` 中新增 `--hook-label`，用于将选定的会话标签传递给 `spawn-runner` hook
+- Self-hosted runner：在 `claude --environment` 中新增 `--metadata key=value`，用于为 `spawn-runner` hook 标记会话
+- Self-hosted runner：在 orchestrator 的 `/metrics` 中新增 `claude_code_self_hosted_orchestrator_session_queue_wait_by_reason_seconds`，以便区分重新打开的会话与新会话的等待时长
+- Self-hosted runner：新增 orchestrator 指标 `claude_code_self_hosted_orchestrator_sessions_given_up_total`，按原因统计 Anthropic 放弃为会话启动 runner 的次数
+- 修复了 zsh 中的 Bash 命令在遇到以 `=` 开头的词（例如 `echo ====` 或 `[ a == b ]`）时因报“not found”错误而终止的问题；`=cmd` 不再展开为命令的路径
+- 修复了自动压缩复用会话早期的系统提示词而非像 `/compact` 那样重新构建的问题
+- 修复了 markdown 渲染在某些超长或格式错误的输入上卡死的问题
+- 修复了极少数情况下的屏幕冻结问题
+- 修复了在权限提示或提问后紧接着输入时 Esc 经常丢失的问题；在将 Alt 发送为 Esc 加按键的终端中，未使用的 Alt 或 Option 键现在会在该处执行拒绝操作
+- 修复了当网络连接缓慢导致内容被截断为两段时，粘贴内容或终端响应被直接键入 prompt 的问题
+- 修复了在第三方提供商环境、遥测或 feature flags 关闭的情况下，当定时任务文件无法读取时保存定时任务会抹除项目中其他已保存任务的问题
+- 修复了项目的定时任务文件中含有拼写错误的定时任务在下次保存该文件时被删除的问题
+- 修复了恢复云端会话时因消息保存延迟而可能丢失压缩摘要或最新消息的问题
+- 修复了 spinner 和子 agent 上的 token 计数会将重试的回复重复计算两次、漏计未流式传输的回复以及在 Claude 思考时停滞不前的问题
+- 修复了在响应过程中用量额度耗尽时显示的错误误报为速率限制（rate limit）的问题
+- 修复了在 Bedrock、Agent Platform、Foundry 或 Claude apps gateway 上，当位于拒绝 beta 的网关后并设置了 `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` 时，Claude Desktop 以外的 auto 模式在每一轮交互中均失败的问题
+- 修复了 `CLAUDE_STREAM_IDLE_TIMEOUT_MS` 未能延长网关、自定义 base URL 及云服务商上 5 分钟连接限制的问题
+- 修复了第三方提供商上的某些 Claude Desktop 会话（定时任务除外）在收到大型工具返回结果后永久以“Prompt is too long”报错结束的问题；现在最大的结果会被略去
+- 修复了在第三方提供商环境、遥测或 feature flags 关闭时，input schema 以 `anyOf`、`oneOf` 或 `allOf` 开头的 MCP 工具会丢失的问题
+- 修复了在第三方提供商环境、遥测或 feature flags 关闭时，具有无效 input schema 的 MCP 工具会导致请求失败的问题；现在该工具会被略去并告知 Claude 原因
+- 修复了如果 Bedrock、Google Cloud's Agent Platform 或 Foundry 拒绝了进度摘要的 effort 设置，导致子 agent 的模型在整个会话中被关闭 effort 的问题（2.1.327 回归缺陷）
+- 修复了在 auto 或 bypass 模式之外，当权限提示、计划审批或提问保持打开状态达到十分钟时，Code Mode 会停止脚本运行的问题
+- 修复了 auto 和 bypass-permissions 模式下的 Code Mode 脚本无法调用在上一个脚本运行期间连接的 MCP 服务器的问题
+- 修复了在通过 `claude --resume` 选择器选取的会话中，auto 或 bypass 权限模式下的 Code Mode 脚本未在后台运行的问题
+- 修复了在恢复一次回复中运行了多个脚本的会话时，Code Mode 会丢失已加载的 skill、hook 上下文或在权限审批时输入的备注的问题
+- 修复了从选择器恢复会话或在需要询问权限的模式下时，未通知 Claude Code Mode 脚本已被截断的问题
+- 修复了 Code Mode 对先前失败脚本未设置的顶层变量静默使用 `undefined` 的问题
+- 修复了当失败命令的长输出被截断时 Code Mode 脚本未收到通知的问题
+- 修复了 Code Mode 拒绝以 `{` 块开头的有效脚本的问题
+- 修复了 Code Mode 拒绝同时使用顶层 `await` 和顶层 `return` 的脚本的问题
+- 修复了在脚本读取或写入 @ 提及的小文件后，该文件在 Code Mode 中未被作为附件附加的问题
+- 修复了 Code Mode 向无法调用 `write()` 和 `edit()` 的只读子 agent 提供这两个方法的问题
+- 修复了在 Code Mode 下按下 Esc 后紧跟诸如 `/model` 等命令时，Claude 会自行启动一轮交互的问题
+- 修复了在 Code Mode 下未告知 Claude 仅在你明确要求时才运行工作流，或者未告知你在 `/config` 中设置的工作流大小的问题
+- 修复了 Remote Control 重复显示同一条断开连接消息，并提示重试无法重新连接的会话的问题
+- 修复了当服务缓慢且远程会话重启时，处于等待状态的权限提示会丢失且其回复被忽略的问题
+- 修复了云端会话在执行回退（rewind）并紧随 `/clear` 后仍会恢复已清除对话的问题
+- 修复了在掉线的模型流重试后，当 runner 或 worker 丢失时，远程会话会丢失某一轮的工具调用及结果的问题
+- 修复了从开启了 Remote Control 的会话进行跨会话消息传递时，无法访问刚启动或标题中包含 @ 的云端及 Remote Control 会话的问题
+- 修复了告知 Claude 云端会话绝不会回复的问题；现在 Claude 会获知回复何时可能到达以及获取结果的其他替代方式
+- 修复了在命令进入另一个仓库后，`/diff`、Remote Control 会话的 Changes 面板以及编辑操作旁的 diff 会遗漏已提交改动的问题
+- 修复了当由 IDE 插件或其他 SDK 应用运行的会话在工作流最后一次取得进展超过一小时后被打开时，Remote Control 不显示正在运行的工作流 agent 的问题
+- Remote Control：修复了开启 Remote Control 后，空闲的 Desktop 或 VS Code 会话显示为正在运行的问题
+- 修复了在 SDK 中断已停止后台 agent 后，模型仍报告其正在运行的问题
+- 修复了在桌面应用和 SDK 宿主中点击 Send now 会告知 Claude 已停止的网页搜索未找到任何结果的问题
+- 修复了在支持报告 Cmd 键的终端中，Cmd+字母 会被直接输入到 prompt 的问题
+- 修复了在全屏模式下 GNOME Terminal 中 Ctrl+点击 会打开链接两次、鼠标侧键触发点击事件，以及暂停后反向滚动的第一个滚轮刻度被忽略的问题
+- 修复了在 tmux 和 ssh 之外的 Konsole 中的 Shift+Enter 问题，以及在支持 kitty 键盘协议的终端中非拉丁键盘布局上的 Alt 快捷键问题
+- Linux：修复了当安装了 `xclip` 或 `wl-copy` 时，若 Claude Code 通过 Ctrl+Z 被挂起，在其他应用中粘贴会导致卡死的问题
+- Linux：修复了 Ctrl+V 丢失剪贴板图片、粘贴旧图片或卡死的问题
+- 修复了在全屏模式下复制文本时会包含引用条、向上拖动滚动时换行处丢失空格，或“Jump to bottom”胶囊按钮下方的单词缺失的问题
+- 修复了粘贴到 `!` 命令中的图片路径会变成附件的问题
+- 修复了在 `?` 快捷键列表打开时，Ctrl+C 未显示退出警告的问题
+- 修复了全屏模式下的 Ctrl+R 搜索和 `/theme` 颜色编辑器在同时收到按键事件时选中错误行，以及在该处和 `/config`、`/plugin` 搜索中按键丢失的问题
+- 修复了 GNU screen 内部颜色错误或缺失的问题
+- 修复了在全屏模式下多个后台通知遮挡已打开对话框顶部边框的问题
+- 修复了发送给后台 agent 的消息中以冗长文件路径代替已粘贴图片显示的问题
+- 修复了当 skill 的 Stop hook 与另一个 hook 提示词相同文字时，`/goal` 会移除该 Stop hook 或根据另一 hook 的结果提前结束的问题
+- 修复了在报告发送后 `/bug` 仍提示已取消（cancelled）的问题
+- 修复了 Pro 和 Max 用户按 Esc 无法关闭 transcript 分享提问的问题
+- 修复了 `/hooks` 在返回时丢失原有浏览位置的问题
+- 修复了 `/export` 在名称留空时会写入名为 `.txt` 文件的问题
+- 修复了 Zed 中的 `/terminal-setup` 将符号链接形式的 `keymap.json` 替换为普通文件的问题
+- 修复了在要求更新现有工作流文件时，`/install-github-app` 却额外添加了一个代码审查工作流的问题
+- 修复了在返回后当耗时较长的保存或移除操作完成时，`/plugin` 会重新打开 skill 或关闭当前打开页面的问题
+- 修复了在更改操作仍在运行时离开插件，导致 `/plugin` 提示卸载错误的插件或忽略 Esc 的问题
+- 修复了在无结果的搜索或点击标签栏后，`/plugin` 的 Installed 标签页中打字和方向键失效的问题
+- 修复了在 `/plugin` 中按住 Enter 会连续关闭多个已安装插件的问题
+- 修复了在 1M 上下文模型上 `/usage` 插件总额卡在 2,000 tokens，以及未选择模型时 `/usage` 和 `/plugin` 中 token 预估偏低的问题
+- 修复了在 Bedrock 访问密钥（access keys）步骤按 Esc 会直接关闭 `/login` 而非返回上一步的问题
+- 修复了 `/exit` 和 Ctrl+D 对正在运行的任务描述不一致，以及 `/exit` 会对已停止的工作流发出警告的问题
+- 修复了 Claude 在读取共享文件夹中的 artifact 或发布到其他组织的文件夹后将其称作私有，以及在其文件夹成员也可以打开时声称只有被指定人员才能打开的问题
+- 修复了某个插件的 toast 提示有时会显示另一个插件文本的问题
+- 修复了在某轮开始后立即保存的 mod 有时会在该轮中间重新加载而非在该轮结束时重载的问题
+- 修复了单个格式错误的 `OTEL_RESOURCE_ATTRIBUTES` 条目会导致该变量的其他标签在指标数据点、事件和 span 中被一并丢弃的问题。现在仅会忽略该错误条目
+- 修复了当请求因过大被拒而在进行压缩时，agent hook 会超时运行的问题
+- 修复了当 `FORCE_COLOR` 设置为负数时启动崩溃的问题
+- 修复了机器内存几乎耗尽时密钥脱敏（secret masking）过程崩溃的问题
+- 修复了当分支名称不是有效 UTF-8 时，Linux 上的 Bash 沙箱在每条命令执行后重命名 `.git/HEAD` 的问题
+- Self-hosted runner：修复了当代理或网络过滤器以 HTTP 200 及诸如 `{}` 的响应体响应轮询时，所有运行中的会话都会被停止的问题；runner 现在会对此类轮询进行重试
+- Self-hosted runner：修复了在发生临时磁盘错误后，保留克隆的 objects 或 refs 以及仅存在于其中的 commit 会被删除的问题；现在此类启动将直接报错失败
+- 修复了在时钟较慢或被调慢的宿主机上，self-hosted runner 在 token 过期时停止运行的问题
+- Self-hosted runner：修复了启用了 Anthropic 托管 git 的会话在内部脚本或 hook 再次运行 `claude` 后丢失对 GitHub 的 git 访问权限的问题
+- 修复了在使用 Anthropic 托管 git 的 self-hosted runner 上，当机器的 git 配置设置了 `http.proactiveAuth` 时无法 fetch 或 push 的问题
+- Self-hosted runner：修复了 runner 在注册后若配置失败直接退出而未通知服务器的问题；现在它会附带原因注销，且按需运行的 runner 会上报启动失败
+- Self-hosted runner：修复了在等待另一个会话准备同一仓库（`--capacity` 大于 1）期间，对会话进行归档或重新排队操作不生效的问题
+- Self-hosted runner：修复了 `.claude.json` 损坏的会话在 `--trust-workspace false` 下后续每次启动都会失败的问题；现在它将以默认设置启动，并在该处再次关闭 MCP 服务器
+- Self-hosted runner：修复了当 checkout hook 或 git 打印大量日志时，启动失败消息中说明失败原因的文字丢失的问题
+- 修复了当磁盘停顿数秒时 self-hosted runner 跳过 post-session hook 的问题；在磁盘无响应时，会话结束默认可能多耗时 25 秒
+- 修复了 self-hosted runner 问题：在新的 Claude 配置目录中恢复的会话不再丢失其任务列表
+- 修复了当 self-hosted 会话在缺少某个仓库的情况下启动时，未告知 Claude 及其原因的问题
+- Self-hosted runner：修复了 `claude --environment` 的 `--correlation-id` 未能传递给 `spawn-runner` hook 的问题
+- 修复了 self-hosted runner 安装向导中的密钥轮换建议，现在会警告吊销密钥将停止在其下运行的会话
+- 改进了 `claude -p` 和 SDK 会话：在后台为后续会话拉取拥有独立 git 仓库的托管设置插件
+- 改进了在全新机器上的 `claude -p`、SDK 和 Claude Desktop 会话中从 git 插件市场加载托管设置插件的速度；短任务运行退出的时间最多可能延后 30 秒
+- 优化了恢复大型会话所需的时间
+- 优化了恢复包含大量图片的会话时的内存占用
+- 优化了运行慢速命令或工具的长时间 SDK 和桌面会话中的内存占用与响应时间
+- 优化了 Code Mode 在 auto 和 bypass-permissions 模式下的运行速度，移除了大多数脚本执行后 0.75 秒的停顿
+- 改进了带有 MCP 服务器的新 Code Mode 会话的 prompt 缓存机制，且现在当服务器仍在连接中或服务器列表发生变动时会通知 Claude
+- 通过缩短工具描述优化了 Code Mode 的 token 消耗
+- 改进了 Code Mode：在脚本运行时显示其正在执行的命令以及输出内容
+- 优化了 Code Mode 的编辑操作：未产生更改的编辑不再导致脚本终止，并在编辑失败时告知 Claude 匹配或最接近匹配的位置
+- 改进了 Code Mode：现在脚本失败时会告知 Claude 哪些工具调用仍在运行
+- 改进了 Claude 在 Code Mode 的 auto 和 bypass 模式下启动开发服务器的方式：提示 Claude 将它们作为显示在 `/tasks` 中的后台任务运行
+- Windows：改进了 Code Mode，告知 Claude 脚本的 shell 命令在 Git Bash 中运行，且 PowerShell 别名会优先于同名函数运行
+- 优化了同时启动多个进程内协作成员（in-process teammates）的表现：出现“Lock file is already being held”失败的情况大幅减少
+- 改进了 computer use 审批对话框：现在显示每个应用的访问级别以及更清晰明了的警告信息
+- 改进了跨会话消息传递：当云端会话或另一台计算机未在列表中时，Claude 现在会说明是因为 Remote Control 已关闭
+- 改进了 `claude -p` 的文本输出：当来自另一会话的消息被挂起或丢弃时，在 stderr 上输出说明及允许接收该消息的方法
+- 改进了 Claude 关于谁能打开其发布的 artifact 的回答：现在提示 Claude 重新检查该 artifact，而非重复上一次发布时的回答
+- 改进了恢复 self-hosted runner 会话时的表现：Claude 现在会检查其早先的工作是否仍存在，并指出缺失的内容
+- 将第三方提供商上的 Opus 4.6 和 Sonnet 4.6 的 plan 模式与 Bash prompt 改为使用并提供 auto 模式（与较新模型一致）；`disableAutoMode` 可将两者关闭
+- 调整了 Code Mode：不再对脚本输出运行 UserPromptSubmit hook（包括托管 hook）；如需脱敏该输出，请使用带有 `updatedToolOutput` 的 PostToolUse hook
+- 调整了大多数模型上的 `/code-review`：仅报告 bug 和对 CLAUDE.md 的违规；代码复用、简化与效率优化请运行 `/simplify`
+- 调整了大多数模型上的 `/code-review`：将每项发现标记为 Important、Pre-existing 或 Nit，并在每个摘要结尾附上建议修复方案；无问题的审查列表现在显示为“Code review found no issues.”
+- 调整了形如 `claude.ai <name>` 的 `deniedMcpServers` 条目，使其同样适用于云端和 self-hosted runner 会话中的该连接器
+- 调整了托管的 `PostToolUse` hook：对于运行前即被拒绝的调用不再触发（不记录日志、不重写、不阻止且不停止）；`PostToolBatch` 会接收到其中的大部分调用，且不标记为被拒绝
+- 调整了 `/bug`：在发送前询问 Yes 或 No，避免连续按 Enter 发送报告或打开 GitHub
+- 调整了当设置了 `CLAUDE_CODE_FORK_SUBAGENT=0` 时，`claude -p`、Agent SDK、桌面端和 VS Code 中的子 agent 默认等待它们自己的子 agent
+- 调整了设置 `CLAUDE_CODE_FORK_SUBAGENT=0` 的 `claude -p`：将后台子 agent 及其等待的子 agent 计入同一个 10 分钟等待限额中；更长调用链可提高 `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`
+- 调整了被 PermissionRequest hook 重写为沙箱排除命令的 shell 命令，使其在沙箱外运行
+- 调整了 Claude in Chrome 欢迎屏幕与 `/chrome` 的文案：说明在 Claude 对网站执行操作前 Claude Code 会先询问，除非已由权限模式或 `/permissions` 中的规则自动处理
+- 调整了第三方提供商或关闭了遥测/feature flags 的 Claude Desktop 和 Agent SDK 会话：在存在未决提问的情况下关闭时直接结束该轮，而非在无回答的情况下继续运行
+- 调整了在第三方提供商环境或遥测/feature flags 关闭时，粘贴的文本会被为 Claude 标记为已粘贴内容
+- 调整了 Anthropic API 终端会话中的子 agent 进度摘要：改为由默认的轻量快速模型基于简短备注生成（在遥测关闭时同样适用），大幅减少 token 消耗
+- 调整了沙箱无法启动时的报错方式（除非设置了 `sandbox.failIfUnavailable`）：拒绝下一个沙箱化的 Bash 命令并提示该会话的沙箱已关闭
+- 调整了 `/list-agents`：仅向你本人显示该列表；Claude 会在需要时自行列出会话
+- Self-hosted runner：在设置中按名称限制 Claude 的 GitHub 工具的地方，将内置的 `gh api` 调整为默认关闭；`--use-anthropic-gh true` 可将其开启
+- Self-hosted runner：调整了在会话自身的 `claude` 启动前或结束后由包装脚本运行的 `claude`，使其不具备 Anthropic 托管 git
+- Self-hosted runner：调整为在会话及其 `checkout`、`post-session` 和 `spawn-runner` hook 中同时设置 `CLAUDE_RUNNER_SESSION_UUID` 与 `CLAUDE_CODE_REMOTE_SESSION_UUID`
+- 调整了 `--capacity 1` 的 self-hosted runner：当推送目标仓库的路径为符号链接时更早拒绝该会话
+- [VSCode] 当来自另一会话的消息被挂起时新增提示，并提供可允许该消息的配置文件链接
+- [VSCode] 修复了当面板高度较小，或命令、URL、描述过长时，权限提示截断 No 按钮、回复输入框或标题的问题
+- [VSCode] 修复了失败或被阻止的工具调用不显示原因或原因被截断的问题，以及 Glob 和 Grep 将错误计入结果的问题
+
 ## 2.1.327 (2026-11-17)
 
 - 在 `/install-github-app` 更改仓库前增加了确认步骤
