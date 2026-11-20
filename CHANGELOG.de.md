@@ -2,6 +2,151 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.330 (2026-11-20)
+
+- Anmeldung bei in Anthropics Enterprise Admin Console verwalteten Organisationen hinzugefügt: Nach `claude auth login` wendet Claude Code die Einstellungen der Organisation an und nutzt deren Cloud-Provider oder Gateway
+- easel hinzugefügt, eine integrierte Mod, die auf Anfrage und unter MCP-Metrikergebnissen Diagramme zeichnet, für Pro, Max und, sofern verfügbar, Team und Enterprise unter macOS und Linux; automatische Diagramme lassen sich in `/config` deaktivieren
+- `CLAUDE_CODE_FULL_SIGN_IN_LINK=1` hinzugefügt, um den vollständigen Anmeldelink auszugeben, falls der kurze einen Fehler anzeigt oder ein Skript Werte daraus liest
+- Self-hosted runner: `--start-dir` / `SELF_HOSTED_RUNNER_START_DIR` hinzugefügt, damit Claude die Arbeit in einem Ordner eines Repositories beginnt, während Einstellungen und Hooks wie gewohnt geladen werden
+- Hinweis in Cloud- und Self-hosted-Runner-Sitzungen hinzugefügt, wenn ein Plugin-Marketplace nicht abgerufen werden kann, weil dessen Repository keines der Sitzung ist
+- Self-hosted runner: Hinweis hinzugefügt, wenn von Anthropic verwaltetes Git das eigene Repository eines Plugins ablehnt, inklusive Nennung des Plugins und Handlungsanweisungen
+- `commandPrinted` zu den Ergebnissen von `claude plugin install --json` hinzugefügt (true, wenn der Installationsbefehl des Plugins auf stderr geschrieben hat) sowie `commandFailed`, wenn er mit einem Fehler beendet, abgebrochen wurde oder ein Timeout auftrat
+- `claude_code_self_hosted_runner_order_to_registered_seconds` zu `/metrics` des Self-hosted Runners hinzugefügt: Sekunden von der Erteilung des Arbeitsauftrags bis zur Annahme der Registrierung bei von Orchestratoren gestarteten Runnern
+- `claude_code_self_hosted_runner_order_to_first_session_seconds` zu `/metrics` des Self-hosted Runners hinzugefügt: Sekunden vom Arbeitsauftrag bis zur Übergabe der ersten Sitzung bei für eine Sitzung gestarteten Runnern
+- Problem behoben, durch das Claude Code direkt nach dem Komprimieren einer sehr langen Konversation für bis zu mehrere Minuten einfror
+- Problem behoben, durch das WebFetch die Sitzung bei einigen Seiten minutenlang einfror und bei anderen ein leeres Ergebnis zurückgab
+- Problem behoben, durch das `ExitWorktree` und der Worktree-Beendigungsdialog einen Worktree löschten, in dem eine andere laufende Claude Code-Sitzung arbeitete
+- Problem behoben, durch das Änderungen an den Benutzereinstellungen verloren gingen, wenn mehrere Claude Code-Prozesse sie gleichzeitig speicherten
+- Problem behoben, durch das `--continue` und `--resume` eine leere Sitzung öffneten oder fehlschlugen, wenn die letzte gespeicherte Nachricht einen fehlenden oder ungültigen Zeitstempel hatte
+- Problem unter Linux und WSL behoben, durch das der erste Prompt nach einem Ruhezustand von zwei oder mehr Minuten drei Minuten lang auf einer abgebrochenen Verbindung verharrte
+- Problem behoben, durch das Turns mit „JSON schema is invalid“ fehlschlugen und Sitzungsdateien um viele Megabyte anwuchsen, wenn viele MCP-Tools ein von der API abgelehntes Input-Schema aufwiesen
+- Linux: Problem behoben, durch das Bash-Befehle sekundenlang warteten und für den Rest einer Sitzung in langsamen Repositories mit großen ignorierten Ordnern wie `node_modules` keinen Datei-Diff anzeigten
+- Windows: Problem auf Rechnern ohne benutzerdefinierte Startdateien behoben, durch das Bash-Befehle für den Rest einer Sitzung langsamer liefen, nachdem Git Bash 10 bis 60 Sekunden zum Starten benötigte
+- Problem behoben, durch das `/rewind` manchmal eine ältere Version einer Datei wiederherstellte, wenn zwei eingereihte Prompts oder gestapelte Skills direkt nach einem Turn ausgeführt wurden, der die Datei geändert hatte
+- Problem behoben, durch das beim Bestätigen einer Berechtigungsabfrage hinzugefügter Text und Bilder verworfen wurden, wenn der genehmigte Befehl oder das Tool anschließend fehlschlug
+- Problem behoben, durch das MCP-Ressourcen von claude.ai-Connectors und Plugin-Servern nicht angehängt wurden, wenn sie im Prompt-Eingabefeld des Terminals mit @ erwähnt wurden
+- Problem behoben, durch das ein von Subagents deklarierter MCP-Server heruntergefahren wurde, sobald einer von ihnen beendet war, obwohl andere Subagents oder die Sitzung ihn noch nutzten
+- Problem behoben, durch das Claude in Chrome nach einem kurzen Verbindungsproblem auf „not connected“ blieb, obwohl Chrome geöffnet und angemeldet war
+- Problem behoben, durch das ohne Modellauswahl gestartete Terminal-Sitzungen auf Amazon Bedrock (Mantle) ein angepinntes Opus-Modell ignorierten und nach Ankündigung eines Fallbacks weiterhin ein nicht verfügbares Standardmodell aufriefen
+- Problem behoben, durch das die restliche Eingabe verloren ging, wenn im Vollbildmodus ein Plan eintraf
+- Problem behoben, durch das claude.ai-Connectors mit unterschiedlichen Namen verworfen wurden, wenn sie dieselbe Server-URL teilen (anthropics/claude-code#101856)
+- Problem behoben, durch das Plugins aus der Liste der installierten Plugins verschwanden, wenn mehrere `claude plugin`-Befehle gleichzeitig liefen
+- Problem behoben, durch das Aufgabenabhängigkeiten und Metadaten verloren gingen, wenn mehrere Task-Updates gleichzeitig ausgeführt wurden
+- Problem behoben, durch das bei voller Festplatte unvollständige Backups von `~/.claude.json` behalten wurden und intakte ersetzten
+- Problem mit langen Pausen im Code Mode nach Code behoben, der Hunderte von Dateien in Projekten mit pfadbezogenen Regeln oder Read-Verweigerungsregeln gelesen hat
+- Problem behoben, durch das das integrierte Diagramm-Tool fehlschlug, wenn Claude es im Code Mode aufrief
+- Problem behoben, durch das der Code Mode in den Berechtigungsmodi auto und bypass die Anforderung eines MCP-Tools ignorierte, den Turn aus einem Skript heraus zu beenden
+- Problem behoben, durch das der Code Mode im auto-Modus vorheriges Thinking verwarf und den Prompt-Cache neu schrieb, wenn eine Mod eine Notiz hinzufügte, nachdem ein Skript einen Skill geladen hatte
+- Problem behoben, durch das der Code Mode eine Datei nicht wiederherstellte, die ein Skript nach Esc und `/compact` gelesen hatte
+- Problem behoben, durch das `/context` im Code Mode vor Claudes erster Antwort System-Tools zu niedrig zählte
+- Problem behoben, durch das ein angehaltener Hintergrund-Subagent manchmal nicht angehalten blieb
+- Problem in über eine App oder das SDK ausgeführten Sitzungen behoben, durch das Claude weiterhin auf einen Hintergrund-Agenten wartete, der genau beim Beenden angehalten wurde
+- Problem behoben, durch das Hintergrund-Sitzungen nach der Genehmigung eines Plans manchmal in ihrem vorherigen Berechtigungsmodus aufwachten
+- Remote Control: Problem behoben, durch das der Hinweis auf durch ein Stop vom Smartphone oder Web beendete Hintergrund-Agenten im Terminal so angezeigt wurde, als hätte man ihn selbst eingetippt
+- Remote Control: Problem behoben, durch das mobile Apps nach dem Aktivieren mitten in der Konversation die Buttons für Diff und Pull-Request ausblendeten oder eine angehaltene Sitzung als aktiv anzeigten
+- Problem behoben, durch das von einem SessionStart-Hook geschriebene Umgebungsvariablen bei `claude -p --continue` verloren gingen
+- Problem behoben, durch das `claude -p` ohne Meldung mit Exit-Code 0 beendet wurde, wenn die Ausgabe in eine Datei auf einer vollen Festplatte ging: Es gibt nun einen Fehler aus und beendet sich mit 1, wenngleich ein voller NFS-Export möglicherweise unbemerkt bleibt
+- Problem behoben, durch das der System-Prompt die Anweisungen des vorherigen Modells beibehielt, wenn das Modell nach `/context`, aber vor der ersten Nachricht geändert wurde
+- Problem behoben, durch das Claude nach einem Modellwechsel mitten im Turn manchmal auf seine eigene Erinnerung zur Commit-Attribution antwortete und den Turn vorzeitig beendete; dies kann weiterhin vorkommen, wenn verwaltete Einstellungen die PR-Attributionszeile festlegen
+- Problem behoben, durch das Esc einen LSP-Tool-Aufruf nicht beendete, der auf einen langsamen oder hängenden Language-Server wartete
+- Problem behoben, durch das LSP-Tool-Aufrufe und Diagnosen fehlschlugen, wenn mehrere Aufrufe oder Bearbeitungen eintrafen, während ein Language-Server noch startete
+- Problem behoben, durch das `/mcp` Plugin-Server als integriert auflistete: Sie stehen nun unter „Plugin MCPs“, `--mcp-config` und integrierte Server unter „Other MCPs“, und die Seite eines Servers nennt dessen Plugin
+- Problem behoben, durch das bei jedem Start die Warnung „MCP server blocked by enterprise policy: easel“ angezeigt wurde, wenn eine MCP-Allowlist oder -Denylist das integrierte Diagramm-Tool ausschließt, welches weiterhin blockiert bleibt
+- Problem behoben, durch das `/stats` neue Aktivitäten in UTC-Tagen statt in der lokalen Zeitzone zählte
+- Problem behoben, durch das `/ultrareview` fehlschlug oder den falschen Code überprüfte, nachdem die Shell in ein anderes Repository gewechselt war: Es stoppt nun und nennt beide Ordner
+- Problem behoben, durch das Grep keine Treffer meldete, wenn das Muster einen Zeilenumbruch ohne Multiline-Modus enthielt; es meldet nun das abgelehnte Muster
+- Problem behoben, durch das mit einem Byte Order Mark gespeicherte Jupyter-Notebooks von den Tools Read und NotebookEdit als ungültiges JSON gemeldet wurden
+- Problem behoben, durch das Link-Referenzdefinitionen aus CLAUDE.md und Speicherdateien verworfen wurden, die einen HTML-Kommentar enthalten
+- Problem behoben, durch das laufende Monitore die vorherige Konversation bis zu ihrem Ende im Speicher behielten
+- Problem behoben, durch das einige Claude Desktop-Sitzungen bei Drittanbietern (außer geplanten Aufgaben) einen Turn mit „Prompt is too long“ beendeten, wenn auf eine lange Konversation ein PDF folgte, das größer als das Kontextfenster war
+- Problem behoben, durch das die Auswahl zwischen zwei Benutzer- oder Projekt-Agentendateien mit demselben deklarierten Namen von der Reihenfolge der Dateisuche abhing
+- Problem behoben, durch das `claude daemon logs` innerhalb eines Git-Repositories nie beendet wurde, wenn keine Protokolldatei vorhanden war
+- Problem behoben, durch das Markdown ein oder zwei Zeichen nach fettem oder kursivem Text ausblendete, wenn weiter hinten im Absatz ein Backslash vor einem Emoji stand
+- Problem behoben, durch das Edit einige gültige Hook-Befehle in Claude-Einstellungsdateien verweigerte
+- Problem behoben, durch das `Read` mit einem Seitenbereich beide Hälften einer gescannten Doppelseite auf jeder ihrer Einzelseiten anzeigte
+- Problem behoben, durch das Zeilenumbrüche und Klassenstereotypen in Mermaid-Diagrammen in HTML-Artefakten fehlten
+- Problem behoben, durch das die Projektanweisungs-Auswahl in `/config` in einem 24-Zeilen-Vollbildfenster nur eine ihrer vier Optionen anzeigte
+- Problem behoben, durch das die eigenen Subagents und Forks eines Subagents im Plan-Modus unter `opusplan` oder `haiku` auf dem Plan-Modus-Modell liefen
+- Problem behoben, durch das WebFetch-Seitenzusammenfassungen die `/effort`-Stufe ignorierten, wenn ein Gateway das kleine, schnelle Modell ablehnt
+- Problem behoben, durch das `claude -p` auf der Agent Platform von Google Cloud `--settings '{"fastMode":true}'` ignorierte, wenn das Modell aus `ANTHROPIC_MODEL` oder einer Einstellungsdatei stammt; solche Ausführungen werden nun zum Fast-Mode-Preis abgerechnet
+- Problem behoben, durch das der Start unter `forceLoginOrgUUID` nach einem einmaligen temporären Serverfehler oder Verbindungsabbruch verweigert wurde
+- Problem behoben, durch das `claude mcp remove` keinen Ausweg für einen claude.ai-Connector bot: Es weist nun darauf hin, ihn in /mcp zu deaktivieren oder auf claude.ai zu entfernen
+- Problem behoben, durch das die /mcp-Prüfung „Connect on claude.ai“ „not connected“ meldete, wenn claude.ai einen Connector unter der URL des Servers ohne dessen Query besaß
+- Problem behoben, durch das `/install-github-app` und `/design-login` bei einem gesperrten Konto einen generischen Fehler anstelle des Sperrhinweises und Einspruchslinks anzeigten
+- Problem behoben, durch das eine laufende MCP-Aufgabe als angehalten gemeldet wurde, wenn eine Sitzung in den Hintergrund verschoben wurde; die Hintergrund-Sitzung kann der Aufgabe nun folgen, jedoch nicht, wenn deren Server stdio verwendet oder Header setzt
+- Problem behoben, durch das Self-hosted Runner eine Sitzung bis zu ihrer Beendigung ignorierten, nachdem deren Fehlerbericht verloren gegangen war oder die Sitzung an denselben Runner zurückgegeben wurde
+- Problem behoben, durch das Self-hosted-Sitzungen den Prompt-Cache und vorheriges Thinking verloren, wenn sich die Liste der Repositories änderte, die ein Neustart nicht vorbereiten konnte
+- Self-hosted runner: Problem in Sitzungen mit deaktivierter Telemetrie behoben, durch das Tool-Aufrufe hinter einer Berechtigungsabfrage ergebnislos verschwanden, wenn ein neuer Runner die Abfrage übernahm
+- Problem behoben, durch das fortgesetzte Self-hosted-Runner-Sitzungen in großen Repositories ohne ihre übertragenen Änderungen starteten, wenn `--push-outcome-on-release` gesetzt ist
+- Problem behoben, durch das Self-hosted-Runner-Sitzungen als aktiv angezeigt wurden, wenn Claude Code bei jedem Start hängenblieb und `--startup-timeout-min` zwischen 2 und etwa 6 lag
+- Problem behoben, durch das `pkill -f` in Self-hosted-Runner-Sitzungen unter Linux die eigene Shell mit Exit-Code 144 oder den Runner beendete (erfordert ein `pkill` mit `--ignore-ancestors`)
+- Problem behoben, durch das geplante Aufgaben auf Self-hosted Runnern kein Tool hatten, um ihren Besitzer zu benachrichtigen, wenn Telemetrie deaktiviert ist oder ein Drittanbieter verwendet wird
+- Self-hosted runner: Problem behoben, durch das ein langsamer `spawn-runner`-Hook den Orchestrator daran hinderte, Sitzungen für freie Slots zu beanspruchen; er pollt nun alle 4 bis 6 Sekunden, solange ein Slot frei ist
+- Self-hosted runner: Problem behoben, durch das ein HTTP 403 (z. B. durch eine IP-Allowlist) als ungültiges Secret oder Token protokolliert wurde: Die meisten dieser Zeilen beginnen nun mit der Begründung des Servers; aktualisieren Sie daher Log-Alerts, die auf den alten Wortlaut matchen
+- Problem behoben, durch das der Warnmodus für Repository-Einstellungen auf Self-hosted Runnern beim ersten Befund der meisten Arten stoppte: Er läuft nun weiter, bis zu 50 pro Sitzung, und meldet ein vorzeitiges Abbrechen
+- Self-hosted runner: Problem behoben, durch das Runner, die auf einer vollen Festplatte starten, Sitzungen annahmen und fehlschlagen ließen; sie warten nun auf Speicherplatz und beenden sich nach einer Minute ohne Sitzung mit Exit-Code 1, es sei denn, sie wurden aus einem Arbeitsauftrag gestartet
+- Self-hosted runner: Problem behoben, durch das ein fehlgeschlagener Start einen erneuten Versuch vorschlug, wenn der Rechner des Runners keine Git-Zugangsdaten hatte; die Fehlermeldung gibt nun an, wen man kontaktieren muss und was zu tun ist, falls das Repository falsch ist
+- Problem behoben, durch das `last_poll_age_seconds` des Self-hosted Runners 0 anzeigte, solange der Runner noch nie erfolgreich gepollt hatte
+- Problem behoben, durch das der Hinweis auf eine übersprungene geplante Aufgabe keine Organisation nannte: Er weist nun darauf hin, Claude Code mit `--resume` zu starten, da `/resume` innerhalb einer laufenden Sitzung die Aufgabe nicht ausführt
+- Problem behoben, durch das `claude plugin validate` fälschlicherweise davor warnte, dass der `AbovePrompt`- oder `AbovePromptList`-Hook einer Mod in VS Code niemals ausgeführt wird
+- Problem behoben, durch das `/design-sync` eine gerade hochgeladene Datei löschte, wenn Claude Design diese Datei unter einem geänderten Namen gespeichert hatte
+- Die in 2.1.329 erfolgte Entfernung des automatischen Retry bei Überschreitung des `max_tokens`-Limits eines Modells oder Gateways wurde rückgängig gemacht
+- Der von /login, `claude auth login` und `claude setup-token` angezeigte claude.ai-Anmeldelink wurde verbessert: Er ist nun deutlich kürzer
+- Windows: Geschwindigkeit von Grep und Glob verbessert, indem für jede integrierte ripgrep-Suche auf einem lokalen Pfad kein eigener Console-Host mehr gestartet wird
+- Geschwindigkeit von Datei-Diffs verbessert
+- Suche in `/config` verbessert: Die meisten Einstellungen, deren Name mit der Eingabe beginnt, stehen an erster Stelle; „effort“ findet Model und „dark“ oder „light“ findet Theme
+- `/resume` verbessert: Sitzungen, in denen lediglich eine Ansicht wie `/model` geöffnet und wieder verlassen wurde, werden nicht mehr aufgeführt
+- Reconnect in `/mcp` und `/plugin` verbessert: Die Seite eines Servers bleibt nun geöffnet und zeigt die Ursache an, wenn der Server weiterhin fehlschlägt oder eine Anmeldung erfordert
+- Fehlermeldung unter macOS bei zu langen Sandbox-Denylists verbessert: Sie benennt nun die zu langen Listen und erklärt, wie sie gekürzt werden können
+- `/plugin` im Vollbildmodus verbessert: Die Seite eines Plugins mit Fehlern beginnt nun direkt mit diesen Fehlern
+- Kostenbestätigung von `/ultrareview` in Team- und Enterprise-Tarifen verbessert: Sie zeigt nun an, wie viel vom monatlichen Ausgabenlimit übrig ist, falls dies weniger ist, als ein Review üblicherweise kostet
+- Self-hosted-Runner-Sitzungen auf Amazon Bedrock oder der Agent Platform von Google Cloud verbessert: Es wird nun darauf hingewiesen, wenn sie mit einem anderen Standardmodell starten, weil Ihr Konto das ursprüngliche abgelehnt hat
+- Windows: Fehlermeldung verbessert, wenn sich der Sitzungsordner auf einem Laufwerk befindet, das Claude Code nicht verifizieren kann: Sie nennt den Grund und ob ein erneuter Versuch helfen kann
+- Code Mode verbessert: Claude wird nun angewiesen, wie Bilder und PDFs zu betrachten sind
+- Code Mode verbessert: Nach Esc wird unter dem angehaltenen Befehl nun „Interrupted“ anstelle eines roten Fehlers angezeigt
+- Code Mode verbessert: Das Terminal friert deutlich kürzer ein, nachdem das Skript eines Subagents Tausende von Tool-Aufrufen durchgeführt hat
+- Wiederkehrende geplante Aufgaben und `/loop` laufen nun bis zu 30 Tage statt 7 Tage, solange ihre Sitzung aktiv bleibt, und geben an, wann sie enden; vor diesem Release erstellte Aufgaben enden weiterhin nach 7 Tagen
+- Weitere `rm`-Befehle, die auf das Root-, Home-, ein Root-Ebenen-Verzeichnis oder das Arbeitsverzeichnis abzielen, fordern nun eine Genehmigung an; kann niemand antworten, werden sie abgelehnt
+- Namenseinträge in `deniedMcpServers` blenden nun nur den benannten claude.ai-Connector aus, nicht andere unter derselben URL; um alle zu blockieren, verweigern Sie die exakte URL
+- `claude --teleport` gibt in manchen Umgebungen nun die Git-Befehle zum Wechseln des Branches aus, anstatt sie direkt auszuführen; mit `-p` beendet es sich mit 1, bis Sie den Branch wechseln
+- Unbekannte Modellnamen, die „sonnet“ oder „haiku“ enthalten, verwenden nun wie andere unbekannte Namen den kürzeren System-Prompt; `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` übergibt jedem Modell den vollständigen Prompt
+- Skills, die Claude mit einer `model`-Einstellung ausführt (außer `context: fork`-Skills), belassen Subagents, Forks, Komprimierung und `/recap` nun auf dem Modell der Sitzung
+- Modell-Fallback eines Subagents wird nun übertragen: Agenten ohne Modell und Forks, die er anschließend startet, laufen auf dem Fallback, und die von ihnen gestarteten Agenten nutzen dessen Bedrock-Region
+- Self-hosted runner: `spawn-runner`-Hooks können nun starten, während vorherige noch laufen, bis zu `--hook-concurrency` pro Orchestrator (standardmäßig 4); setzen Sie den Wert auf 1, falls Ihre Hooks nicht parallel laufen können
+- Self-hosted runner: Bash-Befehle überspringen nun den Datei-Diff, wenn nichts ihn benötigt, sodass Transkripte diesen nicht enthalten können; setzen Sie `bashEditDiffEnabled` in den verwalteten Einstellungen auf true, um jeden Diff zu erhalten
+- Self-hosted Runner brechen den Start einer Sitzung nun sofort ab, ohne andere Runner zu versuchen, wenn ein Checkout-Hook mit Status 108 beendet wird
+- Prompt-Hooks akzeptieren nun Modell-Aliase wie `haiku` oder `sonnet` in ihrem `model`-Feld
+- Der Fallback-Build des Referenz-Storybooks von `/design-sync` verwendet nun ausschließlich ein im Projekt installiertes Storybook
+- Subagent-Fortschrittszusammenfassungen in Terminal-Sitzungen, die an einem Claude-Apps-Gateway angemeldet sind, werden nun anhand kurzer Notizen statt der gesamten Konversation erstellt, was deutlich weniger Tokens verbraucht
+- [VSCode] `/fork` hinzugefügt, um eine Konversation nach ihrer letzten Antwort zu forken (anthropics/claude-code#69272)
+- [VSCode] `/workflows` hinzugefügt, wodurch die Agentenübersicht mit laufenden Workflows geöffnet wird
+- [VSCode] Einstellung `claudeCode.escapeStopsClaude` hinzugefügt; deaktivieren Sie diese, damit Escape Claude nicht anhält (anthropics/claude-code#91536)
+- [VSCode] Einstellung `claudeCode.pinPrompt` hinzugefügt, damit Ihre Nachricht weggescrollt werden kann, anstatt fixiert zu bleiben
+- [VSCode] Einstellung `claudeCode.contextUsageThreshold` hinzugefügt, die bestimmt, ab wann die Kontextanzeige eingeblendet wird (anthropics/claude-code#93036)
+- [VSCode] Ein `prompt`-Argument zum Befehl „Open in Side Bar“ für Tastaturkürzel und Erweiterungen hinzugefügt
+- [VSCode] Move up und Move down zum Menü einer Sitzungsgruppe hinzugefügt (anthropics/claude-code#98654)
+- [VSCode] Problem behoben, durch das VS Code bei jedem Prompt einer verbundenen Terminal-Sitzung sein Terminal öffnete und fokussierte
+- [VSCode] Problem behoben, durch das beim Kopieren eines Codeblocks ein abschließender Zeilenumbruch angehängt wurde, der den Befehl beim Einfügen ausführte (anthropics/claude-code#96976)
+- [VSCode] Problem behoben, durch das das Gedrückthalten von Enter bei `/rewind` Dateien wiederherstellte und ein Doppelklick auf Remove oder Delete ein Memory, einen MCP-Server oder Plugin-Marketplace ohne Bestätigung entfernte
+- [VSCode] Problem behoben, durch das Enter auf einer Fragekarte die vorherige Antwort sendete, anstatt die fokussierte auszuwählen, und Pfeiltasten nach einer „Other“-Antwort nicht funktionierten; beantwortete Fragen öffnen sich nun bei der getroffenen Auswahl erneut
+- [VSCode] Problem behoben, durch das eine gedrückt gehaltene Enter-Taste eine halb geschriebene Nachricht sendete oder einen getippten Slash-Befehl ausführte
+- [VSCode] Problem unter macOS behoben, durch das Cmd+A, C, V, X und Z im Umbenennen-Feld und in Dialogen nicht funktionierten
+- [VSCode] Problem unter macOS behoben, durch das Ctrl+F und Ctrl+P die Schreibmarke im Nachrichtenfeld nicht bewegten
+- [VSCode] Problem behoben, durch das die Buttons Accept und Reject bei einem in ein neues Fenster verschobenen vorgeschlagenen Diff keine Funktion hatten
+- [VSCode] Problem behoben, durch das Accept und Reject Proposed Changes über dem Chat, dem Terminal-Tab und anderen Dateien angezeigt wurden; sie erscheinen nun ausschließlich auf dem vorgeschlagenen Diff
+- [VSCode] Problem behoben, durch das ein langsam startender Claude-Tab den Tastaturfokus von der Datei abzog, in der man weitertippte
+- [VSCode] Problem unter macOS und Linux behoben, durch das ungespeicherte Änderungen und neue Probleme bei Dateien übersehen wurden, deren Pfad `#`, `?` oder `%20` enthält, wie beispielsweise ein `C#`-Ordner
+- [VSCode] Problem behoben, durch das ganzzeilige Auswahlen im Auswahl-Chip, in @-Mentions und in den an Claude übergebenen Informationen eine Zeile zu viel zählten und Dateilinks die letzte Zeile eines Bereichs ausließen
+- [VSCode] Problem behoben, durch das eine im Panel geforkte Konversation nach einem Fenster-Reload von selbst einen alten, unbeantworteten Prompt erneut ausführte
+- [VSCode] Problem behoben, durch das eine geforkte Konversation die `/loop`-Zeitpläne der ursprünglichen Konversation ein zweites Mal ausführte
+- [VSCode] Problem behoben, durch das /clear keinen Hinweis darauf gab, dass die Sitzung weiterhin ohne die CLAUDE.md und Einstellungen eines neu als vertrauenswürdig eingestuften Ordners läuft
+- [VSCode] Problem behoben, durch das Dialoge geschlossen wurden und eingegebener Text verloren ging, wenn eine Textauswahl über deren Rand hinaus gezogen wurde
+- [VSCode] Problem behoben, durch das Advisor-Aufrufe als „Unsupported content type“ angezeigt wurden (anthropics/claude-code#73499, anthropics/claude-code#64158, anthropics/claude-code#90471, anthropics/claude-code#73637)
+- [VSCode] Problem behoben, durch das die Sitzungsliste keinen Status für die Sitzung des Chats in der Seitenleiste anzeigte (anthropics/claude-code#93898)
+- [VSCode] Problem behoben, durch das der Button Add Comment der Plan-Vorschau nach einem schnellen Doppelklick auf ein Wort verschwand
+- [VSCode] Problem behoben, durch das lange Zeilen in der Edit Notebook Cell-Zeile abgeschnitten wurden, Berechtigungsregeln in einem schmalen Panel gequetscht waren, Fragekarten-Markierungen schwer erkennbar waren und Menüs nach einer abgelehnten Vertrauensabfrage den Chat verschoben
+- [VSCode] Problem behoben, durch das die Anmeldung bei einem gesperrten Konto einen generischen Fehler anstelle des Sperrhinweises und Einspruchslinks anzeigte
+
 ## 2.1.329 (2026-11-19)
 
 - Warnhinweis im Vertrauensdialog hinzugefügt, der angibt, wo die Hooks eines Ordners deklariert sind
