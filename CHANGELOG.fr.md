@@ -2,6 +2,144 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.331 (2026-11-23)
+
+- Ajout de la prise en charge de Code Mode dans les sessions de terminal sur Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry et Claude Platform on AWS
+- Ajout de `oidc.groups_jsonpath` à la passerelle des applications Claude, pour lire les groupes à partir des entrées correspondantes d'une liste d'objets avec un sous-ensemble restreint de JSONPath (RFC 9535)
+- Ajout d'une section sur la connectivité de l'API dans `claude doctor` qui indique si l'API est accessible, avec le code de statut HTTP ou l'erreur, ou explique pourquoi elle n'a pas été testée
+- Ajout d'une notification lorsque la dictée vocale en mode tap s'arrête d'elle-même, après 15 secondes sans parole reconnue ou à sa limite de 2 minutes
+- Ajout de `CLAUDE_CODE_DISABLE_RESPONSE_COMPRESSION` pour demander des réponses de modèle non compressées derrière un proxy qui coupe les réponses compressées ; non recommandé pour le moment pour les runners auto-hébergés ou Remote Control
+- Ajout de `CLAUDE_GATEWAY_IDP_CONNECT_BY_HOSTNAME=1` pour les passerelles des applications Claude : avec `oidc.use_proxy: true`, les requêtes de connexion transmettent au proxy le nom d'hôte d'un IdP `https`, même lorsque `NO_PROXY` est défini
+- Ajout de `gen_ai.usage.*`, `gen_ai.response.model` et `gen_ai.operation.name` aux spans de trace `claude_code.llm_request` ; `gen_ai.usage.input_tokens` inclut les tokens du cache de prompt
+- Ajout de `optionalDependencies` aux manifestes de plugins : des plugins qui s'installent avec le plugin qui les liste et peuvent être désactivés ou désinstallés séparément
+- Correction des appels d'outils MCP bloqués jusqu'à 30 minutes lors de certaines réponses malformées provenant d'un serveur local ou WebSocket
+- Correction de PushNotification indiquant à une exécution headless, telle qu'une tâche planifiée, que le terminal était actif durant sa première minute, au lieu d'indiquer si une notification push mobile a été demandée
+- Correction de `/install-github-app` qui sautait l'étape du dépôt après les avertissements de configuration lorsqu'aucun dépôt n'était trouvé, et de la touche Échap qui ne permettait pas de revenir en arrière depuis la liste des workflows et les étapes de connexion
+- Correction des résultats d'outils sur une seule ligne tronqués sans points de suspension dans les fenêtres étroites, des étoiles Markdown dans l'onglet du mode Auto de /permissions, et de la raison d'arrêt d'un hook pour un skill forké qui s'affichait en double
+- Correction de `/diff` masquant ses raccourcis clavier et ne sélectionnant pas les fichiers dans les fenêtres de 24 à 26 lignes, et omettant les fichiers ajoutés avec `git add -N` dans un dépôt sans commit
+- Correction de la liste des thèmes lors du premier lancement qui affichait trop peu de thèmes dans les fenêtres courtes, ainsi que de /usage et d'autres écrans hauts qui apparaissaient tronqués ou déformés
+- Correction de `/bug` en plein écran masquant ses réponses Oui et Non derrière un long rapport, et de l'option Oui restant hors de vue dans les fenêtres très courtes
+- Correction de /compact et de l'auto-compactage qui perdaient parfois une partie du résumé de conversation lorsque le résumé citait certaines balises XML
+- Correction de Claude qui n'était pas averti lorsque les règles de permissions sur l'outil Agent rejetaient son message en attente destiné à un sous-agent déjà terminé
+- Correction d'un message Remote Control s'affichant parfois au-dessus de la réponse qui était en train de se terminer lors de son envoi
+- Correction des hooks Stop lisant la transcription qui manquaient la dernière réponse dans Claude Desktop ; les hooks SubagentStop l'attendent désormais également
+- Correction des tours et sous-agents échouant dans les sessions cloud, ou expirant sur de longues réponses ailleurs, lorsqu'une réponse s'interrompait pendant que Claude réfléchissait encore ; Claude Code réessaie désormais la requête une fois de plus
+- Correction d'Échap et Stop qui attendaient environ une minute ou plus lorsque le contenu d'un fichier cloud ou réseau en cours de lecture par Claude se bloquait
+- Correction des sessions Code Mode reprises avec `--resume` ou `--continue` dans un autre mode de permission perdant la réflexion et le cache de prompt ; une session commencée dans un mode demandant confirmation conserve les restrictions de ce mode sur les scripts
+- Correction de Code Mode envoyant une requête environ chaque seconde lorsqu'une commande `!` ou slash était saisie pendant l'exécution d'un script
+- Correction d'une mise à jour de plugin interrompue ou échouée laissant un dossier de plugin partiel qui se chargeait plus tard avec des skills ou d'autres composants manquants (anthropics/claude-code#102186)
+- Windows : Correction des écritures de fichiers sur les disques FAT32 et exFAT demandant une permission à chaque fois dans certaines sessions de plugins
+- Correction de Claude échouant à lire un notebook ayant une sortie nulle ou une sortie d'erreur sans traceback
+- Correction d'un retour arrière (rewind) supprimant des fichiers après l'échec d'une restauration
+- Correction du mode auto refusant parfois la demande de Claude d'arrêter une boucle /loop, ce qui laissait le déclenchement suivant s'exécuter
+- Correction des shells en arrière-plan et des serveurs MCP d'un agent Workflow parfois laissés en cours d'exécution après la remise de son rapport
+- Windows : Correction de `/desktop` téléchargeant l'ancien programme d'installation de Claude Desktop, et demandant une mise à jour lorsqu'un dossier d'une ancienne installation subsistait
+- Correction de `claude plugin install`, `marketplace add` et commandes similaires restant bloquées sans sortie lorsque des paramètres gérés nécessitaient une approbation qui ne pouvait pas être demandée
+- Correction d'une règle de permission sur le modèle d'un sous-agent, telle que `Agent(model:*)`, bloquant le message de suivi de Claude vers un sous-agent lancé sur cette version sans modèle spécifié
+- Correction des hooks PermissionRequest n'enregistrant pas les règles d'autorisation `Skill(name:*)` en dehors des paramètres locaux
+- Correction de « Demander à votre administrateur » demandant d'augmenter votre propre limite lorsque le budget de groupe partagé de votre équipe vous bloquait, et affichant « Demande envoyée » lorsqu'un administrateur avait approuvé votre demande dans les minutes précédentes
+- Correction de Code Mode perdant le milieu d'une longue sortie de script ; Claude reçoit désormais un chemin vers le texte complet (anthropics/claude-code#111373)
+- Correction de la dictée vocale avec maintien de touche s'arrêtant prématurément et perdant des mots lorsque Claude Code était occupé
+- Correction de Code Mode avec `--bare` n'indiquant pas à Claude ce que ses scripts peuvent appeler
+- Correction d'un plantage lorsqu'un point de terminaison d'API personnalisé renvoyait un appel d'outil sans nom d'outil ; l'appel échoue désormais avec une erreur et la session continue
+- Windows : Correction d'un plantage potentiel lorsque la machine manque de mémoire
+- Correction du CLI se figeant sur certaines réponses, et du texte cité disparaissant parfois ou s'affichant en double
+- Windows : Correction de Claude Code refusant de démarrer lorsque les paramètres gérés dans le registre contiennent des caractères non-ASCII tels que du japonais (anthropics/claude-code#93280)
+- Windows : Correction des clients Remote Control n'affichant aucune étape pour un nouveau sous-agent
+- Correction des @-mentions écrites sous la forme `@file#10-12` joignant le fichier entier au lieu des lignes ciblées
+- Correction de Claude interprétant incorrectement un lien d'invitation d'artefact collé ; il vous demande désormais d'accepter l'invitation et de coller le lien propre à l'artefact
+- Correction des commandes Bash sandboxées échouant parfois à démarrer sur un disque temporaire plein, pour les bacs à sable dont les règles de fichiers interdisent aux commandes d'accéder au répertoire temporaire
+- Amélioration de la vitesse de frappe en mode lecteur d'écran, surtout dans les longues sessions
+- Amélioration du temps de démarrage : une session lancée peu après une autre n'attend plus la liste des modèles, et une session hors d'un dépôt git sans `.claude/settings.local.json` n'attend plus git
+- Windows : Amélioration de la vitesse de la première commande Bash d'une session sur les machines sans fichiers personnalisés d'initialisation du shell
+- Amélioration de la notification de mise à jour automatique des plugins pour nommer séparément les plugins nouvellement installés en tant que dépendances et les plugins mis à jour
+- Amélioration de la recherche d'outils en Code Mode pour afficher une plus grande partie de la description d'un outil MCP, avec ses limites, formats et valeurs par défaut
+- Amélioration du lien de connexion à Console affiché par /login et `claude auth login --console` : il est désormais beaucoup plus court
+- Amélioration de la liste de vos artefacts par Claude : elle identifie désormais les pages web, rendant moins probable que Claude tente d'en ouvrir une avec le connecteur Claude Docs
+- Amélioration des invites de confiance de dossier dans les terminaux courts : les commandes plein écran `/cd` et `/add-dir` affichent leurs choix sur moins de lignes, et l'invite au lancement garde le chemin du dossier visible lorsqu'elle comporte de nombreux avertissements
+- Modification des questions pour arrêter la connexion automatique dans `/ide` et pour `/clear`, `/compact` ou `/rewind` dans la vue d'un sous-agent pour lister Oui en premier ; elles commencent toujours sur Non, donc Bas puis Entrée répond désormais Non
+- Modification de ce que `retry: true` d'un hook `PermissionDenied` indique à Claude : ne réexécuter l'appel refusé que si vous avez vous-même demandé cet appel
+- Modification dans une version future, à partir du 30 novembre 2026 : les places de marché de plugins dans les configurations managées `extraKnownMarketplaces` se mettront à jour automatiquement par défaut. Pour en exclure une, définissez `"autoUpdate": false` sur son entrée
+- Windows : Modification du démarrage avec des paramètres gérés dans le registre : vérification de ceux-ci avant la mise à niveau, car une stratégie `HKLM` prévaut sur `managed-settings.json` et une valeur corrompue peut empêcher le démarrage
+- [VSCode] Ajout d'un avertissement et d'un lien vers la page de révocation lorsque vous vous déconnectez et que la demande de révocation de votre session claude.ai n'est pas confirmée
+- [VSCode] Ajout d'un avertissement avant l'envoi d'une très grande sélection ou d'un volumineux fichier texte joint, et de conseils sous « Prompt is too long » indiquant la partie volumineuse et la marche à suivre
+- [VSCode] Ajout de « Add Cell to Chat » au menu des cellules de notebook, qui joint une cellule avec ses sorties ou son erreur
+- [VSCode] Ajout de « Fix with Claude Code » comme correctif rapide pour les erreurs et avertissements ainsi que pour les tests échoués dans l'aperçu des tests et la vue Test Results, insérant le problème dans la zone de chat
+- [VSCode] Ajout de « Add to Chat » au menu contextuel des fichiers modifiés dans la vue Source Control
+- [VSCode] Ajout de « Resolve Merge Conflicts » dans le titre de l'éditeur d'un fichier avec des conflits de fusion et au groupe Merge Changes dans Source Control
+- [VSCode] Correction des balises brutes pour le code sélectionné sous un prompt reformulé, du bouton de mode clignotant sur Manuel, du menu slash masquant sa ligne en surbrillance, d'une image de connexion cassée et d'une barre Accepter/Rejeter clignotante
+- [VSCode] Correction d'une conversation forkée écrasant le fichier de plan de la conversation originale ; un fork ou un rewind ne pouvant pas copier le plan affiche désormais un avertissement
+- [VSCode] Correction de la dictée vocale indiquant qu'aucune parole n'a été reconnue lorsque sa connexion s'est fermée ou ne s'est jamais ouverte ; elle indique désormais que la connexion a été perdue ou n'a pas pu s'établir
+- [VSCode] Correction d'une question secondaire non envoyée qui était perdue lors de la fermeture de son panneau
+- [VSCode] Correction de la touche Échap arrêtant Claude après avoir renommé une session, et de la saisie au clavier ne fonctionnant plus après la fermeture de l'historique de session avec Échap
+- [VSCode] Correction de Rename, Mark as Unread et Add to Group affichant « connexion en cours » sur un onglet ayant repris une session depuis son historique
+- [VSCode] Correction des tableaux larges et des chemins longs tronqués, des longues erreurs masquant leur bouton de fermeture, des erreurs hors de vue dans le formulaire Add MCP server et la boîte de dialogue Chrome, et des images de plugins ignorant le thème de l'éditeur
+- [VSCode] Correction des invites ultérieures et de la boîte de message recouvrant la boîte de dialogue Rewind code, et du focus sautant de « Annuler » à « Rewind » à la fin de la vérification des fichiers
+- [VSCode] Correction du menu de commande conservant une correspondance antérieure en surbrillance pendant que vous continuiez à taper dans son filtre, pouvant amener Entrée à exécuter la mauvaise ligne
+- [VSCode] Correction du menu @ affichant « No files found » avant l'arrivée de ses premiers résultats de recherche, ou lorsqu'il ne pouvait pas rechercher tous les fichiers d'un très grand espace de travail, ce qu'il indique désormais
+- [VSCode] Correction de la touche Échap arrêtant Claude lors d'une confirmation Remove ou Delete dans les boîtes de dialogue MCP, Hooks et Memory, sur un bouton ou un lien d'un panneau de question secondaire, et sur le bouton Bookmarks lorsque son panneau est ouvert
+- [VSCode] Correction des cases vides s'affichant à la place des signes + et − dans les diffs (anthropics/claude-code#73069)
+- [VSCode] Correction du chat ne suivant plus la réponse de Claude après le redimensionnement du panneau, ou après l'avoir masqué puis affiché à nouveau
+- [VSCode] Correction d'un chat laissé en mode de contournement des permissions qui se rouvrait en mode Auto au lieu de votre mode de permission initial lorsque les paramètres désactivent le contournement
+- [VSCode] Correction du panneau de chat se figeant sur certains blocs de code CSS et diffs
+- [VSCode] Correction de l'indicateur d'utilisation du contexte disparaissant après une erreur d'API, « Prompt is too long », ou une commande slash
+- [VSCode] Correction d'un message placé en file d'attente derrière un /clear en attente qui était perdu
+- [VSCode] Correction de Manage Plugins perdant son champ de recherche ou n'affichant aucun message lorsqu'une recherche ne donne aucun résultat, et n'indiquant pas que la liste des plugins disponibles n'a pas pu se charger
+- [VSCode] Correction des modifications proposées aux notebooks et aux fichiers dotés d'un éditeur personnalisé qui s'ouvraient dans un onglet sans Accepter ou Rejeter et restaient ouverts après la réponse
+- [VSCode] Correction du message de limite de dépenses invitant les membres Team et Enterprise à exécuter `/usage-credits`, qui ne peut pas envoyer de demande à leur administrateur depuis le panneau
+- [VSCode] Correction d'un message rédigé qui était effacé par la touche Tab sur une commande dans le menu du bouton « / » ou par un clic sur une suggestion d'onboarding
+- [VSCode] Correction de Claude continuant à modifier des fichiers après avoir annulé du code (rewind) pendant qu'il travaille
+- [VSCode] Correction du texte saisi perdu après /tasks, /copy, /export, un /feedback ignoré, ou /plan alors qu'on était déjà en mode plan
+- [VSCode] Correction de la carte de question abandonnant une réponse « Autre » saisie avec Ctrl/Cmd+Entrée, et envoyant le mot « Autre » lorsque rien n'était saisi
+- [VSCode] Correction du panneau affichant « Une erreur est survenue » pour une conversation dans laquelle une passerelle a envoyé un appel d'outil sans nom
+- [VSCode] Correction des modifications non enregistrées qui étaient ignorées, et de la modification de Claude écrasée par la sauvegarde suivante, dans un dossier ouvert via un lien symbolique
+- [VSCode] Correction des @-mentions ne joignant rien, ou joignant un autre fichier du même nom, après que Claude a changé de dossier avec `cd`
+- [VSCode] Correction des touches fléchées remplaçant le texte saisi par un ancien prompt lors d'une sélection, et ignorant les modifications apportées à un prompt rappelé
+- [VSCode] Correction d'une @-mention ajoutée alors qu'une invite de permission était ouverte qui était perdue
+- [VSCode] Correction des raccourcis tels que Ctrl+1, Alt+1 ou Ctrl+Espace répondant à une boîte de dialogue ouverte, ce qui pouvait restaurer des fichiers dans la confirmation de retour arrière ou changer de branche git
+- [VSCode] Correction des prompts commençant par un chemin de fichier ou un commentaire de code envoyés sans le code sélectionné et sans menu de fork ou de rewind
+- [VSCode] Correction des liens de fichiers dans le chat ignorant vos associations d'éditeurs pour les fichiers de l'espace de travail, sauf pour les notebooks (anthropics/claude-code#81482)
+- [VSCode] Correction des lignes sélectionnées restant attachées à votre message suivant après la fermeture de l'onglet de leur fichier
+- [VSCode] Correction des nouvelles sessions démarrant automatiquement en mode Édition après avoir appuyé sur Maj+Tab pour atteindre le mode Plan
+- [VSCode] Correction d'une commande modifiée dans l'invite de permission s'exécutant sans les sauts de ligne saisis ou collés dedans
+- [VSCode] Correction d'un onglet Claude nouvellement ouvert ne plaçant pas le focus sur sa boîte de message, ou prenant le focus clavier en retard depuis le terminal ou la palette de commandes et envoyant le texte saisi comme un prompt
+- [VSCode] Correction des plages de lignes Alt+K telles que `@app.ts#5-10` envoyant le fichier entier, ou ses 2 000 premières lignes, au lieu des lignes sélectionnées
+- [VSCode] Correction des onglets de diff s'ouvrant dans le désordre lorsque plusieurs sous-agents attendent une approbation, et d'une modification ultérieure du même fichier annulant une précédente
+- [VSCode] Correction de la touche Entrée réécrivant un message ou exécutant une action de menu lorsqu'un `/mot` tel que le chemin `/api` se trouve à côté d'un autre texte, et exécutant une commande slash saisie sans ses arguments
+- [VSCode] Correction du lancement des applications Electron et des tests d'extensions échouant depuis Claude, un hook ou un serveur MCP ; un wrapper, hook ou serveur exécutant VS Code en tant que Node doit désormais définir `ELECTRON_RUN_AS_NODE=1`
+- [VSCode] Correction de Claude qui n'était pas averti lorsque vous rejetiez une partie d'une modification proposée ou la modifiez dans la vue diff avant de l'accepter
+- [VSCode] Correction de la touche Échap sur une invite de permission envoyant une instruction à moitié saisie à Claude au lieu d'annuler
+- [VSCode] Correction de Ctrl+J et Ctrl+O dans le chat ouvrant également le terminal de VS Code ou la boîte de dialogue d'ouverture de fichier sur Windows et Linux
+- [VSCode] Correction du menu @ insérant le mauvais fichier lors d'une saisie rapide de Tab ou Entrée, et d'Entrée n'envoyant pas un prompt se terminant par un @mot sans fichier correspondant
+- [VSCode] Correction des nouveaux onglets Claude restant vides et de la barre latérale échouant à se charger après la fermeture d'un onglet pendant que Claude était encore en train de démarrer
+- [VSCode] Correction d'un double-clic rapide dans le panneau activant un bouton ou une ligne apparu après le premier clic, ou déclenchant un deuxième compactage depuis le cercle d'utilisation du contexte
+- [VSCode] Correction du changement de modèle échouant avec « Le fichier de paramètres n'est pas un JSON valide » lorsque settings.json est vide ou commence par un indicateur d'ordre des octets (BOM)
+- [VSCode] Correction de l'augmentation de la mémoire consommée à chaque fork ou rewind d'une longue conversation jusqu'au rechargement de la fenêtre
+- [VSCode] Correction des commentaires de plan ne s'affichant pas sur la carte d'approbation du plan dans la vue Focus
+- [VSCode] Correction des liens de fichiers sans numéro de ligne déplaçant le curseur d'un fichier ouvert vers la ligne 1
+- [VSCode] Correction d'une notification manquante lorsqu'une conversation s'exécutant derrière une autre dans le même panneau a besoin d'une permission ou d'une réponse
+- [VSCode] Correction de Manage Plugins ne se chargeant pas lorsque Claude Code est lent à démarrer ou échoue à démarrer, permettant ainsi de désactiver un plugin qui bloque le démarrage
+- [VSCode] Correction des diffs proposés affichant et enregistrant du texte non-ASCII corrompu lorsque `files.encoding` n'est pas UTF-8
+- [VSCode] Correction des modifications et écritures approuvées enregistrant les marques de droite à gauche sous forme d'échappements littéraux `\u200F` sur les lignes contenant du texte en hébreu, arabe ou persan
+- [VSCode] Correction du choix d'un modèle ignoré pour le message suivant lorsque le processus de Claude s'était arrêté ou était encore en train de démarrer
+- [VSCode] Correction de Rewind affichant « Aucune session active » après l'arrêt du processus de Claude
+- [VSCode] Correction de la saisie de @ laissant un processus auxiliaire s'exécuter par onglet lorsqu'aucun navigateur n'est connecté, sauf lorsque le service de Claude in Chrome est inaccessible
+- [VSCode] Correction de la liste des sessions ouvrant toutes les transcriptions à la fois, ce qui bloquait les extensions de l'éditeur et pouvait omettre des sessions dans les projets en contenant beaucoup
+- [VSCode] Amélioration du délai avant la première réponse dans un nouveau dossier lorsque l'extension Python est installée et que le dossier ne contient pas de Python
+- [VSCode] Amélioration de l'écran de connexion pour indiquer lorsqu'il s'est ouvert en raison d'une requête refusée
+- [VSCode] Amélioration de la vitesse d'ouverture, de restauration et de retour vers de longues conversations, particulièrement avec de nombreuses modifications de fichiers ou là où git est lent
+- [VSCode] Amélioration de la réactivité dans les longs chats : saisie fluide et écritures de gros fichiers pendant qu'une réponse est diffusée, invites de permission plus rapides et réduction majeure des blocages lors de l'envoi avec l'accessibilité activée
+- [VSCode] Amélioration du démarrage et de l'utilisation de la mémoire : ouverture plus rapide du panneau et des nouveaux onglets de chat, première réponse plus rapide dans un nouvel onglet, et apparition plus précoce de la boîte de dialogue de confiance du dossier sur les forfaits Pro et Max
+- [VSCode] Amélioration de la vitesse dans les fenêtres distantes (SSH, WSL, conteneurs) : démarrage du panneau, apparition des réponses et réouverture des sessions plus rapides
+- [VSCode] Amélioration du délai de réponse pour le premier message après quelques minutes d'inactivité du chat sur une machine disposant de peu de mémoire
+- [VSCode] Amélioration de la vitesse de démarrage des chats, de leur ouverture depuis l'historique et de leur reprise après un redémarrage sur les disques lents ou analysés par un antivirus
+- [VSCode] Amélioration de la vitesse d'affichage des diffs dans les conversations réouvertes, et suppression des entrées de menu de diff qui ne fonctionnaient pas
+- [VSCode] Amélioration du menu de fichiers @ pour lister en premier les fichiers des onglets ouverts dans l'éditeur, les plus récemment utilisés en tête
+- [VSCode] Modification de l'enregistrement d'un diff proposé pour ne l'accepter qu'après avoir cliqué ou tapé dans sa partie proposée (droite) ; une notification signale lorsqu'un enregistrement est refusé ou qu'une fermeture avec enregistrement n'applique rien
+- [VSCode] Modification des diffs issus d'une session de terminal pour qu'ils s'ouvrent sans déplacer le focus clavier, et à côté d'un fichier contenant des modifications non enregistrées ; pour répondre, cliquez sur Accepter ou utilisez le terminal
+- [VSCode] Modification des cartes de permission pour n'afficher que Oui et Non lorsque `allowManagedPermissionRulesOnly` est défini et que la carte proposerait une règle d'autorisation ; la touche 2 sur ces cartes répond désormais Non
+- [VSCode] Modification d'un onglet Claude pour ignorer la touche Entrée et afficher une notification lorsque sa boîte de recherche a perdu le focus clavier
+
 ## 2.1.330 (2026-11-20)
 
 - Ajout de la connexion aux organisations gérées dans l'Enterprise Admin Console d'Anthropic : après `claude auth login`, Claude Code applique les paramètres de l'organisation et utilise son fournisseur de cloud ou sa passerelle
