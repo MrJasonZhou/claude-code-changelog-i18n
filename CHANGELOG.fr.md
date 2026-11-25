@@ -2,6 +2,159 @@
 
 > Unofficial translation of the [Claude Code CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md). Not affiliated with Anthropic. Original © Anthropic PBC. Machine-translated; the English original is authoritative.
 
+## 2.1.332 (2026-11-24)
+
+- Ajout des compétences provenant des serveurs MCP (bêta). Elles apparaissent sous la forme `server:skill` dans le menu `/` ; les autres compétences conservent leur nom
+- Ajout d'un événement de hook `PreSkillShellCommand` pouvant refuser les commandes shell inline d'une compétence ou d'une commande lors de son chargement ; sur la version 2.1.331 et les versions antérieures, un fichier de configuration le mentionnant ouvre une boîte de dialogue au démarrage
+- Ajout de « Always deliver » à l'invite pour les messages retenus provenant d'autres sessions
+- Ajout d'une ligne de pied de page persistante lorsqu'un message signalé maintient votre session sur un modèle différent, jusqu'à ce que vous en choisissiez un avec `/model`
+- Ajout d'un événement OpenTelemetry `assistant_response` pour le texte envoyé par Claude via SendUserMessage ou l'outil de messagerie de Cowork, lorsque la journalisation des réponses est activée
+- Ajout d'un avertissement dans VS Code et dans l'onglet Code de l'application Desktop lorsqu'une partie d'une session n'a pas pu être enregistrée, indiquant comment l'enregistrer avec `/compact`
+- Ajout d'une notification dans VS Code et dans l'onglet Code de l'application Desktop lorsque les messages antérieurs d'une session reprise n'ont pas été chargés, comme l'affiche déjà le terminal
+- Ajout de votre niveau d'accès au Cyber Verification Program dans l'en-tête de démarrage, à côté du nom du modèle lorsque votre niveau s'applique à ce modèle et que vous êtes connecté avec un compte claude.ai
+- Correction de `claude auth login` qui renvoyait `Login successful.` alors qu'une connexion claude.ai ne pouvait pas être enregistrée : la commande quitte désormais avec le code 1 et indique ce qu'il faut vérifier, comme un fichier de verrouillage résiduel ou un disque plein
+- Correction des blocages de Read, des @-mentions et du compactage sur un tube nommé (named pipe) dans lequel rien n'écrit, tel qu'un `.env` monté par un gestionnaire de secrets verrouillé ; la lecture échoue désormais après 20 secondes
+- Correction des tours se terminant par « Prompt is too long » après des échecs répétés d'auto-compactage alors qu'un compactage supplémentaire à la limite de contexte aurait pu permettre de continuer
+- Correction de l'échec du compactage lorsqu'un résumé dépassait continuellement la limite de sortie : après trois réponses tronquées, la dernière tentative demande désormais un résumé plus court
+- Correction d'un gel lorsqu'une règle de permission ou une condition de hook comportant plusieurs caractères génériques était vérifiée par rapport à une commande longue
+- Correction des gels et de l'utilisation excessive de mémoire dans la plupart des cas lorsqu'un hook affiche une sortie sans fin
+- Correction d'un gel et d'un dépassement de contexte lorsqu'un hook bloque ou échoue pendant un tour, ou après `/compact`, avec un journal très volumineux ; le texte dépassant environ 50 000 caractères est désormais raccourci
+- Correction du gel du terminal et de l'ignorance de Ctrl+C lorsqu'un serveur MCP local sature sa sortie standard
+- Correction d'un gel lorsqu'une invite ou une entrée redirigée contient un `@` suivi d'une très longue chaîne ininterrompue, telle que du CSS minifié avec une police intégrée
+- Correction d'un long gel lors de l'ouverture d'un point de retour arrière (rewind point) après la réécriture d'un gros fichier suivi
+- Correction des serveurs MCP SSE qui se bloquaient ou refusaient chaque appel d'outil après que leur flux d'événements a été interrompu et rétabli sur un nouveau endpoint ou pas du tout, jusqu'à une reconnexion manuelle
+- Correction de Remote Control affichant une session dans l'application de bureau, VS Code ou l'Agent SDK comme en cours d'exécution alors qu'elle était en attente d'une boîte de dialogue ou d'une question d'un serveur MCP
+- Correction d'une limite d'utilisation signalée comme atteinte aux clients Remote Control, IDE et SDK alors qu'elle s'était déjà réinitialisée
+- Correction de l'envoi répété au modèle de CLAUDE.md et des fichiers de règles, dans la plupart des cas, après le déplacement d'une session vers un worktree sous `.claude/worktrees` avec EnterWorktree ou sa reprise à cet endroit
+- Correction des appels d'outils n'ayant jamais été exécutés mais comptabilisés comme effectués dans la ligne de résumé d'un chat claude.ai après avoir refusé une demande d'autorisation dans une session ayant redémarré
+- Linux : correction du diff d'édition Bash affichant un lien symbolique inchangé comme modifié après que Claude a lu le fichier à travers celui-ci
+- Correction de la reprise d'une session et de `/stats` qui se figeaient pendant plusieurs secondes lorsqu'une transcription contenait de nombreuses lignes endommagées
+- Correction d'un nom de famille tel que `sonnet` dans `--fallback-model` qui était ignoré lorsque `availableModels` n'autorise qu'une version plus ancienne de celui-ci
+- Correction du décalage des touches pendant plusieurs secondes pendant que `/stats` lit des transcriptions de sessions volumineuses, y compris après la fermeture de la boîte de dialogue, et avec la journalisation de débogage activée lorsqu'un serveur de langage sature sa sortie stderr
+- Correction de l'échec d'une session lorsque le cloud refusait son modèle par défaut et qu'une liste `availableModels` non appliquée ne mentionnait ni celui-ci ni un modèle plus ancien de cette famille
+- Correction d'une liste imposée de modèles plus anciens échouant sur Agent Platform et Foundry de Google Cloud lorsque le premier est refusé : il bascule désormais vers le suivant dans cette famille, s'ils sont listés du plus récent au plus ancien
+- Correction de l'échec d'`opus` sur Bedrock, Agent Platform et Foundry de Google Cloud derrière une passerelle qui refuse un modèle avec son propre message : il bascule désormais vers un modèle plus ancien qui répond
+- Correction de la proposition de mise à niveau du modèle au démarrage sur Bedrock et Agent Platform de Google Cloud mentionnant un modèle exclu par votre liste `availableModels`
+- Correction de l'échec des sous-agents Bedrock lorsque votre compte ne répertorie aucun profil pour leur modèle dans la région parente : ils utilisent désormais le profil propre au modèle, qui peut se trouver en dehors de cette région
+- Correction des sessions Foundry quittant une famille de modèles lorsque la liste d'un administrateur bloque la version vers laquelle `sonnet`, `opus` ou `haiku` pointe : elles utilisent désormais sa version autorisée la plus récente sous un nom intégré ou mappé
+- Correction de l'alias `sonnet` sur Bedrock Mantle résolu en Haiku 4.5 : il correspond désormais à Sonnet 5, et non à Sonnet 5.5, et un compte sans Sonnet 5 reçoit une erreur ; activez-le donc au préalable
+- Correction de Ctrl+C à l'invite démarrant un nouveau tour, et d'un double Ctrl+C ne quittant pas, lorsqu'un agent en arrière-plan arrêté avait un rapport de sous-agent non lu
+- Correction de `/install-github-app` relançant un workflow après un retour en arrière avec Esc
+- Correction de la perte de texte dicté au-delà de 10 000 caractères
+- Correction des erreurs brutes de l'API « JSON Parse error » et « The operation was aborted. » lorsque la nouvelle tentative sans streaming recevait une réponse corrompue ou était interrompue
+- Correction d'Esc n'interrompant pas l'utilisation de l'ordinateur (computer use) entre les actions sur macOS lorsque la fenêtre de Claude Code ou une application autorisée est au premier plan ; un Esc destiné à la fenêtre contextuelle de cette application arrête désormais l'utilisation de l'ordinateur
+- Correction d'un blocage rare lorsqu'une commande utilitaire, telle qu'un assistant de clé API, dépassait son délai d'expiration
+- Correction de la sélection de texte en plein écran qui repoussait le libellé droit du pied de page sur une deuxième ligne, déplaçant le texte sous la souris et risquant de copier la mauvaise ligne
+- Correction de la raison de la demande d'un hook PreToolUse qui ne s'affichait pas sur les invites terminal de Read, Grep, Glob, Edit et Write (anthropics/claude-code#102892, anthropics/claude-code#105343)
+- Correction de l'accumulation de dossiers `temp_*` dans `~/.claude/plugins/cache` lorsqu'un plugin téléchargé ne pouvait pas être copié à son emplacement
+- Correction de l'ignorance de `--effort` lors du démarrage d'une session interactive avec `--environment` alors que `CLAUDE_CODE_EFFORT_LEVEL` est défini sur le même niveau
+- Correction des sessions headless et cloud signalant l'appel Agent d'un fork au premier plan comme terminé dès le lancement du fork
+- Correction des serveurs MCP locaux recevant un nouvel ID de session après le redémarrage du processus d'une session Remote Control
+- Correction du compactage lors de l'inactivité ignoré pour les abonnés bien en dessous de leur limite hebdomadaire
+- Correction d'un fichier texte @-mentionné avec une extension qui était ignoré sans avertissement lorsque même ses 2 000 premières lignes dépassaient la limite de lecture ; Claude est désormais informé de sa taille et de la façon de le lire
+- Correction de l'erreur de plugin « not cached » pointant vers `/plugin` au lieu de `/reload-plugins`, la commande qui recharge les plugins
+- Correction des sessions de runner auto-hébergé échouant lors de leur premier clonage sous git géré par Anthropic lorsque la configuration git de la machine comporte une section `includeIf "gitdir:"` ou (git 2.44 à 2.46) `"onbranch:"`
+- Correction des réponses commençant par des expressions telles que « You've used » ou « You've hit your » qui s'affichaient sous la forme d'une erreur rouge de limite d'utilisation
+- Correction d'une conversation reprise qui perdait parfois ses derniers messages après un crash ou un arrêt forcé sur Bedrock, Agent Platform de Google Cloud, Foundry et d'autres fournisseurs tiers
+- Correction de NotebookEdit enregistrant un notebook invalide lorsqu'une modification change le type d'une cellule ; la conversion d'une cellule avec pièces jointes en code est désormais refusée
+- Correction d'un long README dans un design system déplacé depuis l'application autonome Claude Design qui perdait sa liste de fichiers à charger lorsque Claude démarre une présentation ou un design
+- Correction des appels d'outils MCP échouant avec « malformed task handle » lorsque l'ID de tâche du serveur dépasse 128 caractères ; les ID jusqu'à 1 024 caractères fonctionnent désormais
+- Runner auto-hébergé : correction de `--configure-git` signalant parfois un `git --version` bloqué comme un git absent du PATH
+- Correction de la réutilisation des identifiants de tâches et de la réapparition des tâches supprimées lorsque plusieurs tâches étaient supprimées ou mises à jour simultanément, et de TaskGet listant les tâches terminées comme bloquantes
+- Correction des lignes obsolètes et répétées dans le sélecteur d'historique Ctrl+R en plein écran lorsque les invites partagent un horodatage
+- Correction de Code Mode ignorant silencieusement un appel d'outil dont l'entrée comporte une liste de plus de 4 096 éléments, et se figeant sur un tableau typé très volumineux dans l'entrée d'un outil, ce qui est désormais refusé
+- Correction de Code Mode laissant un message sans réponse lorsqu'il était saisi pendant une commande et qu'Esc était pressé avant la réponse de Claude ; le message déclenche désormais un nouveau tour, qu'un second Esc arrête
+- Correction de Code Mode n'avertissant pas Claude lorsqu'une commande lente passait en arrière-plan et laissait son script avec une sortie vide, ou de la limite de temps sur les commandes en arrière-plan dans `claude -p` et l'Agent SDK
+- Correction de Code Mode attendant parfois pendant des minutes une commande qui avait déjà été arrêtée
+- Correction des commandes shell inline d'une commande slash saisie qui ne s'exécutaient pas dans Code Mode après l'arrivée de la sortie d'un script en arrière-plan
+- Correction des sessions Code Mode dans l'Agent SDK et `claude -p` perdant parfois la dernière réponse de Claude lors de la reprise après avoir été arrêtées pendant l'exécution d'un script
+- Remote Control : correction des sessions hébergées par l'application de bureau ou VS Code apparaissant comme inactives pendant l'exécution de /compact
+- Correction d'une session perdant parfois son état « needs input » après le rapport d'une tâche en arrière-plan dans Claude Desktop
+- Correction de Grep : -o manquant une correspondance vide à la fin d'un fichier sans saut de ligne final, -o avec multiline ajoutant une ligne vide ou numérotant mal les lignes dans les fichiers non-UTF-8, et -A et -B ignorés à côté d'un -C nul
+- Correction de la dissociation d'une combinaison de touches dans `keybindings.json` laissant toujours sa première touche en attente d'une seconde lorsqu'elle était orthographiée `meta` et liée comme `alt`, ou inversement
+- Correction du déplacement d'une session vide vers l'arrière-plan échouant parfois avec « Couldn't load transcript from file »
+- Correction d'OpenTelemetry signalant un événement `mcp_server_connection` en échec à chaque démarrage pour un serveur intégré non activé pour le compte
+- Correction d'Esc n'arrêtant pas une commande Bash pendant qu'elle attendait son diff de fichier dans des dépôts git volumineux ou lents, ce qui retenait le message suivant
+- Correction des liens collés et des chemins relatifs se terminant par un nom de fichier image apparaissant tardivement et absorbant une touche Enter pressée immédiatement après
+- Correction de `/mcp reconnect all` et `/mcp disable all` prenant en compte un serveur intégré non activé pour le compte
+- Correction de l'interruption d'un tour pendant qu'un hook `turn.step` d'un mod était en attente affichant « user-cancel » comme une erreur au lieu d'« Interrupted »
+- Correction de `~/.claude.json` signalé comme corrompu lorsqu'une autre session était en train de l'enregistrer
+- Correction des recherches web échouant avec une erreur d'API lorsque la liste des domaines autorisés ou bloqués de Claude était vide ou contenait des doublons
+- Correction de la reprise d'un workflow en pause dans Code Mode attendant pendant des minutes alors que d'autres tâches en arrière-plan étaient en cours d'exécution
+- Correction des sous-agents dans Code Mode échouant avec « Agent stalled » et perdant leur commande lorsqu'un script s'exécutait pendant plus de 10 minutes
+- Amélioration de `claude plugin marketplace add` sous Windows pour attendre et réessayer dans certains cas lorsqu'un autre programme, tel qu'un antivirus, bloque brièvement les fichiers téléchargés
+- Windows : amélioration de la stabilité sur certains PC d'entreprise, où Claude Code pouvait quitter sans aucune sortie peu après le démarrage
+- Amélioration de la configuration de computer use : l'invite d'autorisation Screen Recording peut désormais redémarrer Claude Code et reprendre le chat
+- Amélioration de computer use pour consommer moins de contexte jusqu'à ce que Claude l'utilise
+- Amélioration de l'erreur lorsqu'un proxy ou une passerelle coupe ou endommage une réponse compressée : un tour se termine désormais par des mots compréhensibles au lieu du texte brut « ZlibError fetching »
+- Amélioration de `/context` : sortie plus courte en plein écran, afin que le total soit moins susceptible de défiler hors d'une fenêtre courte, et la légende mentionne son unité une seule fois
+- Amélioration de la consommation maximale de mémoire et de la vitesse de `/usage` sur les machines avec de nombreuses sessions récentes
+- Amélioration de `/permissions` pour refuser une règle qui serait ignorée au démarrage suivant, telle que `rm -rf` sans nom d'outil, et pour afficher la raison
+- Amélioration de la reprise d'une session dans Code Mode : Claude est désormais informé d'emblée que ses variables de script précédentes ont disparu
+- Amélioration de Claude dans Code Mode pour demander confirmation avant d'annuler les modifications d'un worktree, pour lire les fichiers d'artefacts avant de les publier, et pour mettre à jour un artefact existant au lieu d'en créer un second
+- Amélioration de la recherche d'outils de Code Mode pour afficher les descriptions longues des outils MCP dans leur intégralité là où l'espace le permet, car une description tronquée pouvait entraîner des appels erronés
+- Linux : amélioration du message de Ctrl+V pour indiquer le paquet à installer (`wl-clipboard` ou `xclip`) lorsque les images ne peuvent pas être lues depuis le presse-papiers
+- Amélioration de la récupération pour les longues conversations derrière un proxy ou une passerelle avec une limite de taille de requête, où chaque message et `/compact` échouait avec une erreur 413
+- Amélioration de la vitesse de Glob dans les grands dossiers locaux sur les machines Windows équipées de 6 processeurs ou plus : les dossiers sont parcourus en parallèle, et une recherche arrêtée à son délai limite liste désormais ce qu'elle a trouvé
+- Amélioration de l'utilisation de la mémoire lors de la reprise d'une longue conversation
+- Amélioration de l'utilisation de la mémoire au démarrage avec les serveurs MCP listant de nombreux outils
+- Amélioration de l'utilisation de la mémoire de `claude -p` et des sessions hébergées par SDK au début d'une conversation
+- Mise à jour de computer use sur macOS vers de nouvelles règles de sécurité, de sorte que certaines actions sont refusées et la saisie peut être plus lente
+- Modification des sessions terminal et VS Code basculées vers Sonnet 5 ou 5.5 sur Bedrock Mantle, Agent Platform et Foundry pour démarrer en mode automatique si aucun mode n'est défini ; définissez `disableAutoMode` sur `"disable"` pour l'arrêter
+- Modification de l'alias de modèle `sonnet` sur Agent Platform de Google Cloud et Microsoft Foundry vers Sonnet 5.5, et de l'alias `opus` de Foundry vers Opus 5.5 ; `sonnet` sur Amazon Bedrock reste à Sonnet 4.5
+- Modification du modèle par défaut sur Microsoft Foundry vers Sonnet 5.5 : déployez `claude-sonnet-5-5`, ou définissez `ANTHROPIC_DEFAULT_SONNET_MODEL` sur un modèle que vous avez déployé
+- Modification de `sonnet` et des requêtes en arrière-plan sur Agent Platform de Google Cloud pour lire `VERTEX_REGION_CLAUDE_5_5_SONNET` ; avec seulement la variable `4_5` définie, elles basculent vers `CLOUD_ML_REGION` ou `us-east5`
+- Modification de `--model default` et de la sélection de Default pour passer à un modèle plus ancien lorsque ce modèle n'est pas disponible, au lieu de s'arrêter avec une erreur ; en mode auto, uniquement vers un modèle accepté par le mode auto
+- Modification sur Microsoft Foundry : Claude Sonnet 4, Opus 4 et Opus 4.1 sont désormais considérés comme retirés, de sorte que les rétrogradations s'arrêtent au-dessus d'eux et qu'un verrouillage sur l'un d'eux avertit qu'il a été retiré
+- Modification de la liste des modèles intégrés de la passerelle des applications Claude : Sonnet 5.5 remplace Sonnet 4.5 comme deuxième modèle, et Claude Desktop démarre dessus lorsqu'une politique n'autorise pas Opus 4.6
+- Modification des messages à mi-tour du SDK et de `claude -p` pour être comptabilisés comme ceux de l'utilisateur lorsque les indicateurs de fonctionnalités ne sont pas récupérés, comme sur les clouds ou avec la télémétrie désactivée, à partir d'Opus 4.8 ; marquez le texte relayé avec `isSynthetic: true`
+- Modification de `computer-use` en un nom de compétence réservé sur les Mac où computer use est activé : votre propre compétence ou commande portant ce nom cesse de se charger, et une notification au démarrage invite à la renommer
+- Modification du `service.name` OpenTelemetry par défaut des sessions de l'onglet Code du bureau vers `claude-code-desktop` ; mettez à jour les filtres basés sur `claude-code`, ou définissez `OTEL_SERVICE_NAME` pour conserver l'ancien nom
+- Modification d'OpenTelemetry `tool_input` pour afficher uniquement la longueur du texte envoyé via SendUserMessage ou l'outil de message de Cowork, sauf si la journalisation des réponses est activée (`OTEL_LOG_ASSISTANT_RESPONSES=1`)
+- Runner auto-hébergé : modification de `CLAUDE_CODE_OAUTH_TOKEN` : son préfixe peut désormais se terminer par `oat02-` ainsi que par `oat01-`. Mettez à jour les règles de proxy et les nettoyeurs de journaux qui ciblent `oat01-`, et masquez la valeur entière
+- Modification de `claude self-hosted-runner setup` sans argument sur macOS et Linux pour demander la clé d'environnement dans le terminal avant le démarrage de Claude, et la masquer lors du collage
+- Modification de l'onglet Code de Claude Desktop sur l'API d'Anthropic pour ignorer les ID de modèles par défaut, de requêtes secondaires, d'alias et de sous-agents ne commençant pas par `claude` dans vos propres paramètres à côté d'une adresse de passerelle
+- Modification de l'onglet Code de Claude Desktop sur l'API d'Anthropic pour ignorer un `CLAUDE_CODE_AUTO_COMPACT_WINDOW` inférieur à 200K dans vos propres paramètres à côté d'une adresse de passerelle ; utilisez plutôt `/autocompact`
+- Modification du mode plan dans l'onglet Code de l'application de bureau et VS Code pour demander une approbation au lieu de refuser lorsqu'aucun contrôle de sécurité du mode auto ne peut évaluer une commande, pour les plans saisis depuis Manual ou Accept edits
+- Modification de PgUp et Home pour aller sur No lors de questions destructives, telles que `/clear` depuis la vue d'un agent
+- Modification des brouillons de `/feedback` dans le terminal pour s'ouvrir sur Not now, au-dessus de lignes distinctes pour envoyer le rapport seul ou avec la transcription
+- Modification de la dictée vocale en mode tap pour maintenir le microphone activé jusqu'à 60 secondes sans nouveau mot ou 10 minutes, contre 15 secondes et 2 minutes auparavant, puis conserver le texte non envoyé ; le tap suivant s'y ajoute
+- Modification de la dictée vocale en mode tap pour s'arrêter lorsque vous envoyez l'invite, et pour s'arrêter en indiquant la raison lorsque vous la modifiez, qu'un panneau la recouvre, ou que la connexion ou un programme d'enregistrement distinct est perdu
+- Modification de `/schedule`, des invites d'autorisation et de la proposition cloud de `/loop` pour afficher « cloud scheduled task » au lieu de « routine » ou « cloud schedule » ; `/routines` fonctionne toujours
+- Modification des changements de modèle depuis l'application mobile Claude ou claude.ai pour conserver le niveau d'effort que vous avez enregistré pour le modèle précédent lorsqu'aucun n'est enregistré pour le nouveau
+- Modification du `hint` reçu par le hook `PromptHint` d'un mod pour omettre l'indice pour le texte sélectionné lorsque le pied de page plein écran comporte un libellé à sa droite
+- Modification de `awsCredentialExport` pour expirer après 10 minutes au lieu d'attendre indéfiniment
+- [VSCode] Ajout d'une notification dans davantage de cas lorsque la fermeture d'un diff proposé laisse la modification non appliquée, et arrêt des notifications de diff sur une copie scindée d'un diff traité
+- [VSCode] Ajout d'un avertissement lors de la restauration d'une conversation avec `/rewind` dans la barre latérale si cela interrompt un `/loop` autonome
+- [VSCode] Ajout de la version installée aux lignes de Manage plugins
+- [VSCode] Correction de Rewind restant bloqué sur « Checking code changes… » pendant que le processus de Claude était figé à son démarrage
+- [VSCode] Correction des touches fléchées du sélecteur de modèle partant de la mauvaise ligne juste après son ouverture, et des lecteurs d'écran n'annonçant pas son modèle mis en surbrillance lorsqu'il est ouvert avec `/model` ou le menu de commande
+- [VSCode] Correction des options « Copy deleted line » et « Copy changed line » de la vue diff qui copiaient une ligne différente de celle indiquée, et d'un double-clic près du bas copiant sans demande
+- [VSCode] Correction de l'infobulle du microphone bloqué qui était tronquée, des adresses longues débordant des lignes Web Fetch, des barres d'utilisation paraissant pleines en High Contrast, et d'une ligne Thinking sautant lorsqu'on cliquait dessus
+- [VSCode] Correction d'un second Logout dans la même fenêtre signalant un succès alors que le premier était encore en cours, et ajout d'un bouton Show logs à l'erreur lorsque la déconnexion échoue
+- [VSCode] Correction du chat n'affichant aucune notification lorsqu'une commande en arrière-plan, un agent, un workflow ou un moniteur se terminait pendant que Claude était inactif
+- [VSCode] Correction du fork d'une conversation, de l'ouverture et de l'enregistrement de souvenirs, et de la création de styles de sortie de projet échouant sur les disques NTFS dans VS Code 1.101 et 1.102 sous Windows 11 24H2 et versions ultérieures
+- [VSCode] Correction de Web Fetch affichant « Fetched from » avec un point vert de succès lorsque le site renvoyait une erreur ou une redirection non suivie
+- [VSCode] Correction du résumé de compactage apparaissant comme votre propre invite, ainsi que dans Rewind et l'historique des invites, après avoir rechargé, repris ou dupliqué (fork) une conversation compactée
+- [VSCode] Correction de `spinnerVerbs` provenant des paramètres utilisateur et gérés de Claude Code qui étaient ignorés
+- [VSCode] Correction du texte de droite à gauche provenant des mods affichant sa ponctuation du mauvais côté, et du bandeau ou panneau d'un mod ne remplissant qu'une partie de sa largeur lorsque la police du panneau n'a pas de caractères de tracé de boîtes
+- [VSCode] Correction d'un volet d'éditeur vide et verrouillé restant à côté du fichier suivant ou de l'onglet Claude après la fermeture du dernier onglet Claude
+- [VSCode] Correction du renommage d'une session impossible à enregistrer qui s'annulait silencieusement, et des lecteurs d'écran ne détectant pas le statut d'une session, quelle session est ouverte ou quels groupes sont réduits
+- [VSCode] Correction de la notification d'un panneau masqué qui ne nommait pas la session en attente, des questions en hébreu et en arabe lues dans le désordre, et d'une question coupée lorsque le processus de Claude se terminait n'affichant qu'un point rouge
+- [VSCode] Correction d'une connexion ayant échoué sans message d'erreur qui renvoyait à l'écran de connexion sans rien afficher, et d'une erreur d'authentification semblant toujours active après vous être reconnecté dans cet onglet
+- [VSCode] Correction du déplacement du chat lorsqu'un menu s'ouvrait sur certaines bannières, et du nombre d'appels d'outils d'un agent diminuant dans les longues sessions ; il indique désormais combien d'appels sont répertoriés
+- [VSCode] Correction de la plupart des liens vers des fichiers sans extension, vers des dossiers, et comportant une ligne et une colonne qui ne faisaient rien
+- [VSCode] Correction des messages en file d'attente et des fichiers joints apparaissant dans l'ordre inverse après la réouverture d'une conversation
+- [VSCode] Correction d'une question qui se terminait par une erreur affichant « Something went wrong » lorsque son résultat enregistré ne contenait aucun texte
+- [VSCode] Correction de la réflexion masquée (redacted thinking) affichée comme « Unsupported content type »
+- [VSCode] Correction de la zone de message qui ne soulignait pas le mot en cours de composition par une méthode de saisie (IME)
+- [VSCode] Correction d'un appui maintenu sur la touche Up remplaçant un message non envoyé par une invite antérieure, et de Down ne restaurant pas le message après que l'invite rappelée a reçu une nouvelle ligne ou a été effacée
+- [VSCode] Correction de `/model` complété avec Tab changeant parfois de modèle, et fermant le sélecteur de modèle immédiatement lorsque rien n'est en cours d'exécution
+- [VSCode] Amélioration du temps nécessaire pour ouvrir le panneau Claude et les longues sessions, des performances lors de la diffusion de réponses longues, et de la vitesse de lecture des diagnostics dans les très grands espaces de travail
+- [VSCode] Amélioration des commandes et des sorties sur une seule ligne ouvertes dans un onglet de texte brut : elles reviennent désormais à la ligne automatiquement
+- [VSCode] Modification de la dictée vocale pour s'arrêter d'elle-même après 60 secondes sans parole reconnue ou 10 minutes, contre 15 secondes et 2 minutes auparavant, afin que le microphone puisse rester activé plus longtemps
+- [VSCode] Modification de la dictée vocale pour s'arrêter, et en indiquer la raison, lorsque le microphone cesse d'envoyer de l'audio ou que le panneau reste masqué
+
 ## 2.1.331 (2026-11-23)
 
 - Ajout de la prise en charge de Code Mode dans les sessions de terminal sur Amazon Bedrock, Google Cloud's Agent Platform, Microsoft Foundry et Claude Platform on AWS
